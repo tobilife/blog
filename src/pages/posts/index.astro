@@ -1,0 +1,17 @@
+---
+import PageLayout from '@layouts/PageLayout.astro'
+import PostsList from '@components/PostsList.astro'
+import { getAllPosts } from '@/utils/content'
+
+const allPosts = await getAllPosts()
+const sortedPosts = allPosts.sort((a, b) => 
+  new Date(b.data.published).valueOf() - new Date(a.data.published).valueOf()
+)
+---
+
+<PageLayout title="모든 포스트" description="블로그의 모든 포스트 목록">
+  <div class="mx-auto max-w-screen-lg px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">모든 포스트</h1>
+    <PostsList posts={sortedPosts} />
+  </div>
+</PageLayout>
