@@ -172,8 +172,13 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-96HLCPW09T');
-    </script>
-  </head>
+      </script>
+      
+      <!-- Cloudflare Web Analytics -->
+      <script defer src='https://static.cloudflareinsights.com/beacon.min.js' 
+              data-cf-beacon='{"token": "4328394e17b64e2186aad2aa3aa3eb1a"}'></script>
+      <!-- End Cloudflare Web Analytics -->
+      </head>
   
   <body 
     class="min-h-screen transition" 
