@@ -10,8 +10,19 @@
 <body>
   <!-- Include the script that builds the page and powers Decap CMS -->
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-  <!-- Optionally, you can add custom previews and editor widgets -->
+  <!-- Configure Netlify Identity -->
   <script>
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on("init", user => {
+        if (!user) {
+          window.netlifyIdentity.on("login", () => {
+            document.location.href = "/admin/";
+          });
+        }
+      });
+    }
+    
+    // CMS 설정
     CMS.registerPreviewStyle("/styles/blog.css");
   </script>
 </body>
