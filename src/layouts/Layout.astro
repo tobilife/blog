@@ -77,8 +77,15 @@ const bannerOffset =
 	  data-overlayscrollbars-initialize
 >
 	<head>
-
-		<title>{pageTitle}</title>
+	 <!-- Google Tag Manager -->
+	 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	 })(window,document,'script','dataLayer','GTM-TW3XCSQP');</script>
+	 <!-- End Google Tag Manager -->
+	
+	 <title>{pageTitle}</title>
 
 		<meta charset="UTF-8" />
 		<meta name="description" content={description || pageTitle}>
@@ -163,9 +170,14 @@ const bannerOffset =
 
 	</head>
 	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
-		  data-overlayscrollbars-initialize
+	   data-overlayscrollbars-initialize
 	>
-		<ConfigCarrier></ConfigCarrier>
+	 <!-- Google Tag Manager (noscript) -->
+	 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TW3XCSQP"
+	 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	 <!-- End Google Tag Manager (noscript) -->
+	 
+	 <ConfigCarrier></ConfigCarrier>
 		<slot />
 
 		<!-- increase the page height during page transition to prevent the scrolling animation from jumping -->
