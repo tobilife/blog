@@ -50,6 +50,3 @@
 - GitHub OAuth App
   - Client ID: Ov23liK5mOXV8tlLfumz
   - Client Secret: 2859320759cc8ed88f534a9f319600c039a2d85a
-- ~~Sanity Project~~ (제거됨)
-  - ~~Project ID: 85dni07i~~
-  - ~~Dataset: production~~
