@@ -162,9 +162,6 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
 
     <link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`} />
     
-    <!-- Netlify Identity Widget -->
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-96HLCPW09T"></script>
     <script>
@@ -202,16 +199,24 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
     <!-- Increase the page height during page transition to prevent the scrolling animation from jumping -->
     <div id="page-height-extend" class="hidden h-[300vh]"></div>
     
-    <!-- Netlify Identity Redirect -->
+    <!-- Netlify Identity - Only load on admin page -->
     <script>
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.on('init', (user) => {
-          if (!user) {
-            window.netlifyIdentity.on('login', () => {
-              document.location.href = '/admin/';
+      // Only load Netlify Identity on admin pages
+      if (window.location.pathname.startsWith('/admin')) {
+        const script = document.createElement('script');
+        script.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+        script.onload = () => {
+          if (window.netlifyIdentity) {
+            window.netlifyIdentity.on('init', (user) => {
+              if (!user) {
+                window.netlifyIdentity.on('login', () => {
+                  document.location.href = '/admin/';
+                });
+              }
             });
           }
-        });
+        };
+        document.head.appendChild(script);
       }
     </script>
   </body>
