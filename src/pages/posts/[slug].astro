@@ -2,7 +2,7 @@
 import { getAllPosts, getPostBySlug, urlFor } from '../../lib/sanity';
 import Layout from '../../layouts/Layout.astro';
 import { formatDate } from '../../utils/date-utils';
-import { PortableText } from '@portabletext/react';
+import { toHTML } from '@portabletext/to-html';
 
 export async function getStaticPaths() {
   const posts = await getAllPosts();
@@ -19,61 +19,43 @@ if (!post) {
   return Astro.redirect('/404');
 }
 
-// Portable Text 컴포넌트 설정
-const components = {
-  types: {
-    image: ({ value }: any) => {
-      if (!value?.asset?._ref) {
-        return null;
-      }
-      return (
-        <img
-          src={urlFor(value).width(800).url()}
-          alt={value.alt || ''}
-          className="my-8 rounded-lg"
-        />
-      );
+// PortableText를 HTML로 변환
+const htmlContent = post.content ? toHTML(post.content, {
+  components: {
+    types: {
+      image: ({ value }) => {
+        if (!value?.asset?._ref) {
+          return '';
+        }
+        return `<img src="${urlFor(value).width(800).url()}" alt="${value.alt || ''}" class="my-8 rounded-lg" />`;
+      },
+      code: ({ value }) => {
+        return `<pre class="my-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-x-auto"><code class="language-${value.language || 'plaintext'}">${value.code}</code></pre>`;
+      },
     },
-    code: ({ value }: any) => (
-      <pre className="my-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-x-auto">
-        <code className={`language-${value.language || 'plaintext'}`}>
-          {value.code}
-        </code>
-      </pre>
-    ),
-  },
-  marks: {
-    link: ({ children, value }: any) => {
-      const rel = !value.href.startsWith('/') ? 'noreferrer noopener' : undefined;
-      return (
-        <a href={value.href} rel={rel} className="text-blue-600 dark:text-blue-400 underline">
-          {children}
-        </a>
-      );
+    marks: {
+      link: ({ children, value }) => {
+        const rel = !value.href.startsWith('/') ? 'noreferrer noopener' : undefined;
+        return `<a href="${value.href}" ${rel ? `rel="${rel}"` : ''} class="text-blue-600 dark:text-blue-400 underline">${children}</a>`;
+      },
+      code: ({ children }) => {
+        return `<code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm">${children}</code>`;
+      },
     },
-    code: ({ children }: any) => (
-      <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm">
-        {children}
-      </code>
-    ),
+    block: {
+      h1: ({ children }) => `<h1 class="text-3xl font-bold mt-8 mb-4">${children}</h1>`,
+      h2: ({ children }) => `<h2 class="text-2xl font-bold mt-6 mb-3">${children}</h2>`,
+      h3: ({ children }) => `<h3 class="text-xl font-bold mt-4 mb-2">${children}</h3>`,
+      h4: ({ children }) => `<h4 class="text-lg font-bold mt-3 mb-2">${children}</h4>`,
+      blockquote: ({ children }) => `<blockquote class="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic">${children}</blockquote>`,
+      normal: ({ children }) => `<p class="mb-4">${children}</p>`,
+    },
+    list: {
+      bullet: ({ children }) => `<ul class="list-disc pl-6 mb-4">${children}</ul>`,
+      number: ({ children }) => `<ol class="list-decimal pl-6 mb-4">${children}</ol>`,
+    },
   },
-  block: {
-    h1: ({ children }: any) => <h1 className="text-3xl font-bold mt-8 mb-4">{children}</h1>,
-    h2: ({ children }: any) => <h2 className="text-2xl font-bold mt-6 mb-3">{children}</h2>,
-    h3: ({ children }: any) => <h3 className="text-xl font-bold mt-4 mb-2">{children}</h3>,
-    h4: ({ children }: any) => <h4 className="text-lg font-bold mt-3 mb-2">{children}</h4>,
-    blockquote: ({ children }: any) => (
-      <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic">
-        {children}
-      </blockquote>
-    ),
-    normal: ({ children }: any) => <p className="mb-4">{children}</p>,
-  },
-  list: {
-    bullet: ({ children }: any) => <ul className="list-disc pl-6 mb-4">{children}</ul>,
-    number: ({ children }: any) => <ol className="list-decimal pl-6 mb-4">{children}</ol>,
-  },
-};
+}) : '';
 ---
 
 <Layout title={post.title}>
@@ -115,12 +97,6 @@ const components = {
       )}
     </header>
     
-    <div class="prose prose-lg dark:prose-invert max-w-none">
-      {post.content ? (
-        <PortableText value={post.content} components={components} />
-      ) : (
-        <p class="text-gray-500 dark:text-gray-400">콘텐츠가 없습니다.</p>
-      )}
-    </div>
+    <div class="prose prose-lg dark:prose-invert max-w-none" set:html={htmlContent || '<p class="text-gray-500 dark:text-gray-400">콘텐츠가 없습니다.</p>'} />
   </article>
 </Layout>
