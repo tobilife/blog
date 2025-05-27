@@ -1,0 +1,40 @@
+backend:
+  name: git-gateway
+  branch: main # 메인 브랜치 이름
+
+# Netlify Identity 위젯 활성화
+identity:
+  enable: true
+
+# 미디어 파일 저장 위치
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+# 컬렉션 정의
+collections:
+  - name: "posts" # CMS에서 사용할 이름
+    label: "Blog Posts" # UI에 표시될 이름
+    folder: "src/content/posts" # 파일이 저장될 폴더
+    create: true # 새 문서 생성 허용
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # 파일명 형식
+    fields: # 필드 정의
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Publish Date", name: "published", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false}
+      - {label: "Description", name: "description", widget: "text", required: false}
+      - {label: "Category", name: "category", widget: "string", required: false}
+      - {label: "Tags", name: "tags", widget: "list", default: [], required: false}
+      - {label: "Draft", name: "draft", widget: "boolean", default: false}
+      - {label: "Body", name: "body", widget: "markdown"}
+
+# UI 언어 설정 (한국어)
+locale: "ko"
+
+# 편집기 설정
+editor:
+  preview: true # 미리보기 활성화
+
+# 미디어 라이브러리 설정
+media_library:
+  name: uploadcare
+  config:
+    publicKey: demo # 실제 사용시 Uploadcare 공개 키로 변경

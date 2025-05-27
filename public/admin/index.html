@@ -1,17 +1,18 @@
-<!DOCTYPE html>
-<html lang="ko">
+<!doctype html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>토비라이프 블로그 관리자</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <script src="https://unpkg.com/@sanity/client@latest/umd/sanityClient.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Content Manager</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-  <div id="sanity">
-    <h1>Sanity Studio</h1>
-    <p>Sanity Studio는 별도로 배포되어야 합니다.</p>
-    <p>대신 <a href="https://www.sanity.io/manage/project/85dni07i" target="_blank">Sanity 웹 관리자</a>를 사용하세요.</p>
-  </div>
+  <!-- Include the script that builds the page and powers Decap CMS -->
+  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <!-- Optionally, you can add custom previews and editor widgets -->
+  <script>
+    CMS.registerPreviewStyle("/styles/blog.css");
+  </script>
 </body>
 </html>

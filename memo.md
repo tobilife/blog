@@ -16,41 +16,40 @@
    - Client ID: Ov23liK5mOXV8tlLfumz
    - Client Secret: 생성 완료
 
-4. **Sanity CMS 기본 설정**
-   - Sanity 프로젝트 생성 완료 (Project ID: 85dni07i)
-   - Sanity 패키지 설치 완료
-   - Astro와 Sanity 통합 설정 완료
-   - Sanity Studio 파일 구조 생성 완료
-   - 블로그 포스트 스키마 정의 완료
-
-5. **Sanity 프로덕션 통합**
-   - Sanity 데이터 페츭 유틸리티 생성 완료
-   - 포스트 목록 페이지 생성 완료 (/posts/)
-   - 개별 포스트 페이지 생성 완료 (/posts/[slug]/)
-   - 네비게이션에 Posts 메뉴 추가 완료
+4. **Sanity CMS 제거 및 Decap CMS 설치**
+   - Sanity 관련 패키지 제거 완료
+   - Sanity 폴더 제거 시도 (수동으로 제거 필요)
+   - Decap CMS 패키지 설치 완료
+   - public/admin/index.html 생성 완료
+   - public/admin/config.yml 생성 완료
+   - Netlify Identity 위젯 추가 완료
+   - 이미지 업로드 폴더 생성 완료 (public/images/uploads)
 
 ### 🚀 다음 진행 예정
-1. **프로덕션 배포 및 테스트**
-   - GitHub에 커밋 및 푸시
-   - Netlify에서 자동 배포
-   - Sanity Studio에서 테스트 포스트 작성
-   - 실제 사이트에서 포스트 확인
+1. **Sanity 폴더 수동 제거**
+   - Windows 탐색기에서 D:\dev\blog\sanity 폴더 수동 삭제 필요
 
-2. **기존 콘텐츠 마이그레이션**
-   - 기존 Markdown 파일들을 Sanity로 마이그레이션
-   - 자동화 스크립트 작성
+2. **Netlify 설정**
+   - Netlify 사이트에서 Identity 활성화
+   - Git Gateway 활성화
+   - 초대 메일 발송 및 관리자 계정 생성
 
-### 📝 기타 커스터마이징 아이디어
-- subtitle 변경
-- 언어 설정을 'ko'로 변경
-- 프로필 name, bio 설정
-- 테마 색상 커스터마이징
-- SNS 링크 업데이트
+3. **테스트**
+   - /admin/ 경로 접속하여 CMS 확인
+   - 테스트 포스트 작성
+   - 마크다운 파일 생성 확인
+
+### 📝 설정 정보
+- **Decap CMS 경로**: /admin/
+- **인증 방식**: Netlify Identity
+- **미디어 저장**: /images/uploads/
+- **컨텐츠**: src/content/posts/
+- **파일명 형식**: YYYY-MM-DD-slug.md
 
 ### 🔧 환경 정보
 - GitHub OAuth App
   - Client ID: Ov23liK5mOXV8tlLfumz
   - Client Secret: 2859320759cc8ed88f534a9f319600c039a2d85a
-- Sanity Project
-  - Project ID: 85dni07i
-  - Dataset: production
+- ~~Sanity Project~~ (제거됨)
+  - ~~Project ID: 85dni07i~~
+  - ~~Dataset: production~~
