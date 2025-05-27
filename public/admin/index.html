@@ -26,6 +26,19 @@
     
     // CMS 설정
     CMS.registerPreviewStyle("/styles/blog.css");
+    
+    // 발행일 자동 설정
+    CMS.registerEventListener({
+      name: 'preSave',
+      handler: ({ entry }) => {
+        // 새 포스트일 때만 (발행일이 비어있을 때)
+        if (!entry.getIn(['data', 'published'])) {
+          const today = new Date().toISOString().split('T')[0];
+          return entry.setIn(['data', 'published'], today);
+        }
+        return entry;
+      }
+    });
   </script>
 </body>
 </html>

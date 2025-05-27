@@ -22,7 +22,15 @@ collections:
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # 파일명 형식
     fields: # 필드 정의
       - {label: "제목", name: "title", widget: "string", required: true}
-      - {label: "발행일", name: "published", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, required: true}
+      - {
+          label: "발행일", 
+          name: "published", 
+          widget: "datetime", 
+          date_format: "YYYY-MM-DD", 
+          time_format: false, 
+          required: true,
+          default: ""
+        }
       - {label: "설명", name: "description", widget: "text", required: false}
       - {
           label: "카테고리",
@@ -31,7 +39,16 @@ collections:
           required: false,
           hint: "자유롭게 카테고리를 입력하세요 (예: 기술, 일상, 리뷰, 튜토리얼, 학습, 취미 등)"
         }
-      - {label: "태그", name: "tags", widget: "list", default: [], required: false, hint: "엔터를 눌러 태그를 추가하세요"}
+      - {
+          label: "태그", 
+          name: "tags", 
+          widget: "list", 
+          default: [], 
+          required: false, 
+          hint: "태그를 입력하고 쉼표(,)로 구분하거나 입력 후 엔터를 누르세요",
+          allow_add: true,
+          field: {label: "태그", name: "tag", widget: "string"}
+        }
       - {label: "대표 이미지", name: "image", widget: "image", required: false, hint: "포스트의 대표 이미지를 선택하세요"}
       - {label: "임시 저장", name: "draft", widget: "boolean", default: false, hint: "체크하면 사이트에 표시되지 않습니다"}
       - {label: "본문", name: "body", widget: "markdown"}
