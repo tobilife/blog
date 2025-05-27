@@ -1,0 +1,126 @@
+---
+import { getAllPosts, getPostBySlug, urlFor } from '../../lib/sanity';
+import Layout from '../../layouts/Layout.astro';
+import { formatDate } from '../../utils/date-utils';
+import { PortableText } from '@portabletext/react';
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  
+  return posts.map((post) => ({
+    params: { slug: post.slug.current },
+  }));
+}
+
+const { slug } = Astro.params;
+const post = await getPostBySlug(slug);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+// Portable Text 컴포넌트 설정
+const components = {
+  types: {
+    image: ({ value }: any) => {
+      if (!value?.asset?._ref) {
+        return null;
+      }
+      return (
+        <img
+          src={urlFor(value).width(800).url()}
+          alt={value.alt || ''}
+          className="my-8 rounded-lg"
+        />
+      );
+    },
+    code: ({ value }: any) => (
+      <pre className="my-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-x-auto">
+        <code className={`language-${value.language || 'plaintext'}`}>
+          {value.code}
+        </code>
+      </pre>
+    ),
+  },
+  marks: {
+    link: ({ children, value }: any) => {
+      const rel = !value.href.startsWith('/') ? 'noreferrer noopener' : undefined;
+      return (
+        <a href={value.href} rel={rel} className="text-blue-600 dark:text-blue-400 underline">
+          {children}
+        </a>
+      );
+    },
+    code: ({ children }: any) => (
+      <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm">
+        {children}
+      </code>
+    ),
+  },
+  block: {
+    h1: ({ children }: any) => <h1 className="text-3xl font-bold mt-8 mb-4">{children}</h1>,
+    h2: ({ children }: any) => <h2 className="text-2xl font-bold mt-6 mb-3">{children}</h2>,
+    h3: ({ children }: any) => <h3 className="text-xl font-bold mt-4 mb-2">{children}</h3>,
+    h4: ({ children }: any) => <h4 className="text-lg font-bold mt-3 mb-2">{children}</h4>,
+    blockquote: ({ children }: any) => (
+      <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic">
+        {children}
+      </blockquote>
+    ),
+    normal: ({ children }: any) => <p className="mb-4">{children}</p>,
+  },
+  list: {
+    bullet: ({ children }: any) => <ul className="list-disc pl-6 mb-4">{children}</ul>,
+    number: ({ children }: any) => <ol className="list-decimal pl-6 mb-4">{children}</ol>,
+  },
+};
+---
+
+<Layout title={post.title}>
+  <article class="container mx-auto px-4 py-8 max-w-4xl">
+    {post.coverImage && (
+      <img
+        src={urlFor(post.coverImage).width(1200).height(600).url()}
+        alt={post.coverImage.alt || post.title}
+        class="w-full h-auto rounded-lg mb-8"
+      />
+    )}
+    
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold mb-4">{post.title}</h1>
+      
+      <div class="flex items-center gap-4 text-gray-600 dark:text-gray-400">
+        <time>{formatDate(new Date(post.publishedAt))}</time>
+        {post.category && (
+          <>
+            <span>•</span>
+            <a href={`/category/${post.category}/`} class="hover:text-blue-600 dark:hover:text-blue-400">
+              {post.category}
+            </a>
+          </>
+        )}
+      </div>
+      
+      {post.tags && post.tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mt-4">
+          {post.tags.map((tag) => (
+            <a
+              href={`/tags/${tag}/`}
+              class="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )}
+    </header>
+    
+    <div class="prose prose-lg dark:prose-invert max-w-none">
+      {post.content ? (
+        <PortableText value={post.content} components={components} />
+      ) : (
+        <p class="text-gray-500 dark:text-gray-400">콘텐츠가 없습니다.</p>
+      )}
+    </div>
+  </article>
+</Layout>
