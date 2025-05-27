@@ -19,7 +19,7 @@ const {
   tags = []
 } = Astro.props;
 
-const siteUrl = Astro.site || 'https://www.tobilife.com';
+const siteUrl = Astro.site || 'https://tobilife.netlify.app';
 const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
 const canonicalUrl = canonical || Astro.url.href;
 ---
