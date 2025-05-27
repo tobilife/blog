@@ -47,6 +47,8 @@
 - **파일명 형식**: YYYY-MM-DD-slug.md
 
 ### 🔧 환경 정보
+- **사이트 URL**: https://tobilife.netlify.app
+- **호스팅**: Netlify
 - GitHub OAuth App
   - Client ID: Ov23liK5mOXV8tlLfumz
   - Client Secret: 2859320759cc8ed88f534a9f319600c039a2d85a
