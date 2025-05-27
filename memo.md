@@ -52,3 +52,4 @@
 - GitHub OAuth App
   - Client ID: Ov23liK5mOXV8tlLfumz
   - Client Secret: 2859320759cc8ed88f534a9f319600c039a2d85a
+  - Callback URL: https://tobilife.netlify.app/api/auth/callback/github
