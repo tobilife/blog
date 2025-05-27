@@ -1,6 +1,6 @@
 backend:
   name: git-gateway
-  branch: main # 메인 브랜치 이름
+  branch: master # 메인 브랜치 이름
 
 # Netlify Identity 위젯 활성화
 identity:
