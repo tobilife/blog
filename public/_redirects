@@ -1,0 +1,5 @@
+# Redirect netlify subdomain to primary domain
+https://tobilife.netlify.app/* https://www.tobilife.com/:splat 301!
+
+# Redirect non-www to www
+https://tobilife.com/* https://www.tobilife.com/:splat 301!
