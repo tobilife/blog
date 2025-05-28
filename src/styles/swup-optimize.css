@@ -1,0 +1,100 @@
+/* Swup Performance Optimizations - Ultra Mode */
+
+/* Reduce repaints during page transitions */
+.transition-swup-fade {
+  contain: layout style paint;
+  will-change: opacity;
+}
+
+/* Ultra-fast transitions */
+html.is-changing .transition-swup-fade {
+  transition: opacity 50ms ease-out !important;
+}
+
+html.is-animating .transition-swup-fade {
+  opacity: 0;
+}
+
+/* Optimize swup container */
+#swup-container {
+  contain: layout;
+  isolation: isolate;
+}
+
+/* Disable expensive transitions in development */
+@media (prefers-reduced-motion: reduce) {
+  .transition-swup-fade {
+    transition: none !important;
+  }
+}
+
+/* Optimize page height extend element */
+#page-height-extend {
+  contain: strict;
+  pointer-events: none;
+  will-change: display;
+}
+
+/* Reduce layout calculations */
+.is-animating #main-grid {
+  contain: layout style;
+}
+
+/* Optimize navbar transitions */
+#navbar-wrapper {
+  contain: layout;
+  will-change: transform, opacity;
+  transform: translateZ(0); /* Force GPU layer */
+}
+
+/* Use transform instead of position changes */
+.navbar-hidden {
+  transform: translateY(-4rem) translateZ(0);
+  opacity: 0;
+}
+
+/* Optimize TOC transitions */
+#toc-wrapper {
+  contain: layout style;
+  will-change: opacity;
+}
+
+.toc-not-ready {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Pause animations during navigation */
+html[style*="--animation-play-state: paused"] * {
+  animation-play-state: paused !important;
+}
+
+/* Optimize link hover states */
+a[href] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a[href]:active {
+  transition: none !important;
+}
+
+/* Reset cursor styles */
+body {
+  cursor: auto !important;
+}
+
+a[href]:not([disabled]) {
+  cursor: pointer !important;
+}
+
+button:not([disabled]) {
+  cursor: pointer !important;
+}
+
+/* Prevent wait cursor from persisting */
+body.is-changing,
+body.is-animating,
+body.is-leaving,
+body.is-rendering {
+  cursor: auto !important;
+}

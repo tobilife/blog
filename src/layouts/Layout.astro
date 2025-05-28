@@ -401,7 +401,7 @@ function showBanner(): void {
 function init(): void {
   loadTheme();
   loadHue();
-  initCustomScrollbar();
+  initLightweightScrollbar(); // Use lightweight version
   showBanner();
 }
 
@@ -425,7 +425,10 @@ const setupSwup = (): void => {
     }
   });
 
-  window.swup.hooks.on('content:replace', initCustomScrollbar);
+  window.swup.hooks.on('content:replace', () => {
+    // Only initialize scrollbars for new content, not the entire page
+    initContentScrollbars();
+  });
   
   window.swup.hooks.on('visit:start', (visit: { to: { url: string } }) => {
     const bodyElement = document.querySelector('body');
@@ -448,13 +451,14 @@ const setupSwup = (): void => {
   });
 
   window.swup.hooks.on('visit:end', () => {
-    setTimeout(() => {
+    // Use requestAnimationFrame instead of setTimeout for better performance
+    requestAnimationFrame(() => {
       const heightExtend = document.getElementById('page-height-extend');
       heightExtend?.classList.add('hidden');
-
+  
       const toc = document.getElementById('toc-wrapper');
       toc?.classList.remove('toc-not-ready');
-    }, 200);
+    });
   });
 };
 
@@ -464,10 +468,63 @@ if (window?.swup?.hooks) {
   document.addEventListener('swup:enable', setupSwup);
 }
 
-// Scroll handling
+// Scroll handling with throttle for better performance
 const backToTopBtn = document.getElementById('back-to-top-btn');
 const toc = document.getElementById('toc-wrapper');
 const navbar = document.getElementById('navbar-wrapper');
+
+// Throttle function to limit scroll event frequency
+function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  let lastCallTime = 0;
+  
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+    const remaining = wait - (now - lastCallTime);
+    
+    if (remaining <= 0) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      lastCallTime = now;
+      func(...args);
+    } else if (!timeout) {
+      timeout = setTimeout(() => {
+        lastCallTime = Date.now();
+        timeout = null;
+        func(...args);
+      }, remaining);
+    }
+  };
+}
+
+// Cache frequently accessed values
+let cachedBannerHeight = window.innerHeight * (BANNER_HEIGHT / 100);
+let cachedThreshold = 0;
+
+function updateCachedValues(): void {
+  cachedBannerHeight = window.innerHeight * (BANNER_HEIGHT / 100);
+  
+  if (bannerEnabled && navbar) {
+    const NAVBAR_HEIGHT = 72;
+    const MAIN_PANEL_EXCESS_HEIGHT = MAIN_PANEL_OVERLAPS_BANNER_HEIGHT * 16;
+    
+    let currentBannerHeight = BANNER_HEIGHT;
+    if (document.body.classList.contains('lg:is-home') && window.innerWidth >= 1024) {
+      currentBannerHeight = BANNER_HEIGHT_HOME;
+    }
+    
+    cachedThreshold = window.innerHeight * (currentBannerHeight / 100) - NAVBAR_HEIGHT - MAIN_PANEL_EXCESS_HEIGHT - 16;
+  }
+}
+
+// Update cached values on resize
+window.addEventListener('resize', throttle(updateCachedValues, 250));
+updateCachedValues(); // Initial calculation
 
 function handleScroll(): void {
   const bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100);
@@ -508,7 +565,9 @@ function handleScroll(): void {
   }
 }
 
-window.addEventListener('scroll', handleScroll);
+// Throttled scroll handler for better performance
+const throttledHandleScroll = throttle(handleScroll, 16); // ~60fps
+window.addEventListener('scroll', throttledHandleScroll, { passive: true });
 
 // Resize handling
 window.addEventListener('resize', () => {
@@ -521,6 +580,9 @@ window.addEventListener('resize', () => {
 <script>
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
+// import { optimizeSwupTransitions } from '../scripts/swup-performance.js'; // Disabled - causes cursor issues
+import { ultraOptimizeSwup } from '../scripts/swup-ultra-optimize.js';
+import { initLightweightScrollbar, initContentScrollbars } from '../scripts/scrollbar-optimize.js';
 
 let lightbox: PhotoSwipeLightbox | null = null;
 const pswp = import('photoswipe');
@@ -573,7 +635,11 @@ const setupPhotoSwipe = (): void => {
 
 if (window.swup) {
   setupPhotoSwipe();
+  ultraOptimizeSwup(); // Use ultra optimization instead
 } else {
-  document.addEventListener('swup:enable', setupPhotoSwipe);
+  document.addEventListener('swup:enable', () => {
+    setupPhotoSwipe();
+    ultraOptimizeSwup(); // Use ultra optimization instead
+  });
 }
 </script>

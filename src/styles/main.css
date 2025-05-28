@@ -1,3 +1,5 @@
+@import './post-card-optimize.css';
+@import './swup-optimize.css';
 @tailwind components;
 
 @layer components {

@@ -12,6 +12,18 @@ let result: SearchResult[] = [];
 let isSearching = false;
 let pagefindLoaded = false;
 
+// Debounce utility
+function debounce<T extends (...args: any[]) => any>(
+	func: T,
+	wait: number
+): (...args: Parameters<T>) => void {
+	let timeout: ReturnType<typeof setTimeout> | null = null;
+	return (...args: Parameters<T>) => {
+		if (timeout) clearTimeout(timeout);
+		timeout = setTimeout(() => func(...args), wait);
+	};
+}
+
 const fakeResult: SearchResult[] = [
 	{
 		url: url("/"),
@@ -46,7 +58,7 @@ const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 	}
 };
 
-const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
+const searchImpl = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	if (!keyword) {
 		setPanelVisibility(false, isDesktop);
 		result = [];
@@ -78,6 +90,10 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	}
 };
 
+// Debounced search functions
+const searchDesktop = debounce((keyword: string) => searchImpl(keyword, true), 300);
+const searchMobile = debounce((keyword: string) => searchImpl(keyword, false), 300);
+
 onMount(async () => {
 	pagefindLoaded = typeof window !== "undefined" && "pagefind" in window;
 
@@ -88,8 +104,19 @@ onMount(async () => {
 	}
 });
 
-$: search(keywordDesktop, true);
-$: search(keywordMobile, false);
+// Watch for keyword changes and trigger debounced search
+$: keywordDesktop && searchDesktop(keywordDesktop);
+$: keywordMobile && searchMobile(keywordMobile);
+
+// Clear results when keywords are empty
+$: if (!keywordDesktop) {
+	result = [];
+	setPanelVisibility(false, true);
+}
+$: if (!keywordMobile) {
+	result = [];
+	setPanelVisibility(false, false);
+}
 </script>
 
 <!-- search bar for desktop view -->
@@ -98,7 +125,7 @@ $: search(keywordMobile, false);
       dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
 ">
     <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-    <input placeholder="{i18n(I18nKey.search)}" bind:value={keywordDesktop} on:focus={() => search(keywordDesktop, true)}
+    <input placeholder="{i18n(I18nKey.search)}" bind:value={keywordDesktop} on:focus={() => searchImpl(keywordDesktop, true)}
            class="transition-all pl-10 text-sm bg-transparent outline-0
          h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
     >

@@ -1,0 +1,52 @@
+/* PostCard Performance Optimizations */
+
+/* Pre-calculate commonly used CSS variables */
+.post-card-title {
+  /* Cache color values for better performance */
+  --cached-primary: var(--primary);
+  --cached-title-active: var(--title-active);
+}
+
+/* Optimize pseudo-element rendering */
+.post-card-title::before {
+  /* Use transform instead of position for better performance */
+  content: '';
+  position: absolute;
+  width: 0.25rem;
+  height: 1.25rem;
+  background-color: var(--cached-primary, var(--primary));
+  border-radius: 0.375rem;
+  transform: translate(-1.125rem, 0.75rem);
+  opacity: 0;
+}
+
+@media (min-width: 768px) {
+  .post-card-title::before {
+    opacity: 1;
+  }
+}
+
+/* Reduce repaints for hover states */
+.post-card-hover-icon {
+  /* Pre-allocate space to prevent layout shift */
+  contain: layout style;
+}
+
+/* Optimize transition performance */
+.post-card-transition {
+  /* Only transition what's needed */
+  transition-property: color, opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Force GPU acceleration for transforms */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Reduce paint areas */
+.post-card-container {
+  contain: layout;
+}
