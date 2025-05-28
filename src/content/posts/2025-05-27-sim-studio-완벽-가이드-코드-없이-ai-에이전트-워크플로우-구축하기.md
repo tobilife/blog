@@ -1021,10 +1021,7 @@ Happy Building! 🚀
 
 ## GitHub
 
-
-::github{repo="simstudioai/sim}
-
-
+::github{repo="simstudioai/sim"}
 
 ## 참고 자료 및 링크
 
