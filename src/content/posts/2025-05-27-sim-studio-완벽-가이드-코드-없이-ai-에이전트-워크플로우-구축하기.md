@@ -1,7 +1,7 @@
 ---
 title: "Sim Studio 완벽 가이드: 코드 없이 AI 에이전트 워크플로우 구축하기"
-description: Sim Studio로 개발 자동화와 API 연동을 구현하는 초보자도 따라할 수 있는 상세 가이드
 published: 2025-05-27T10:01:00.000Z
+description: Sim Studio로 개발 자동화와 API 연동을 구현하는 초보자도 따라할 수 있는 상세 가이드
 category: AI
 tags:
   - Sim Studio
@@ -15,7 +15,7 @@ draft: false
 ---
 ## 들어가며: 또 다른 AI 도구? 아니, 이번엔 다르다
 
-솔직히 말해서, 처음엔 저도 \"아, 또 AI 도구 하나 나왔구나\" 했습니다. 
+솔직히 말해서, 처음엔 저도 "아, 또 AI 도구 하나 나왔구나" 했습니다. 
 LangChain, AutoGPT, CrewAI... 
 이미 시장에는 AI 에이전트 프레임워크가 넘쳐나죠. 
 그런데 Sim Studio를 써보고 나서 생각이 완전히 바뀌었어요.
@@ -26,11 +26,11 @@ API 호출하고, 에러 처리하고, 로깅하고...
 정작 핵심 로직은 몇 줄 안 되는데 말이죠.
 
 그러던 중 우연히 Hacker News에서 Sim Studio를 발견했는데,
-\"드래그 앤 드롭으로 AI 워크플로우를 만든다\"는 문구가 눈에 띄더라고요.
+"드래그 앤 드롭으로 AI 워크플로우를 만든다"는 문구가 눈에 띄더라고요.
 
 ## Sim Studio가 뭐길래?
 
-:::note[한 줄 요약]
+:::note\[한 줄 요약]
 Sim Studio는 AI 에이전트 워크플로우를 시각적으로 만들 수 있는 오픈소스 플랫폼입니다.
 :::
 
@@ -38,16 +38,18 @@ Sim Studio는 AI 에이전트 워크플로우를 시각적으로 만들 수 있�
 AI 에이전트에 특화된 버전이라고 보시면 돼요. 
 근데 여기서 끝이 아니에요. 
 
-제가 Sim Studio를 쓰면서 \"와, 이거 진짜 잘 만들었다\" 싶었던 부분들:
+제가 Sim Studio를 쓰면서 "와, 이거 진짜 잘 만들었다" 싶었던 부분들:
 
-### 1. 진짜 \"AI-Native\" 설계
+### 1. 진짜 "AI-Native" 설계
+
 보통 기존 도구들은 전통적인 개발 환경에 AI 기능을 억지로 끼워 넣은 느낌이 강해요.
 반면 Sim Studio는 처음부터 AI 워크플로우를 위해 설계됐다는 게 확 느껴집니다.
 
 예를 들어, 프롬프트 테스팅이나 모델 파라미터 조정 같은 게 너무 자연스러워요.
-\"아, 개발자가 실제로 AI 에이전트 만들어보면서 필요한 게 뭔지 알고 만들었구나\" 싶더라고요.
+"아, 개발자가 실제로 AI 에이전트 만들어보면서 필요한 게 뭔지 알고 만들었구나" 싶더라고요.
 
 ### 2. 로컬 우선 접근
+
 이거 정말 중요한데요, 대부분의 AI 플랫폼들이 클라우드 API만 지원하는 반면,
 Sim Studio는 Ollama를 통한 로컬 모델 실행을 완벽 지원합니다. 
 
@@ -57,6 +59,7 @@ Ollama로 로컬 모델 돌리니까 비용이 0달러예요.
 특히 mvp 빨리 만들고 싶을때乃
 
 ### 3. 실시간 디버깅
+
 이건 진짜 게임 체인저였어요.
 워크플로우가 실행되는 걸 실시간으로 볼 수 있고,
 각 단계에서 어떤 데이터가 오가는지 다 보여줍니다. 
@@ -73,11 +76,12 @@ Ollama로 로컬 모델 돌리니까 비용이 0달러예요.
 ### 사전 준비물
 
 먼저 이것들이 설치되어 있어야 합니다:
-- Docker & Docker Compose (필수!)
-- Git
-- 텍스트 에디터 (VS Code 추천)
 
-:::warning[Windows 사용자 주의!]
+* Docker & Docker Compose (필수!)
+* Git
+* 텍스트 에디터 (VS Code 추천)
+
+:::warning\[Windows 사용자 주의!]
 Windows에서는 WSL2를 먼저 설정하세요.
 Docker Desktop만 깔면 된다고 생각하시면 큰 오산입니다.
 WSL2 없이 Docker Desktop만으로는 제대로 작동 안 할 수 있어요.
@@ -105,11 +109,13 @@ BETTER_AUTH_SECRET=아무거나32자이상의랜덤문자열넣으세요진짜�
 DATABASE_URL=postgres://postgres:postgres@db:5432/simstudio
 ```
 
-:::tip[Pro Tip]
+:::tip\[Pro Tip]
 BETTER_AUTH_SECRET 생성하기 귀찮으시죠? 터미널에서 이렇게 하세요:
+
 ```bash
 openssl rand -base64 32
 ```
+
 :::
 
 이제 Docker Compose로 실행:
@@ -144,51 +150,55 @@ cd sim
 cp sim/.env.example sim/.env
 ```
 
-:::caution[Windows 특별 주의사항]
+:::caution\[Windows 특별 주의사항]
 Windows에서 가장 많이 겪는 문제:
+
 1. 파일 권한 문제 → WSL2 내에서 작업하세요
 2. 포트 충돌 → 3000번 포트 사용 중인지 확인
 3. Docker 메모리 부족 → Docker Desktop에서 메모리 4GB 이상 할당
-:::
+   :::
 
 ### 설치 확인
 
 설치가 끝났으면 브라우저에서 `http://localhost:3000/w/` 접속해보세요.
 
-:::important[URL 주의!]
+:::important\[URL 주의!]
 `/w/`를 빼먹지 마세요!
 그냥 `localhost:3000`으로 가면 404 뜹니다.
 저도 처음에 이거 때문에 10분 헤맸어요
 :::
 
-## 첫 번째 워크플로우: \"Hello, AI Agent!\"
+## 첫 번째 워크플로우: "Hello, AI Agent!"
 
 자, 이제 재미있는 부분입니다! 첫 워크플로우를 만들어봅시다.
 
 ### Step 1: 기본 구조 이해하기
 
-Sim Studio의 워크플로우는 \"블록\"들로 구성됩니다.
+Sim Studio의 워크플로우는 "블록"들로 구성됩니다.
 각 블록은 특정 작업을 수행하고,
 블록들을 연결해서 전체 워크플로우를 만드는 거죠.
 
 주요 블록 타입:
-- **Input Block**: 워크플로우의 시작점
-- **LLM Block**: AI 모델 호출
-- **Tool Block**: 외부 도구나 API 호출
-- **Output Block**: 결과 반환
+
+* **Input Block**: 워크플로우의 시작점
+* **LLM Block**: AI 모델 호출
+* **Tool Block**: 외부 도구나 API 호출
+* **Output Block**: 결과 반환
 
 ### Step 2: 간단한 코드 리뷰 봇 만들기
 
-개발자라면 누구나 한 번쯤 \"PR 리뷰 자동화하면 좋겠다\"고 생각해보셨을 거예요.
+개발자라면 누구나 한 번쯤 "PR 리뷰 자동화하면 좋겠다"고 생각해보셨을 거예요.
 간단한 버전을 만들어봅시다!
 
 1. **새 워크플로우 생성**
-   - 왼쪽 사이드바에서 \"New Workflow\" 클릭
-   - 이름은 \"Code Review Bot\"으로
 
+   * 왼쪽 사이드바에서 "New Workflow" 클릭
+   * 이름은 "Code Review Bot"으로
 2. **Input Block 추가**
-   - 드래그 앤 드롭으로 Input Block 추가
-   - 설정에서 입력 스키마 정의:
+
+   * 드래그 앤 드롭으로 Input Block 추가
+   * 설정에서 입력 스키마 정의:
+
    ```json
    {
      \"code\": \"string\",
@@ -196,17 +206,18 @@ Sim Studio의 워크플로우는 \"블록\"들로 구성됩니다.
      \"context\": \"string\"
    }
    ```
-
 3. **LLM Block 추가 및 연결**
-   - LLM Block을 추가하고 Input Block과 연결
-   - 프롬프트 설정:
+
+   * LLM Block을 추가하고 Input Block과 연결
+   * 프롬프트 설정:
+
    ```
    You are an experienced code reviewer. Review the following {{language}} code:
-
    ```
+
    {{code}}
-   ```
 
+   ````
    Context: {{context}}
 
    Provide constructive feedback focusing on:
@@ -216,7 +227,8 @@ Sim Studio의 워크플로우는 \"블록\"들로 구성됩니다.
    4. Security concerns
    ```과 연결
    - 프롬프트 설정:
-   ```
+   ````
+
    You are an experienced code reviewer. Review the following {{language}} code:
 
    ```
@@ -226,10 +238,14 @@ Sim Studio의 워크플로우는 \"블록\"들로 구성됩니다.
    Context: {{context}}
 
    Provide constructive feedback focusing on:
+
    1. Code quality and best practices
    2. Potential bugs or issues
    3. Performance improvements
    4. Security concerns
+
+   ```
+
    ```
 
 여기서 제가 발견한 꿀팁!
@@ -242,14 +258,15 @@ Sim Studio의 워크플로우는 \"블록\"들로 구성됩니다.
 GitHub PR에서 자동으로 코드를 가져와서 리뷰하는 기능을 추가할 거예요.
 
 1. **HTTP Request Block 추가**
+
    ```yaml
    URL: https://api.github.com/repos/{{owner}}/{{repo}}/pulls/{{pr_number}}/files
    Method: GET
    Headers:
      Authorization: Bearer {{github_token}}
    ```
-
 2. **Transform Block으로 데이터 가공**
+
    ```javascript
    // PR 파일 중에서 실제 코드 부분만 추출
    return data.map(file => ({
@@ -271,6 +288,7 @@ GitHub PR에서 자동으로 코드를 가져와서 리뷰하는 기능을 추�
 먼저 Ollama를 설치해야 합니다:
 
 **macOS:**
+
 ```bash
 # Homebrew로 설치
 brew install ollama
@@ -280,6 +298,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 ```
 
 **Windows (WSL2):**
+
 ```bash
 # WSL2 Ubuntu에서 실행
 curl -fsSL https://ollama.com/install.sh | sh
@@ -297,13 +316,14 @@ ollama pull deepseek-coder:6.7b  # 코딩 특화 모델
 ollama run mistral:7b
 ```
 
-:::tip[모델 선택 가이드]
+:::tip\[모델 선택 가이드]
 제가 여러 모델 써본 결과:
-- **가벼운 작업**: mistral:7b (속도 빠름, 품질 괜찮음)
-- **코드 생성**: codellama:7b 또는 deepseek-coder
-- **한국어 필요**: gemma2:9b (한국어 성능 준수)
-- **고품질 필요**: llama3:70b (RAM 64GB 이상 필요!)
-:::
+
+* **가벼운 작업**: mistral:7b (속도 빠름, 품질 괜찮음)
+* **코드 생성**: codellama:7b 또는 deepseek-coder
+* **한국어 필요**: gemma2:9b (한국어 성능 준수)
+* **고품질 필요**: llama3:70b (RAM 64GB 이상 필요!)
+  :::
 
 ### Sim Studio에 Ollama 연결
 
@@ -329,7 +349,7 @@ docker compose up --profile local-cpu -d --build --network=host
 # extra_hosts 추가하는 방법 (위 설치 가이드 참조)
 ```
 
-저는 처음에 이거 몰라서 \"왜 연결이 안 되지?\" 하면서 2시간 헤맸네요.. 😅
+저는 처음에 이거 몰라서 "왜 연결이 안 되지?" 하면서 2시간 헤맸네요.. 😅
 
 ## 실전 프로젝트 1: PR 자동 리뷰 시스템
 
@@ -351,14 +371,15 @@ GitHub Webhook → Sim Studio Workflow → Review Comment 작성
 ### 상세 구현
 
 1. **Webhook 받기**
+
    ```yaml
    # Webhook Block 설정
    Path: /webhooks/github-pr
    Method: POST
    Secret: {{GITHUB_WEBHOOK_SECRET}}
    ```
-
 2. **PR 정보 파싱**
+
    ```javascript
    // Transform Block
    const pr = data.pull_request;
@@ -371,42 +392,42 @@ GitHub Webhook → Sim Studio Workflow → Review Comment 작성
      comments_url: pr.comments_url
    };
    ```
-
 3. **파일별 분석 (반복문)**
-   
+
 여기가 좀 트리키한데,
 Sim Studio는 아직 네이티브 반복문을 지원하지 않아요. 그래서 이렇게 우회
 
-   ```javascript
-   // 모든 파일을 하나의 문자열로 합치기
-   const reviewRequests = files.map(file => ({
-     filename: file.filename,
-     language: getLanguageFromExtension(file.filename),
-     patch: file.patch
-   }));
-   
-   // 배치로 처리
-   return JSON.stringify(reviewRequests);
-   ```
+```javascript
+// 모든 파일을 하나의 문자열로 합치기
+const reviewRequests = files.map(file => ({
+  filename: file.filename,
+  language: getLanguageFromExtension(file.filename),
+  patch: file.patch
+}));
+
+// 배치로 처리
+return JSON.stringify(reviewRequests);
+```
 
 4. **LLM 리뷰 생성**
+
    ```
    Review the following code changes:
    {{batch_data}}
-   
+
    For each file, provide:
    1. Overall assessment (Good/Needs Work/Critical)
    2. Specific line-by-line comments
    3. Suggestions for improvement
-   
+
    Format as JSON for easy parsing.
    ```
-
 5. **GitHub에 댓글 작성**
+
    ```javascript
    // HTTP Request Block으로 댓글 POST
    const comments = JSON.parse(llm_output);
-   
+
    // 각 파일별로 인라인 코멘트 작성
    for (const comment of comments) {
      await postReviewComment({
@@ -422,16 +443,18 @@ Sim Studio는 아직 네이티브 반복문을 지원하지 않아요. 그래서
 이 시스템을 3개월째 운영 중인데요:
 
 **장점:**
-- 주니어 개발자들이 놓치기 쉬운 부분을 잘 잡아냅니다
-- 코드 스타일 일관성이 확실히 좋아졌어요
-- 새벽에 올라온 PR도 바로 피드백이 가능
+
+* 주니어 개발자들이 놓치기 쉬운 부분을 잘 잡아냅니다
+* 코드 스타일 일관성이 확실히 좋아졌어요
+* 새벽에 올라온 PR도 바로 피드백이 가능
 
 **단점:**
-- 가끔 과도하게 세세한 지적을 할 때가 있어요
-- 비즈니스 로직은 이해 못 함 (당연하지만...)
-- 대용량 PR은 토큰 제한 때문에 분할 처리 필요
 
-:::note[비용 절감 팁]
+* 가끔 과도하게 세세한 지적을 할 때가 있어요
+* 비즈니스 로직은 이해 못 함 (당연하지만...)
+* 대용량 PR은 토큰 제한 때문에 분할 처리 필요
+
+:::note\[비용 절감 팁]
 OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
 대신 서버 비용은 있지만, 이미 있는 서버 활용하면 추가 비용 없음!
 :::
@@ -442,20 +465,22 @@ OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
 이것도 실제로 쓰고 있는 거예요.
 
 ### 요구사항
-- 5분마다 주요 API 엔드포인트 체크
-- 응답 시간이 느리거나 에러 발생시 알림
-- 장애 패턴 분석 및 리포트
+
+* 5분마다 주요 API 엔드포인트 체크
+* 응답 시간이 느리거나 에러 발생시 알림
+* 장애 패턴 분석 및 리포트
 
 ### 구현
 
 1. **스케줄러 설정**
+
    ```yaml
    # Scheduler Block
    Cron: */5 * * * *  # 5분마다
    Timezone: Asia/Seoul
    ```
-
 2. **멀티 API 체크**
+
    ```javascript
    // 체크할 API 목록
    const apis = [
@@ -463,7 +488,7 @@ OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
      { name: 'Payment API', url: 'https://api.myapp.com/payments/health' },
      { name: 'Auth API', url: 'https://api.myapp.com/auth/health' }
    ];
-   
+
    // 병렬로 체크 (Transform Block)
    const results = await Promise.all(
      apis.map(async (api) => {
@@ -489,12 +514,12 @@ OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
      })
    );
    ```
-
 3. **이상 감지 및 알림**
+
    ```javascript
    // Condition Block
    const unhealthyAPIs = results.filter(api => !api.healthy);
-   
+
    if (unhealthyAPIs.length > 0) {
      // Slack 알림 전송
      return {
@@ -503,17 +528,16 @@ OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
      };
    }
    ```
-
 4. **AI 분석 추가**
-   
+
    여기가 재미있는 부분! 단순 알림만 하는 게 아니라 AI가 패턴을 분석하게 했어요:
 
    ```
    Analyze the following API health check results from the past hour:
    {{historical_data}}
-   
+
    Current failure: {{current_failure}}
-   
+
    Provide:
    1. Root cause analysis
    2. Is this part of a pattern?
@@ -526,25 +550,26 @@ OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
 이거 운영하면서 배운 것들:
 
 1. **False Positive 줄이기**
-   - 단발성 타임아웃은 무시 (3회 연속 실패시만 알림)
-   - 새벽 시간대는 임계값 완화
-   - 정기 점검 시간은 체크 비활성화
 
+   * 단발성 타임아웃은 무시 (3회 연속 실패시만 알림)
+   * 새벽 시간대는 임계값 완화
+   * 정기 점검 시간은 체크 비활성화
 2. **컨텍스트 추가**
+
    ```javascript
    // 최근 배포 정보 함께 전달
    const recentDeployments = await getRecentDeployments();
-   
+
    if (recentDeployments.length > 0) {
      context.possibleCause = \"Recent deployment detected\";
      context.deploymentInfo = recentDeployments[0];
    }
    ```
-
 3. **점진적 알림**
-   - 1차: Slack 알림
-   - 2차 (5분 후): 담당자 멘션
-   - 3차 (10분 후): 전화 알림 (Twilio 연동)
+
+   * 1차: Slack 알림
+   * 2차 (5분 후): 담당자 멘션
+   * 3차 (10분 후): 전화 알림 (Twilio 연동)
 
 ## 트러블슈팅: 제가 겪은 삽질들
 
@@ -553,6 +578,7 @@ OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
 **증상**: 워크플로우 실행 중 갑자기 멈춤
 
 **해결**:
+
 ```bash
 # Docker Desktop 설정에서 메모리 늘리기
 # Mac: Preferences > Resources > Memory: 8GB 이상
@@ -561,9 +587,10 @@ OpenAI API 대신 로컬 Mistral 모델 사용하니 월 $200 → $0
 
 ### 2. Ollama 모델 로딩 실패
 
-**증상**: \"model not found\" 에러
+**증상**: "model not found" 에러
 
 **해결**:
+
 ```bash
 # 모델이 실제로 다운로드되었는지 확인
 ollama list
@@ -581,12 +608,14 @@ brew services restart ollama   # macOS
 **증상**: GitHub에서 webhook 보냈는데 Sim Studio가 못 받음
 
 **해결**:
+
 1. ngrok으로 로컬 터널링
+
    ```bash
    ngrok http 3000
    ```
-
 2. 또는 Cloudflare Tunnel 사용 (더 안정적)
+
    ```bash
    cloudflared tunnel --url http://localhost:3000
    ```
@@ -596,25 +625,27 @@ brew services restart ollama   # macOS
 이건 정말 흔한 문제인데요, 해결 방법들:
 
 1. **스트리밍 활성화**
+
    ```yaml
    # LLM Block 설정에서
    Stream: true
    ```
-
 2. **타임아웃 설정**
+
    ```yaml
    Timeout: 30s  # 기본값이 너무 길어요
    ```
-
 3. **모델 다운그레이드**
-   - 70B → 13B → 7B 순으로 테스트
-   - 대부분의 경우 7B로도 충분
+
+   * 70B → 13B → 7B 순으로 테스트
+   * 대부분의 경우 7B로도 충분
 
 ### 5. 한글 깨짐 문제
 
 **증상**: API 응답이나 로그에서 한글이 ???로 표시
 
 **해결**:
+
 ```yaml
 # docker-compose.yml에 추가
 environment:
@@ -828,8 +859,9 @@ aws s3 cp backups/ s3://your-backup-bucket/simstudio/ --recursive
 ### Q1: Sim Studio vs LangChain, 뭐가 다른가요?
 
 **A**: LangChain은 코드 기반 프레임워크고, Sim Studio는 시각적 워크플로우 빌더예요. 
-- LangChain: 개발자가 직접 코딩, 세밀한 제어 가능
-- Sim Studio: 드래그 앤 드롭, 빠른 프로토타이핑, 비개발자도 사용 가능
+
+* LangChain: 개발자가 직접 코딩, 세밀한 제어 가능
+* Sim Studio: 드래그 앤 드롭, 빠른 프로토타이핑, 비개발자도 사용 가능
 
 저는 프로토타입은 Sim Studio로 만들고, 
 복잡한 로직이 필요하면 LangChain으로 마이그레이션해요.
@@ -864,6 +896,7 @@ stream.pipe(parser)
 ### Q3: 보안은 어떻게 관리하나요?
 
 **A**: 몇 가지 기본 원칙:
+
 1. API 키는 환경 변수로 관리
 2. 워크플로우 실행 권한 관리 (RBAC)
 3. 네트워크 격리 (VPC 내부 운영)
@@ -881,16 +914,17 @@ ALLOWED_IPS=10.0.0.0/8,172.16.0.0/12
 **A**: 제가 겪은 성능 문제들과 해결법:
 
 1. **데이터베이스 인덱싱**
+
    ```sql
    CREATE INDEX idx_workflow_executions_created 
    ON workflow_executions(created_at DESC);
    ```
-
 2. **Redis 캐싱 추가**
+
    ```javascript
    const redis = require('redis');
    const client = redis.createClient();
-   
+
    // 자주 사용하는 데이터 캐싱
    const getCachedData = async (key) => {
      const cached = await client.get(key);
@@ -901,11 +935,11 @@ ALLOWED_IPS=10.0.0.0/8,172.16.0.0/12
      return data;
    };
    ```
-
 3. **워크플로우 최적화**
-   - 불필요한 블록 제거
-   - 병렬 처리 가능한 부분 분리
-   - 조건부 실행으로 불필요한 작업 스킵
+
+   * 불필요한 블록 제거
+   * 병렬 처리 가능한 부분 분리
+   * 조건부 실행으로 불필요한 작업 스킵
 
 ## 마치며
 
@@ -924,77 +958,87 @@ Sim Studio를 3개월간 실전에서 사용해본 솔직한 후기입니다.
 ### 좋았던 점
 
 1. **진입 장벽이 낮음**
-   - 비개발자 팀원들도 간단한 워크플로우는 직접 만들더라고요
-   - \"코드 몰라도 된다\"는 게 진짜였음
 
+   * 비개발자 팀원들도 간단한 워크플로우는 직접 만들더라고요
+   * "코드 몰라도 된다"는 게 진짜였음
 2. **디버깅이 쉬움**
-   - 시각적으로 어디서 막혔는지 바로 보임
-   - 각 단계별 입출력 확인 가능
 
+   * 시각적으로 어디서 막혔는지 바로 보임
+   * 각 단계별 입출력 확인 가능
 3. **확장성**
-   - 커스텀 블록 만들기 쉬움
-   - 기존 시스템과 통합도 간단
 
+   * 커스텀 블록 만들기 쉬움
+   * 기존 시스템과 통합도 간단
 4. **비용 효율적**
-   - 로컬 LLM 지원으로 API 비용 대폭 절감
-   - 오픈소스라 라이선스 비용 없음
+
+   * 로컬 LLM 지원으로 API 비용 대폭 절감
+   * 오픈소스라 라이선스 비용 없음
 
 ### 아쉬운 점
 
 1. **아직 초기 버전**
-   - 가끔 UI 버그가 있어요
-   - 문서가 부족한 부분들이 있음
 
+   * 가끔 UI 버그가 있어요
+   * 문서가 부족한 부분들이 있음
 2. **복잡한 로직 구현의 한계**
-   - 조건문이 복잡해지면 스파게티 됨
-   - 반복문 지원이 제한적
 
+   * 조건문이 복잡해지면 스파게티 됨
+   * 반복문 지원이 제한적
 3. **버전 관리**
-   - Git으로 워크플로우 버전 관리가 애매함
-   - 팀 협업 기능이 부족
+
+   * Git으로 워크플로우 버전 관리가 애매함
+   * 팀 협업 기능이 부족
 
 ### 추천 대상
 
-- ✅ AI 워크플로우를 빠르게 프로토타이핑하고 싶은 개발자
-- ✅ API 비용 부담 없이 AI 자동화를 구축하고 싶은 스타트업
-- ✅ 코딩 없이 AI 에이전트를 만들고 싶은 비개발자
-- ✅ 기존 n8n/Zapier 사용자 중 AI 기능이 필요한 사람
+* ✅ AI 워크플로우를 빠르게 프로토타이핑하고 싶은 개발자
+* ✅ API 비용 부담 없이 AI 자동화를 구축하고 싶은 스타트업
+* ✅ 코딩 없이 AI 에이전트를 만들고 싶은 비개발자
+* ✅ 기존 n8n/Zapier 사용자 중 AI 기능이 필요한 사람
 
 ### 추천하지 않는 경우
 
-- ❌ 엔터프라이즈급 안정성이 필요한 경우
-- ❌ 복잡한 비즈니스 로직이 많은 경우
-- ❌ 실시간 고성능 처리가 필요한 경우
+* ❌ 엔터프라이즈급 안정성이 필요한 경우
+* ❌ 복잡한 비즈니스 로직이 많은 경우
+* ❌ 실시간 고성능 처리가 필요한 경우
 
 ## 맺음말
 
 Sim Studio는 완벽한 도구는 아닙니다.
-하지만 \"AI 에이전트 워크플로우를 쉽게 만들 수 있게 해준다\"는 목표는 
+하지만 "AI 에이전트 워크플로우를 쉽게 만들 수 있게 해준다"는 목표는 
 확실히 달성했다고 봅니다.
 
-특히 저처럼 \"일단 빠르게 만들어서 테스트해보고 싶다\"는
+특히 저처럼 "일단 빠르게 만들어서 테스트해보고 싶다"는
 스타일의 개발자에게는 정말 좋은 도구예요. 
 프로토타입을 만드는 데 며칠씩 걸리던 작업을 몇 시간으로 단축할 수 있었거든요.
 
 앞으로 Sim Studio가 더 발전해서,
-언젠가는 \"AI 워크플로우 빌더의 표준\"이 되길 기대해봅니다. 
+언젠가는 "AI 워크플로우 빌더의 표준"이 되길 기대해봅니다. 
 
 Happy Building! 🚀
 
----
+- - -
+
+## GitHub
+
+
+::github{repo="simstudioai/sim}
+
+
 
 ## 참고 자료 및 링크
 
-- [Sim Studio 공식 문서](https://docs.simstudio.ai)
-- [Sim Studio GitHub](https://github.com/simstudioai/sim)
-- [Ollama 공식 사이트](https://ollama.com)
-- [Sim Studio 커뮤니티 Discord](https://discord.gg/simstudio)
+* [Sim Studio 공식 문서](https://docs.simstudio.ai)
+* [Sim Studio GitHub](https://github.com/simstudioai/sim)
+* [Ollama 공식 사이트](https://ollama.com)
+* [Sim Studio 커뮤니티 Discord](https://discord.gg/simstudio)
 
 ## 부록: 자주 사용하는 프롬프트 템플릿
 
 제가 자주 쓰는 프롬프트들 공유합니다:
 
 ### 코드 리뷰용
+
 ```
 You are a senior developer reviewing code.
 Focus on: security, performance, maintainability.
@@ -1006,6 +1050,7 @@ Code to review:
 ```
 
 ### API 응답 파싱용
+
 ```
 Parse the following API response and extract:
 {{extraction_requirements}}
@@ -1017,6 +1062,7 @@ Return as valid JSON only, no explanation.
 ```
 
 ### 에러 분석용
+
 ```
 Analyze this error and suggest solutions:
 
