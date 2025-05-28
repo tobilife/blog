@@ -31,9 +31,7 @@ API 호출하고, 에러 처리하고, 로깅하고...<br>
 
 ## Sim Studio가 뭐길래?
 
-:::note
-
-\[한 줄 요약]<br>
+:::note \[한 줄 요약]<br>
 Sim Studio는 AI 에이전트 워크플로우를 시각적으로 만들 수 있는 오픈소스 플랫폼입니다.<br>
 :::
 
@@ -84,9 +82,7 @@ Ollama로 로컬 모델 돌리니까 비용이 0달러예요.<br>
 * Git
 * 텍스트 에디터 (VS Code 추천)
 
-:::warning
-
-\[Windows 사용자 주의!]
+:::warning \[Windows 사용자 주의!]
 Windows에서는 WSL2를 먼저 설정하세요<br>
 Docker Desktop만 깔면 된다고 생각하시면 큰 오산입니다.<br>
 WSL2 없이 Docker Desktop만으로는 제대로 작동 안 할 수 있어요.<br>
@@ -114,7 +110,7 @@ BETTER_AUTH_SECRET=아무거나32자이상의랜덤문자열넣으세요진짜�
 DATABASE_URL=postgres://postgres:postgres@db:5432/simstudio
 ```
 
-:::tip\[Pro Tip]
+:::tip \[Pro Tip]
 BETTER_AUTH_SECRET 생성하기 귀찮으시죠? 터미널에서 이렇게 하세요<br>
 
 ```bash
@@ -155,9 +151,7 @@ cd sim
 cp sim/.env.example sim/.env
 ```
 
-:::caution
-
-\[Windows 특별 주의사항]<br>
+:::caution \[Windows 특별 주의사항]<br>
 Windows에서 가장 많이 겪는 문제:<br>
 
 1. 파일 권한 문제 → WSL2 내에서 작업하세요
@@ -169,9 +163,7 @@ Windows에서 가장 많이 겪는 문제:<br>
 
 설치가 끝났으면 브라우저에서 `http://localhost:3000/w/` 접속해보세요.<br>
 
-:::important
-
-\[URL 주의!]<br>
+:::important \[URL 주의!]<br>
 `/w/`를 빼먹지 마세요!<br>
 그냥 `localhost:3000`으로 가면 404 뜹니다.<br>
 저도 처음에 이거 때문에 10분 헤맸어요<br>
@@ -325,7 +317,7 @@ ollama pull deepseek-coder:6.7b  # 코딩 특화 모델
 ollama run mistral:7b
 ```
 
-:::tip\[모델 선택 가이드]
+:::tip \[모델 선택 가이드]
 제가 여러 모델 써본 결과:
 
 * **가벼운 작업**: mistral:7b (속도 빠름, 품질 괜찮음)
