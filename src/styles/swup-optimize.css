@@ -64,6 +64,17 @@ html.is-animating .transition-swup-fade {
   pointer-events: none;
 }
 
+/* Ensure TOC inner wrapper works properly */
+#toc-inner-wrapper {
+  contain: layout;
+}
+
+/* Ensure TOC is visible after page transition */
+#toc-wrapper:not(.toc-hide):not(.toc-not-ready) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Pause animations during navigation */
 html[style*="--animation-play-state: paused"] * {
   animation-play-state: paused !important;

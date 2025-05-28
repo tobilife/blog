@@ -11,6 +11,7 @@ export function ultraOptimizeSwup() {
     body: document.body,
     navbar: null,
     toc: null,
+    tocInner: null,
     heightExtend: null
   };
 
@@ -20,6 +21,7 @@ export function ultraOptimizeSwup() {
   function updateCache() {
     cache.navbar = document.getElementById('navbar-wrapper');
     cache.toc = document.getElementById('toc-wrapper');
+    cache.tocInner = document.getElementById('toc-inner-wrapper');
     cache.heightExtend = document.getElementById('page-height-extend');
     
     const BANNER_HEIGHT = window.BANNER_HEIGHT || 0;
@@ -63,7 +65,9 @@ export function ultraOptimizeSwup() {
     
     // Hide elements using CSS instead of JS
     if (cache.heightExtend) cache.heightExtend.style.display = 'block';
-    if (cache.toc) cache.toc.style.opacity = '0';
+    
+    // Don't hide TOC completely, just add the not-ready class
+    if (cache.toc) cache.toc.classList.add('toc-not-ready');
     
     // Pause all animations
     document.documentElement.style.setProperty('--animation-play-state', 'paused');
@@ -72,6 +76,22 @@ export function ultraOptimizeSwup() {
   window.swup.hooks.on('content:replace', () => {
     // Lightweight scrollbar init
     lightweightScrollbarInit();
+    
+    // Update cache after content replacement
+    updateCache();
+    
+    // Initialize TOC scrollbar if it exists
+    if (cache.tocInner && window.OverlayScrollbars && !scrollbarInstances.has(cache.tocInner)) {
+      window.OverlayScrollbars(cache.tocInner, {
+        scrollbars: {
+          theme: 'scrollbar-base scrollbar-auto',
+          autoHide: 'move',
+          autoHideDelay: 500,
+          autoHideSuspend: false
+        }
+      });
+      scrollbarInstances.set(cache.tocInner, true);
+    }
     
     // Only init scrollbars for new pre elements
     requestAnimationFrame(() => {
@@ -103,13 +123,22 @@ export function ultraOptimizeSwup() {
         cache.navbar.style.opacity = '';
         cache.navbar.classList.remove('navbar-hidden');
       }
+      
+      // Remove toc-not-ready class
+      if (cache.toc) {
+        cache.toc.classList.remove('toc-not-ready');
+      }
     });
   });
 
   window.swup.hooks.on('visit:end', () => {
     // Immediate restoration
     requestAnimationFrame(() => {
-      if (cache.toc) cache.toc.style.opacity = '';
+      // Remove toc-not-ready class
+      if (cache.toc) {
+        cache.toc.classList.remove('toc-not-ready');
+      }
+      
       document.documentElement.style.setProperty('--animation-play-state', 'running');
       
       // Ensure navbar is visible after transition

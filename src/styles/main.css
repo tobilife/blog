@@ -78,6 +78,62 @@
     .hide-scrollbar::-webkit-scrollbar {
         display: none;
     }
+    
+    /* TOC 내부 스크롤 수정 */
+    #toc-wrapper {
+        overflow: hidden !important;
+    }
+    
+    #toc-inner-wrapper {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        scrollbar-width: thin;
+        scrollbar-color: var(--toc-btn-hover) transparent;
+    }
+    
+    #toc-inner-wrapper::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #toc-inner-wrapper::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    #toc-inner-wrapper::-webkit-scrollbar-thumb {
+        background-color: var(--toc-btn-hover);
+        border-radius: 3px;
+    }
+    #toc-inner-wrapper::-webkit-scrollbar-thumb:hover {
+        background-color: var(--toc-btn-active);
+    }
+    
+    /* TOC 콘텐츠가 스크롤 가능하도록 설정 */
+    table-of-contents {
+        display: block;
+        position: relative;
+    }
+    
+    /* TOC를 1920px 이상에서만 표시 */
+    @media (max-width: 1919px) {
+        #toc-wrapper {
+            display: none !important;
+        }
+        /* 부모 요소도 숨김 */
+        .absolute.w-full.z-0.hidden.xl\:block {
+            display: none !important;
+        }
+    }
+    
+    @media (min-width: 1920px) {
+        #toc-wrapper {
+            display: block !important;
+        }
+        /* 부모 요소도 표시 */
+        .absolute.w-full.z-0.hidden.xl\:block {
+            display: block !important;
+        }
+    }
+
 
     .text-90 {
         @apply text-black/90 dark:text-white/90

@@ -398,6 +398,77 @@ function showBanner(): void {
   banner.classList.remove('opacity-0', 'scale-105');
 }
 
+// Lightweight scrollbar initialization
+let bodyScrollbarInitialized = false;
+const scrollbarInstances = new WeakMap();
+
+function initLightweightScrollbar(): void {
+  const bodyElement = document.body;
+  
+  // Initialize body scrollbar only once
+  if (!bodyScrollbarInitialized && typeof OverlayScrollbars !== 'undefined') {
+    try {
+      const instance = OverlayScrollbars(bodyElement, {
+        scrollbars: {
+          theme: 'scrollbar-base scrollbar-auto py-1',
+          autoHide: 'move',
+          autoHideDelay: 500,
+          autoHideSuspend: false,
+        },
+      });
+      scrollbarInstances.set(bodyElement, instance);
+      bodyScrollbarInitialized = true;
+    } catch (e) {
+      console.warn('Failed to initialize body scrollbar:', e);
+    }
+  }
+  
+  // Defer content scrollbar initialization
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(() => {
+      initContentScrollbars();
+    }, { timeout: 1000 });
+  } else {
+    setTimeout(() => initContentScrollbars(), 100);
+  }
+}
+
+function initContentScrollbars(): void {
+  if (typeof OverlayScrollbars === 'undefined') return;
+  
+  // Initialize pre scrollbars only for visible elements
+  const preElements = document.querySelectorAll('pre:not([data-scrollbar-init])');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const element = entry.target as HTMLElement;
+        element.setAttribute('data-scrollbar-init', 'true');
+        
+        try {
+          OverlayScrollbars(element, {
+            scrollbars: {
+              theme: 'scrollbar-base scrollbar-dark px-2',
+              autoHide: 'leave',
+              autoHideDelay: 500,
+              autoHideSuspend: false
+            }
+          });
+        } catch (e) {
+          console.warn('Failed to initialize pre scrollbar:', e);
+        }
+        
+        observer.unobserve(element);
+      }
+    });
+  }, { rootMargin: '200px' });
+  
+  preElements.forEach(el => observer.observe(el));
+  
+  // Handle KaTeX elements similarly
+  const katexElements = document.querySelectorAll('.katex-display:not([data-scrollbar-init])');
+  katexElements.forEach(el => observer.observe(el));
+}
+
 function init(): void {
   loadTheme();
   loadHue();
@@ -582,7 +653,7 @@ import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
 // import { optimizeSwupTransitions } from '../scripts/swup-performance.js'; // Disabled - causes cursor issues
 import { ultraOptimizeSwup } from '../scripts/swup-ultra-optimize.js';
-import { initLightweightScrollbar, initContentScrollbars } from '../scripts/scrollbar-optimize.js';
+// import { initLightweightScrollbar, initContentScrollbars } from '../scripts/scrollbar-optimize.js'; // Moved inline to fix import issue
 
 let lightbox: PhotoSwipeLightbox | null = null;
 const pswp = import('photoswipe');
