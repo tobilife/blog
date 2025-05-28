@@ -29,15 +29,6 @@ API 호출하고, 에러 처리하고, 로깅하고...<br>
 그러던 중 우연히 Hacker News에서 Sim Studio를 발견했는데,<br>
 "드래그 앤 드롭으로 AI 워크플로우를 만든다"는 문구가 눈에 띄더라고요.<br>
 
-
-
-
-\`\`\`mermaidgraph LR    subgraph "Before (레거시)"        A\[Monolithic]         B\[xPlatform]        C\[Stored Procedure]    end        subgraph "After (현대화)"        D\[Microservices]        E\[Next.js/React]        F\[RESTful API]    end        A -->|전환| D    B -->|현대화| E    C -->|리팩토링| F\`\`\`
-
-
-
-
-
 ## Sim Studio가 뭐길래?
 
 :::note
