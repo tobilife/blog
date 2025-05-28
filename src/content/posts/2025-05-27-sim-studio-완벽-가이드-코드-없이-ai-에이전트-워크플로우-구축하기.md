@@ -1028,8 +1028,7 @@ Happy Building! 🚀
 
 ## 참고 자료 및 링크
 
-* [Sim Studio 공식 문서](https://docs.simstudio.ai)
-* [Sim Studio GitHub](https://github.com/simstudioai/sim)
+* [Sim Studio 공식 문서](https://docs.simstudio.ai)[](https://github.com/simstudioai/sim)
 * [Ollama 공식 사이트](https://ollama.com)
 * [Sim Studio 커뮤니티 Discord](https://discord.gg/simstudio)
 
