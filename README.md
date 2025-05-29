@@ -21,7 +21,7 @@ A static blog template built with [Astro](https://astro.build).
 - [x] Light / dark mode
 - [x] Customizable theme colors & banner
 - [x] Responsive design
-- [ ] Comments
+- [ ] Comments -> 개인적으로 Giscus을 이용하여 적용했습니다.
 - [x] Search
 - [x] TOC
 
