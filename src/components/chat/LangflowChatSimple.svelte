@@ -72,7 +72,7 @@
     isLoading = true;
     
     try {
-      console.log('Sending to:', LANGFLOW_API_URL);
+      //console.log('Sending to:', LANGFLOW_API_URL);
       
       // Langflow API 호출
       const payload = {
@@ -84,7 +84,7 @@
         tweaks: {}
       };
       
-      console.log('Request payload:', payload);
+      //console.log('Request payload:', payload);
       
       const response = await fetch(LANGFLOW_API_URL, {
         method: 'POST',
@@ -95,27 +95,27 @@
       });
       
       const responseText = await response.text();
-      console.log('Response status:', response.status);
-      console.log('Response text:', responseText);
+      //console.log('Response status:', response.status);
+      //console.log('Response text:', responseText);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = JSON.parse(responseText);
-      console.log('Parsed response:', data);
+      //console.log('Parsed response:', data);
       
       // 응답 파싱 - 다양한 구조 시도
       let botResponse = 'Sorry, I could not generate a response.';
       
       // Langflow 응답 구조 확인
       if (data.outputs) {
-        console.log('Found outputs:', data.outputs);
+        //console.log('Found outputs:', data.outputs);
         
         // outputs 배열 순회
         if (Array.isArray(data.outputs)) {
           for (const output of data.outputs) {
-            console.log('Checking output:', output);
+            //console.log('Checking output:', output);
             
             // 다양한 경로 시도
             if (output.outputs?.[0]?.results?.message?.text) {
@@ -155,7 +155,7 @@
         botResponse = data.text;
       }
       
-      console.log('Final bot response:', botResponse);
+      //console.log('Final bot response:', botResponse);
       
       // <think> 태그 제거
       if (botResponse.includes('<think>')) {
@@ -194,7 +194,7 @@
   }
   
   onMount(async () => {
-    console.log('LangflowChatSimple: Initializing with Langflow API...');
+    //console.log('LangflowChatSimple: Initializing with Langflow API...');
     
     // 동적으로 marked와 katex 로드
     try {
@@ -221,7 +221,7 @@
     // 프로덕션에서는 Netlify Functions 사용
     LANGFLOW_API_URL = '/.netlify/functions/langflow-proxy';
     
-    console.log('API URL:', LANGFLOW_API_URL);
+    //console.log('API URL:', LANGFLOW_API_URL);
     
     // 초기 환영 메시지
     messages = [{
