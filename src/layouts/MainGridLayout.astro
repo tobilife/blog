@@ -1,6 +1,7 @@
 ---
 import Footer from "@components/Footer.astro";
 import Navbar from "@components/Navbar.astro";
+import LangflowChatSimple from "@components/chat/LangflowChatSimple.svelte";
 import BackToTop from "@components/control/BackToTop.astro";
 import SideBar from "@components/widget/SideBar.astro";
 import type { MarkdownHeading } from "astro";
@@ -122,4 +123,8 @@ const mainPanelTop = siteConfig.banner.enable
         {!siteConfig.toc.enable && <div id="toc"></div>}
     </div>
 </div>
+
+<!-- Chat Widget -->
+<LangflowChatSimple client:load />
+
 </Layout>

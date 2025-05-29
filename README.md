@@ -1,4 +1,47 @@
-# 🍥Fuwari
+# My Blog with Langflow Chat Assistant
+
+블로그에 AI 채팅 어시스턴트가 통합되었습니다.
+
+## 기능
+- Astro 프레임워크 기반 블로그
+- Langflow + Groq AI 기반 채팅 어시스턴트
+- 블로그 콘텐츠 Q&A 지원
+- 실시간 대화 기능
+- 무료 AI 모델 사용 (Groq)
+
+## 기술 스택
+- **프론트엔드**: Astro, Svelte, Tailwind CSS
+- **AI 플랫폼**: Langflow (Astra DataStax)
+- **AI 모델**: Groq (meta-llama/llama-4-maverick-17b-128e-instruct)
+- **호스팅**: Netlify
+
+## 설정 방법
+
+1. 의존성 설치
+   ```bash
+   pnpm install
+   ```
+
+2. 개발 서버 실행
+   ```bash
+   pnpm dev
+   ```
+
+3. 빌드
+   ```bash
+   pnpm build
+   ```
+
+## Langflow 설정
+
+이 블로그는 Langflow Cloud를 사용하여 AI 채팅 기능을 제공합니다.
+- Flow ID: `790574cb-2624-492b-a3a5-e0e118c1416f`
+- 모델: Groq (무료)
+
+---
+---
+
+# Fuwari
 
 A static blog template built with [Astro](https://astro.build).
 
