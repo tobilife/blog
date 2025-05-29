@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, afterUpdate } from 'svelte';
   
   let messages = [];
   let inputMessage = '';
@@ -7,6 +7,59 @@
   let chatVisible = false;
   let sessionId = null;
   let LANGFLOW_API_URL = '';
+  let marked = null;
+  let katex = null;
+  let chatMessagesEl = null; // chat-messages 엘리먼트 참조
+  
+  // 채팅 메시지 스크롤을 가장 아래로 이동
+  function scrollToBottom() {
+    if (chatMessagesEl) {
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+  }
+  
+  // 메시지가 업데이트될 때마다 스크롤
+  afterUpdate(() => {
+    scrollToBottom();
+  });
+  
+  // 마크다운을 렌더링하는 함수
+  function renderMarkdown(text) {
+    if (!marked) return text;
+    
+    try {
+      // 먼저 수식을 처리
+      let processedText = text;
+      if (katex) {
+        // 인라인 수식: $...$
+        processedText = processedText.replace(/\$([^\$]+)\$/g, (match, math) => {
+          try {
+            return katex.renderToString(math, { throwOnError: false });
+          } catch (e) {
+            return match;
+          }
+        });
+        
+        // 블록 수식: $$...$$
+        processedText = processedText.replace(/\$\$([^\$]+)\$\$/g, (match, math) => {
+          try {
+            return katex.renderToString(math, { 
+              throwOnError: false,
+              displayMode: true 
+            });
+          } catch (e) {
+            return match;
+          }
+        });
+      }
+      
+      // 그 다음 마크다운 처리
+      return marked.parse(processedText);
+    } catch (error) {
+      console.error('Markdown parsing error:', error);
+      return text;
+    }
+  }
   
   async function sendMessage() {
     if (!inputMessage.trim() || isLoading) return;
@@ -103,6 +156,13 @@
       }
       
       console.log('Final bot response:', botResponse);
+      
+      // <think> 태그 제거
+      if (botResponse.includes('<think>')) {
+        // <think>...</think> 패턴을 찾아서 제거
+        botResponse = botResponse.replace(/<think>.*?<\/think>/gs, '').trim();
+      }
+      
       messages = [...messages, { role: 'assistant', content: botResponse }];
       
     } catch (error) {
@@ -133,8 +193,27 @@
     }
   }
   
-  onMount(() => {
+  onMount(async () => {
     console.log('LangflowChatSimple: Initializing with Langflow API...');
+    
+    // 동적으로 marked와 katex 로드
+    try {
+      const markedModule = await import('marked');
+      marked = markedModule.marked;
+      
+      // Marked 설정
+      marked.setOptions({
+        breaks: true,
+        gfm: true,
+        headerIds: false,
+        mangle: false
+      });
+      
+      const katexModule = await import('katex');
+      katex = katexModule.default;
+    } catch (error) {
+      console.error('Failed to load markdown/katex modules:', error);
+    }
     
     // 클라이언트 사이드에서만 실행
     sessionId = 'user_' + Date.now();
@@ -147,7 +226,7 @@
     // 초기 환영 메시지
     messages = [{
       role: 'assistant',
-      content: '안녕하세요! 블로그에 대해 궁금한 점이 있으시면 물어봐주세요. 🤖'
+      content: '안녕하세요!<br>토비라이프 블로그 채팅봇은<br>2024년12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br>궁금한 점이 있으시면 물어봐주세요.🤖<br>따라서 2025년 이후의 내용이나<br>실시간 데이터에 대한 질문에는<br>도움을 드리기 어려울 수 있습니다.😊!'
     }];
     
     return () => {
@@ -155,6 +234,10 @@
     };
   });
 </script>
+
+<svelte:head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+</svelte:head>
 
 <div class="chat-container">
   <!-- 챗봇 버튼 -->
@@ -179,15 +262,19 @@
     <div class="chat-window">
       <!-- 헤더 -->
       <div class="chat-header">
-        <span>Blog Assistant</span>
+        <span>토비라이프 블로그 챗봇 (공개된 오픈소스 LLM 모델을 사용중입니다.)</span>
         <button on:click={() => chatVisible = false} class="close-button">×</button>
       </div>
       
       <!-- 메시지 영역 -->
-      <div class="chat-messages">
+            <div class="chat-messages" bind:this={chatMessagesEl}>
         {#each messages as message}
           <div class="message {message.role}">
-            {message.content}
+            {#if message.role === 'assistant' && marked}
+              {@html renderMarkdown(message.content)}
+            {:else}
+              {message.content}
+            {/if}
           </div>
         {/each}
         
@@ -262,8 +349,9 @@
     position: absolute;
     bottom: 70px;
     right: 0;
-    width: 380px;
-    height: 600px;
+    width: calc(100vw - 40px); /* 화면 너비에서 여백을 뺀 값 */
+    max-width: 800px; /* 최대 너비 제한 */
+    height: 750px;
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
@@ -274,7 +362,7 @@
   }
   
   .chat-header {
-    background-color: #4A90E2;
+    background-color: #b75dc1;
     color: white;
     padding: 16px;
     display: flex;
@@ -304,13 +392,14 @@
     overflow-y: auto;
     padding: 16px;
     background-color: #f7f9fc;
+    scroll-behavior: smooth;
   }
   
   .message {
     margin-bottom: 12px;
     padding: 10px 14px;
     border-radius: 12px;
-    max-width: 80%;
+        max-width: 100%;
     word-wrap: break-word;
   }
   
@@ -326,6 +415,127 @@
     color: #333;
     border: 1px solid #e0e0e0;
     border-bottom-left-radius: 4px;
+    line-height: 1.6;
+  }
+  
+  /* 마크다운 스타일링 */
+  .message.assistant :global(h1),
+  .message.assistant :global(h2),
+  .message.assistant :global(h3),
+  .message.assistant :global(h4),
+  .message.assistant :global(h5),
+  .message.assistant :global(h6) {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  
+  .message.assistant :global(h1) { font-size: 1.5em; }
+  .message.assistant :global(h2) { font-size: 1.3em; }
+  .message.assistant :global(h3) { font-size: 1.1em; }
+  .message.assistant :global(h4) { font-size: 1em; }
+  .message.assistant :global(h5) { font-size: 0.9em; }
+  .message.assistant :global(h6) { font-size: 0.85em; }
+  
+  .message.assistant :global(p) {
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+  
+  .message.assistant :global(ul),
+  .message.assistant :global(ol) {
+    margin-bottom: 12px;
+    padding-left: 24px;
+  }
+  
+  .message.assistant :global(li) {
+    margin-bottom: 4px;
+    line-height: 1.6;
+  }
+  
+  .message.assistant :global(code) {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #d73a49;
+  }
+  
+  .message.assistant :global(pre) {
+    background-color: #f6f8fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+  }
+  
+  .message.assistant :global(pre code) {
+    background-color: transparent;
+    padding: 0;
+    color: #333;
+  }
+  
+  .message.assistant :global(blockquote) {
+    border-left: 4px solid #4A90E2;
+    padding-left: 16px;
+    margin-left: 0;
+    margin-bottom: 12px;
+    color: #666;
+  }
+  
+  .message.assistant :global(a) {
+    color: #4A90E2;
+    text-decoration: none;
+  }
+  
+  .message.assistant :global(a:hover) {
+    text-decoration: underline;
+  }
+  
+  .message.assistant :global(strong) {
+    font-weight: 600;
+  }
+  
+  .message.assistant :global(em) {
+    font-style: italic;
+  }
+  
+  .message.assistant :global(hr) {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 16px 0;
+  }
+  
+  .message.assistant :global(table) {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  .message.assistant :global(th),
+  .message.assistant :global(td) {
+    border: 1px solid #e0e0e0;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  
+  .message.assistant :global(th) {
+    background-color: #f6f8fa;
+    font-weight: 600;
+  }
+  
+  /* KaTeX 스타일 */
+  .message.assistant :global(.katex) {
+    font-size: 1.1em;
+  }
+  
+  .message.assistant :global(.katex-display) {
+    margin: 16px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   
   .typing-indicator {
@@ -418,17 +628,17 @@
   /* 모바일 반응형 */
   @media (max-width: 768px) {
     .chat-window {
-      width: 100vw;
-      height: 100vh;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
       bottom: 0;
       right: 0;
+      left: 0;
+      top: 0;
       border-radius: 0;
-      max-width: none;
-    }
-    
-    .chat-button {
-      bottom: 10px;
-      right: 10px;
+      animation: none;
     }
   }
 </style>
