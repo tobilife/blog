@@ -262,7 +262,7 @@
     <div class="chat-window">
       <!-- 헤더 -->
       <div class="chat-header">
-        <span>토비라이프 블로그 챗봇 (공개된 오픈소스 LLM 모델을 사용중입니다.)</span>
+        <span>토비라이프 블로그 챗봇</span>
         <button on:click={() => chatVisible = false} class="close-button">×</button>
       </div>
       

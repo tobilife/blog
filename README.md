@@ -11,6 +11,7 @@
 - Langflow + Groq AI 기반 채팅 어시스턴트
 - 블로그 콘텐츠 Q&A 지원
 - 실시간 대화 기능
+- 댓글 기능 추가
 - 무료 AI 모델 사용 (Groq)
 
 ## 기술 스택
@@ -82,7 +83,7 @@ Langflow Dashboard: https://astra.datastax.com/langflow
   - chatMessagesEl 참조를 통해 스크롤 위치 제어
   - 사용자가 항상 최신 응답을 볼 수 있도록 개선
 
-  ## 여기까지는 tobilife가 작업한 내용입니다.
+  ## ✅ tobilife의 추가기능 내용입니다.
 ---
 ---
 
