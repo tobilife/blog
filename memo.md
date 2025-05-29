@@ -6,17 +6,14 @@
 - Blog: https://tobilife.netlify.app/
 
 ## ✅ 해결 완료
-- Langflow 공식 임베드 스크립트가 제대로 작동하지 않아 iframe 방식으로 변경
-- 챗봇 버튼과 창을 직접 구현하여 더 나은 UX 제공
-- 모바일 반응형 완벽 지원
+- CORS 문제 해결: Vite 프록시(로컬) + Netlify Functions(프로덕션)
+- 커스텀 챗봇 UI로 완전한 제어 가능
+- Langflow API를 직접 호출하여 실시간 대화 가능
 
 ## 구현 방식
-1. **커스텀 챗봇 UI**: 직접 버튼과 창을 만들어 스타일 완전 제어
-2. **iframe 임베드**: Langflow 챗봇을 iframe으로 로드
-3. **반응형 디자인**: 모바일에서 전체 화면으로 표시
-
-## ✅ 완료된 작업
-
+1. **로컬 개발**: Vite 프록시를 통해 CORS 회피
+2. **프로덕션**: Netlify Functions를 통해 서버리스 프록시 구현
+3. **UI**: 커스텀 챗봇 인터페이스로 사용자 경험 최적화
 ### 1. Langflow Cloud 설정
 - Astra DataStax 계정: happytobilife@gmail.com
 - Flow ID: 790574cb-2624-492b-a3a5-e0e118c1416f
@@ -51,5 +48,3 @@
 - 무료 AI 모델 사용 (Groq)
 - 실시간 대화 가능
 - 모바일 반응형 디자인
-- 커스텀 스타일링 가능
-- 안정적인 iframe 임베드

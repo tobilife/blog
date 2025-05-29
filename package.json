@@ -4,6 +4,9 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "dev:netlify": "netlify dev",
+    "clean": "rimraf node_modules/.vite .astro dist",
+    "dev:clean": "pnpm clean && astro dev",
     "start": "astro dev",
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
@@ -31,7 +34,9 @@
     "@tailwindcss/typography": "^0.5.16",
     "astro": "5.8.0",
     "astro-icon": "^1.1.5",
+    "cors": "^2.8.5",
     "decap-cms-app": "^3.6.3",
+    "express": "^5.1.0",
     "hastscript": "^9.0.1",
     "katex": "^0.16.22",
     "lodash": "^4.17.21",
@@ -69,7 +74,8 @@
     "@types/mdast": "^4.0.4",
     "@types/sanitize-html": "^2.16.0",
     "postcss-import": "^16.1.0",
-    "postcss-nesting": "^13.0.1"
+    "postcss-nesting": "^13.0.1",
+    "rimraf": "^5.0.5"
   },
   "packageManager": "pnpm@9.14.4"
 }
