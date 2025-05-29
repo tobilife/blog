@@ -116,6 +116,8 @@
         errorMessage = 'Flow를 찾을 수 없습니다. Flow ID를 확인해주세요.';
       } else if (error.message.includes('500')) {
         errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      } else if (error.message.includes('502') || error.message.includes('504') || error.message.includes('timeout')) {
+        errorMessage = '응답 시간이 초과되었습니다. 더 간단한 질문으로 시도해주세요.';
       }
       
       messages = [...messages, { role: 'assistant', content: errorMessage }];

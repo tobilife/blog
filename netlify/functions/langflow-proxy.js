@@ -1,7 +1,5 @@
 export async function handler(event, context) {
   console.log('Langflow proxy called');
-  console.log('Method:', event.httpMethod);
-  console.log('Body:', event.body);
   
   // CORS headers
   const headers = {
@@ -38,47 +36,70 @@ export async function handler(event, context) {
     
     const LANGFLOW_API_URL = 'https://api.langflow.astra.datastax.com/lf/88f74398-7c51-4066-a0e2-c6a1992f0889/api/v1/run/790574cb-2624-492b-a3a5-e0e118c1416f';
 
-    console.log('Forwarding to:', LANGFLOW_API_URL);
+    console.log('Forwarding to Langflow...');
 
-    // Forward the request to Langflow
-    const response = await fetch(LANGFLOW_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_TOKEN}`,
-        'Accept': 'application/json',
-      },
-      body: event.body,
-    });
+    // Forward the request to Langflow with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25초 타임아웃
 
-    const responseText = await response.text();
-    console.log('Langflow response status:', response.status);
-    console.log('Langflow response:', responseText.substring(0, 200) + '...');
+    try {
+      const response = await fetch(LANGFLOW_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_TOKEN}`,
+          'Accept': 'application/json',
+        },
+        body: event.body,
+        signal: controller.signal
+      });
 
-    if (!response.ok) {
-      console.error('Langflow API error:', responseText);
+      clearTimeout(timeoutId);
+
+      const responseText = await response.text();
+      console.log('Langflow response status:', response.status);
+
+      if (!response.ok) {
+        console.error('Langflow API error:', responseText);
+        return {
+          statusCode: response.status,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            error: 'Langflow API error',
+            status: response.status,
+            message: responseText
+          }),
+        };
+      }
+
       return {
-        statusCode: response.status,
+        statusCode: 200,
         headers: {
           ...headers,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          error: 'Langflow API error',
-          status: response.status,
-          message: responseText
-        }),
+        body: responseText,
       };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === 'AbortError') {
+        console.error('Request timeout');
+        return {
+          statusCode: 504,
+          headers,
+          body: JSON.stringify({ 
+            error: 'Gateway timeout',
+            message: 'The request took too long to complete. Please try again.'
+          }),
+        };
+      }
+      
+      throw fetchError;
     }
-
-    return {
-      statusCode: 200,
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json',
-      },
-      body: responseText,
-    };
   } catch (error) {
     console.error('Langflow proxy error:', error);
     return {
