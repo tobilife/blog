@@ -1,13 +1,19 @@
-# Langflow Chat Widget 통합 (문제 해결 중)
+# Langflow Chat Widget 통합 (✅ 완료)
 
-## 현재 문제
-- 채팅 위젯이 로컬 개발 환경에서 표시되지 않음
-- Langflow 스크립트는 로드되지만 Chatbot 모듈이 window 객체에 노출되지 않음
+## 주요 URL
+- Langflow Dashboard: https://astra.datastax.com/langflow
+- Flow URL: https://astra.datastax.com/langflow/f6815d30-a3c1-4f0f-96a2-6abe11577877/flow/790574cb-2624-492b-a3a5-e0e118c1416f
+- Blog: https://tobilife.netlify.app/
 
-## 시도한 해결 방법
-1. client:only="svelte"를 client:load로 변경
-2. 스크립트 로드 방식을 innerHTML에서 src 방식으로 변경
-3. 모듈 로드 후 window.Chatbot 접근 시도
+## ✅ 해결 완료
+- Langflow 공식 임베드 스크립트가 제대로 작동하지 않아 iframe 방식으로 변경
+- 챗봇 버튼과 창을 직접 구현하여 더 나은 UX 제공
+- 모바일 반응형 완벽 지원
+
+## 구현 방식
+1. **커스텀 챗봇 UI**: 직접 버튼과 창을 만들어 스타일 완전 제어
+2. **iframe 임베드**: Langflow 챗봇을 iframe으로 로드
+3. **반응형 디자인**: 모바일에서 전체 화면으로 표시
 
 ## ✅ 완료된 작업
 
@@ -23,23 +29,27 @@
 
 ### 3. 블로그 통합
 - MainGridLayout.astro에 채팅 위젯 추가
-- 모든 페이지에서 채팅 버튼 표시
+- 모든 페이지에서 챗봇 버튼 표시
+- 파란색 원형 버튼 (우측 하단)
+- 클릭 시 챗봇 창 열림
 
 ## 프로젝트 구조
 ```
 /src/components/chat/
-  └── LangflowChatSimple.svelte (최종 버전)
+  └── LangflowChatSimple.svelte (최종 버전 - iframe 방식)
 ```
 
 ## 배포 방법
 1. `pnpm dev`로 로컬 테스트
 2. `git add .`
-3. `git commit -m "Add Langflow chat with Groq AI"`
+3. `git commit -m "Fix Langflow chat widget with iframe implementation"`
 4. `git push`
 5. Netlify 자동 배포
 
 ## 특징
 - 서버 설치 불필요
-- 무료 AI 모델 사용
+- 무료 AI 모델 사용 (Groq)
 - 실시간 대화 가능
 - 모바일 반응형 디자인
+- 커스텀 스타일링 가능
+- 안정적인 iframe 임베드
