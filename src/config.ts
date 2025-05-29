@@ -43,11 +43,11 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		LinkPreset.About,
-		{
-			name: "GitHub",
-			url: "https://github.com/tobilife/", // Internal links should not include the base path, as it is automatically added
-			external: true, // Show an external link icon and will open in a new tab
-		},
+		// {
+		// 	name: "GitHub",
+		// 	url: "https://github.com/tobilife/", // Internal links should not include the base path, as it is automatically added
+		// 	external: true, // Show an external link icon and will open in a new tab
+		// },
 	],
 };
 
@@ -56,23 +56,23 @@ export const profileConfig: ProfileConfig = {
 	name: "토비라이프",
 	bio: "인생은 아름다워",
 	links: [
-		{
-			name: "x-twitter",
-			icon: "fa6-brands:x-twitter", // Visit https://icones.js.org/ for icon codes
-			// You will need to install the corresponding icon set if it's not already included
-			// `pnpm add @iconify-json/<icon-set-name>`
-			url: "https://x.com/TobiLifeDev",
-		},
-		{
-			name: "instagram",
-			icon: "fa6-brands:instagram",
-			url: "https://store.steampowered.com",
-		},
-		{
-			name: "GitHub",
-			icon: "fa6-brands:github",
-			url: "https://github.com/tobilife/",
-		},
+		// {
+		// 	name: "x-twitter",
+		// 	icon: "fa6-brands:x-twitter", // Visit https://icones.js.org/ for icon codes
+		// 	// You will need to install the corresponding icon set if it's not already included
+		// 	// `pnpm add @iconify-json/<icon-set-name>`
+		// 	url: "https://x.com/TobiLifeDev",
+		// },
+		// {
+		// 	name: "instagram",
+		// 	icon: "fa6-brands:instagram",
+		// 	url: "https://",
+		// },
+		// {
+		// 	name: "GitHub",
+		// 	icon: "fa6-brands:github",
+		// 	url: "https://github.com/tobilife/",
+		// },
 	],
 };
 
