@@ -96,6 +96,10 @@
     
     // 사용자 메시지 추가
     messages = [...messages, { role: 'user', content: userMessage }];
+    
+    // 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
+    messages = [...messages, { role: 'assistant', content: '', isTyping: true }];
+    
     isLoading = true;
     
     // 타임아웃을 위한 AbortController 생성
@@ -195,13 +199,11 @@
         botResponse = botResponse.replace(/<think>.*?<\/think>/gs, '').trim();
       }
       
-      // 타이핑 효과를 위해 빈 메시지 먼저 추가
-      messages = [...messages, { role: 'assistant', content: '', isTyping: true }];
-      
+      // 이미 추가된 assistant 메시지에 타이핑 효과 적용
       // 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // 타이핑 효과 구현
+      // 타이핑 효과 구현 (마지막 메시지 업데이트)
       await typeMessage(botResponse, messages.length - 1);
       
     } catch (error) {
@@ -224,7 +226,13 @@
         errorMessage = '응답 시간이 초과되었습니다. 더 간단한 질문으로 시도해주세요.';
       }
       
-      messages = [...messages, { role: 'assistant', content: errorMessage }];
+      // 이미 추가된 assistant 메시지를 업데이트
+      messages[messages.length - 1] = { 
+        role: 'assistant', 
+        content: errorMessage,
+        isTyping: false 
+      };
+      messages = [...messages]; // 리액티비티 트리거
     } finally {
       clearTimeout(timeoutId);
       isLoading = false;
