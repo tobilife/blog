@@ -79,7 +79,7 @@
         input_value: userMessage,
         output_type: "chat",
         input_type: "chat",
-        stream: false,
+        stream: true,
         session_id: sessionId,
         tweaks: {}
       };
