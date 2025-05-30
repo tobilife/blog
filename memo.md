@@ -113,3 +113,19 @@
   - afterUpdate 라이프사이클 훅을 사용하여 메시지 업데이트 감지
   - chatMessagesEl 참조를 통해 스크롤 위치 제어
   - 사용자가 항상 최신 응답을 볼 수 있도록 개선
+
+## 타임아웃 및 에러 처리 개선 (✅ 완료)
+- 422 에러 수정: streaming → chat으로 output_type 변경
+- 클라이언트 타임아웃 설정: 25초 (Netlify Functions 제한 고려)
+- AbortController를 사용한 타임아웃 처리
+- AbortError 감지 및 사용자 친화적 메시지 표시
+- finally 블록으로 리소스 정리 보장
+
+### Netlify Functions 타임아웃 제한
+- 무료 플랜: 10초
+- Pro 이상 플랜: 26초
+- 장시간 처리가 필요한 경우 대안:
+  - 스트리밍 응답 사용
+  - Background Functions 사용 (최대 15분)
+  - Edge Functions 사용
+  - 클라이언트에서 직접 API 호출 (CORS 설정 필요)

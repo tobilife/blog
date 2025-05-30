@@ -77,22 +77,28 @@
       // Langflow API 호출
       const payload = {
         input_value: userMessage,
-        output_type: "streaming",
+        output_type: "chat",
         input_type: "chat",
-        stream: true,
+        stream: false,
         session_id: sessionId,
         tweaks: {}
       };
       
       //console.log('Request payload:', payload);
       
-      const response = await fetch(LANGFLOW_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+      // 타임아웃을 위한 AbortController 생성
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25초 타임아웃
+      
+      try {
+        const response = await fetch(LANGFLOW_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
       
       const responseText = await response.text();
       //console.log('Response status:', response.status);
@@ -165,26 +171,30 @@
       
       messages = [...messages, { role: 'assistant', content: botResponse }];
       
-    } catch (error) {
-      console.error('Error calling Langflow API:', error);
-      
-      let errorMessage = '죄송합니다. 일시적인 오류가 발생했습니다.';
-      
-      if (error.message.includes('401')) {
-        errorMessage = '인증 오류가 발생했습니다. API 토큰을 확인해주세요.';
-      } else if (error.message.includes('404')) {
-        errorMessage = 'Flow를 찾을 수 없습니다. Flow ID를 확인해주세요.';
-      } else if (error.message.includes('500')) {
-        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-      } else if (error.message.includes('502') || error.message.includes('504') || error.message.includes('timeout')) {
-        errorMessage = '응답 시간이 초과되었습니다. 더 간단한 질문으로 시도해주세요.';
-      }
-      
-      messages = [...messages, { role: 'assistant', content: errorMessage }];
-    } finally {
-      isLoading = false;
-    }
-  }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error('Error calling Langflow API:', error);
+        
+        let errorMessage = '죄송합니다. 일시적인 오류가 발생했습니다.';
+        
+        if (error.name === 'AbortError') {
+          errorMessage = '응답 시간이 초과되었습니다. 더 간단한 질문으로 시도해주세요.';
+        } else if (error.message.includes('401')) {
+          errorMessage = '인증 오류가 발생했습니다. API 토큰을 확인해주세요.';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Flow를 찾을 수 없습니다. Flow ID를 확인해주세요.';
+        } else if (error.message.includes('500')) {
+          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        } else if (error.message.includes('502') || error.message.includes('504') || error.message.includes('timeout')) {
+          errorMessage = '응답 시간이 초과되었습니다. 더 간단한 질문으로 시도해주세요.';
+        }
+        
+        messages = [...messages, { role: 'assistant', content: errorMessage }];
+        } finally {
+        clearTimeout(timeoutId);
+        isLoading = false;
+        }
+        }
   
   function handleKeyPress(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
