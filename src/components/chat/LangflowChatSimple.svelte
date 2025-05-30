@@ -71,13 +71,21 @@
       currentText += (i > 0 ? ' ' : '') + words[i];
       messages[messageIndex] = {
         ...messages[messageIndex],
-        content: currentText
+        content: currentText,
+        isTyping: i < words.length - 1 // 마지막 단어가 아니면 아직 타이핑 중
       };
       messages = [...messages]; // 리액티비티 트리거
       
       // 단어 사이에 짧은 딜레이
       await new Promise(resolve => setTimeout(resolve, typingSpeed));
     }
+    
+    // 타이핑 완료 후 isTyping 제거
+    messages[messageIndex] = {
+      ...messages[messageIndex],
+      isTyping: false
+    };
+    messages = [...messages];
   }
   
   async function sendMessage() {
@@ -188,7 +196,10 @@
       }
       
       // 타이핑 효과를 위해 빈 메시지 먼저 추가
-      messages = [...messages, { role: 'assistant', content: '' }];
+      messages = [...messages, { role: 'assistant', content: '', isTyping: true }];
+      
+      // 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // 타이핑 효과 구현
       await typeMessage(botResponse, messages.length - 1);
@@ -304,23 +315,21 @@
       <div class="chat-messages" bind:this={chatMessagesEl}>
         {#each messages as message}
           <div class="message {message.role}">
-            {#if message.role === 'assistant' && marked}
+            {#if message.role === 'assistant' && marked && !message.isTyping}
               {@html renderMarkdown(message.content)}
             {:else}
               {message.content}
             {/if}
+            
+            {#if message.isTyping}
+              <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            {/if}
           </div>
         {/each}
-        
-        {#if isLoading && messages[messages.length - 1]?.content === ''}
-          <div class="message assistant">
-            <div class="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </div>
-        {/if}
       </div>
       
       <!-- 입력 영역 -->
@@ -573,8 +582,9 @@
   }
   
   .typing-indicator {
-    display: flex;
+    display: inline-flex;
     gap: 4px;
+    margin-left: 8px;
   }
   
   .typing-indicator span {
