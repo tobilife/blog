@@ -213,7 +213,7 @@
       let errorMessage = '죄송합니다. 일시적인 오류가 발생했습니다.';
       
       if (error.name === 'AbortError') {
-        errorMessage = '응답 시간이 초과되었습니다. 더 간단한 질문으로 시도해주세요.';
+        errorMessage = 'netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎';
       } else if (error.message.includes('401')) {
         errorMessage = '인증 오류가 발생했습니다. API 토큰을 확인해주세요.';
       } else if (error.message.includes('404')) {
@@ -223,7 +223,7 @@
       } else if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
         errorMessage = 'Langflow API 서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.';
       } else if (error.message.includes('504') || error.message.includes('timeout')) {
-        errorMessage = '응답 시간이 초과되었습니다. 더 간단한 질문으로 시도해주세요.';
+        errorMessage = 'netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎';
       }
       
       // 이미 추가된 assistant 메시지를 업데이트
@@ -413,7 +413,7 @@
   }
   
   .chat-header {
-    background-color: #b75dc1;
+    background-color: #2575d3;
     color: white;
     padding: 16px;
     display: flex;
