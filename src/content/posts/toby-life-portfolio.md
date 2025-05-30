@@ -1,7 +1,7 @@
 ---
 title: "보험 IT 15년, 토비라이프의 여정"
 published: 2025-05-25
-description: '손해보험사 IT 보험 개발자 포트폴리오'
+description: '손해보험사 IT 개발자 경력 Overview'
 image: ''
 tags: [Portfolio, Insurance-IT, Java, Oracle, xPlatform]
 category: 'Portfolio'

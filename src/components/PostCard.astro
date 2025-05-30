@@ -6,6 +6,7 @@ import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { getDir } from "../utils/url-utils";
 import PostMetadata from "./PostMeta.astro";
+import TimeAgo from "./TimeAgo.astro";
 import ImageWrapper from "./misc/ImageWrapper.astro";
 
 interface Props {
@@ -68,9 +69,10 @@ const { remarkPluginFrontmatter } = await entry.render();
 
         <!-- word count and read time  -->
         <div class="text-sm text-black/30 dark:text-white/30 flex gap-4">
-            <div>{remarkPluginFrontmatter.words} {" " + i18n(I18nKey.wordsCount)}</div>
+            <div>{remarkPluginFrontmatter.words} {" " + i18n(I18nKey.wordsCount)}</div>            
             <div>|</div>
-            <div>{remarkPluginFrontmatter.minutes} {" " + i18n(I18nKey.minutesCount)}</div>
+            <TimeAgo date={published} class="text-sm text-black/30 dark:text-white/30" />            
+            <!-- <div>{remarkPluginFrontmatter.minutes} {" " + i18n(I18nKey.minutesCount)}</div> -->
         </div>
 
     </div>

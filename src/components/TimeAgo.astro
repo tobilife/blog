@@ -1,0 +1,72 @@
+---
+import { getRelativeTime } from "../utils/date-utils";
+import { formatDateToYYYYMMDD } from "../utils/date-utils";
+
+interface Props {
+  date: Date;
+  class?: string;
+}
+
+const { date, class: className } = Astro.props;
+---
+
+<time-ago 
+  data-date={date.toISOString()} 
+  class={className}
+  title={formatDateToYYYYMMDD(date)}
+>
+  {getRelativeTime(date)}
+</time-ago>
+
+<script>
+  class TimeAgoElement extends HTMLElement {
+    private intervalId: number | null = null;
+    
+    connectedCallback() {
+      this.update();
+      // 1분마다 업데이트
+      this.intervalId = window.setInterval(() => this.update(), 60000);
+    }
+    
+    disconnectedCallback() {
+      if (this.intervalId) {
+        window.clearInterval(this.intervalId);
+      }
+    }
+    
+    update() {
+      const dateStr = this.getAttribute('data-date');
+      if (!dateStr) return;
+      
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffInMs = now.getTime() - date.getTime();
+      const diffInSeconds = Math.floor(diffInMs / 1000);
+      const diffInMinutes = Math.floor(diffInSeconds / 60);
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+      const diffInYears = Math.floor(diffInDays / 365);
+      
+      let text = '';
+      
+      if (diffInSeconds < 60) {
+        text = '방금 전';
+      } else if (diffInMinutes < 60) {
+        text = `${diffInMinutes}분 전`;
+      } else if (diffInHours < 24) {
+        text = `${diffInHours}시간 전`;
+      } else if (diffInDays < 365) {
+        text = `${diffInDays}일 전`;
+      } else {
+        text = `${diffInYears}년 전`;
+      }
+      
+      this.textContent = text;
+    }
+  }
+  
+  // Custom element 등록
+  if (!customElements.get('time-ago')) {
+    customElements.define('time-ago', TimeAgoElement);
+  }
+</script>
