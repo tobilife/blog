@@ -77,7 +77,7 @@
       // Langflow API 호출
       const payload = {
         input_value: userMessage,
-        output_type: "chat",
+        output_type: "streaming",
         input_type: "chat",
         stream: true,
         session_id: sessionId,
