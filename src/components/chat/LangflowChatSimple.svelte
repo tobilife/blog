@@ -1,291 +1,305 @@
 <script>
-  import { onMount, afterUpdate } from 'svelte';
-  
-  let messages = [];
-  let inputMessage = '';
-  let isLoading = false;
-  let chatVisible = false;
-  let sessionId = null;
-  let LANGFLOW_API_URL = '';
-  let marked = null;
-  let katex = null;
-  let chatMessagesEl = null; // chat-messages 엘리먼트 참조
-  
-  // 채팅 메시지 스크롤을 가장 아래로 이동
-  function scrollToBottom() {
-    if (chatMessagesEl) {
-      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    }
-  }
-  
-  // 메시지가 업데이트될 때마다 스크롤
-  afterUpdate(() => {
-    scrollToBottom();
-  });
-  
-  // 마크다운을 렌더링하는 함수
-  function renderMarkdown(text) {
-    if (!marked) return text;
-    
-    try {
-      // 먼저 수식을 처리
-      let processedText = text;
-      if (katex) {
-        // 인라인 수식: $...$
-        processedText = processedText.replace(/\$([^\$]+)\$/g, (match, math) => {
-          try {
-            return katex.renderToString(math, { throwOnError: false });
-          } catch (e) {
-            return match;
-          }
-        });
-        
-        // 블록 수식: $$...$$
-        processedText = processedText.replace(/\$\$([^\$]+)\$\$/g, (match, math) => {
-          try {
-            return katex.renderToString(math, { 
-              throwOnError: false,
-              displayMode: true 
-            });
-          } catch (e) {
-            return match;
-          }
-        });
-      }
-      
-      // 그 다음 마크다운 처리
-      return marked.parse(processedText);
-    } catch (error) {
-      console.error('Markdown parsing error:', error);
-      return text;
-    }
-  }
-  
-  // 타이핑 효과 함수
-  async function typeMessage(text, messageIndex) {
-    const typingSpeed = 15; // 각 문자 간 딜레이 (ms)
-    const words = text.split(' ');
-    let currentText = '';
-    
-    for (let i = 0; i < words.length; i++) {
-      currentText += (i > 0 ? ' ' : '') + words[i];
-      messages[messageIndex] = {
-        ...messages[messageIndex],
-        content: currentText,
-        isTyping: i < words.length - 1 // 마지막 단어가 아니면 아직 타이핑 중
-      };
-      messages = [...messages]; // 리액티비티 트리거
-      
-      // 단어 사이에 짧은 딜레이
-      await new Promise(resolve => setTimeout(resolve, typingSpeed));
-    }
-    
-    // 타이핑 완료 후 isTyping 제거
-    messages[messageIndex] = {
-      ...messages[messageIndex],
-      isTyping: false
-    };
-    messages = [...messages];
-  }
-  
-  async function sendMessage() {
-    if (!inputMessage.trim() || isLoading) return;
-    
-    const userMessage = inputMessage;
-    inputMessage = '';
-    
-    // 사용자 메시지 추가
-    messages = [...messages, { role: 'user', content: userMessage }];
-    
-    // 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
-    messages = [...messages, { role: 'assistant', content: '', isTyping: true }];
-    
-    isLoading = true;
-    
-    // 타임아웃을 위한 AbortController 생성
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 9000); // 9초 타임아웃 (프록시보다 짧게)
-    
-    try {
-      //console.log('Sending to:', LANGFLOW_API_URL);
-      
-      // Langflow API 호출
-      const payload = {
-        input_value: userMessage,
-        output_type: "chat",
-        input_type: "chat",
-        stream: false,
-        session_id: sessionId,
-        tweaks: {}
-      };
-      
-      //console.log('Request payload:', payload);
-      
-      const response = await fetch(LANGFLOW_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
-      
-      const responseText = await response.text();
-      //console.log('Response status:', response.status);
-      //console.log('Response text:', responseText);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = JSON.parse(responseText);
-      //console.log('Parsed response:', data);
-      
-      // 응답 파싱 - 다양한 구조 시도
-      let botResponse = 'Sorry, I could not generate a response.';
-      
-      // Langflow 응답 구조 확인
-      if (data.outputs) {
-        //console.log('Found outputs:', data.outputs);
-        
-        // outputs 배열 순회
-        if (Array.isArray(data.outputs)) {
-          for (const output of data.outputs) {
-            //console.log('Checking output:', output);
-            
-            // 다양한 경로 시도
-            if (output.outputs?.[0]?.results?.message?.text) {
-              botResponse = output.outputs[0].results.message.text;
-              break;
-            }
-            if (output.outputs?.[0]?.results?.text?.text) {
-              botResponse = output.outputs[0].results.text.text;
-              break;
-            }
-            if (output.outputs?.[0]?.results?.text) {
-              botResponse = output.outputs[0].results.text;
-              break;
-            }
-            if (output.outputs?.[0]?.message) {
-              botResponse = output.outputs[0].message;
-              break;
-            }
-            if (output.message) {
-              botResponse = output.message;
-              break;
-            }
-            if (output.text) {
-              botResponse = output.text;
-              break;
-            }
-          }
-        }
-      }
-      
-      // 직접 필드 확인
-      if (data.result) {
-        botResponse = data.result;
-      } else if (data.message) {
-        botResponse = data.message;
-      } else if (data.text) {
-        botResponse = data.text;
-      }
-      
-      //console.log('Final bot response:', botResponse);
-      
-      // <think> 태그 제거
-      if (botResponse.includes('<think>')) {
-        // <think>...</think> 패턴을 찾아서 제거
-        botResponse = botResponse.replace(/<think>.*?<\/think>/gs, '').trim();
-      }
-      
-      // 이미 추가된 assistant 메시지에 타이핑 효과 적용
-      // 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // 타이핑 효과 구현 (마지막 메시지 업데이트)
-      await typeMessage(botResponse, messages.length - 1);
-      
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.error('Error calling Langflow API:', error);
-      
-      let errorMessage = '죄송합니다. 일시적인 오류가 발생했습니다.';
-      
-      if (error.name === 'AbortError') {
-        errorMessage = 'netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎';
-      } else if (error.message.includes('401')) {
-        errorMessage = '인증 오류가 발생했습니다. API 토큰을 확인해주세요.';
-      } else if (error.message.includes('404')) {
-        errorMessage = 'Flow를 찾을 수 없습니다. Flow ID를 확인해주세요.';
-      } else if (error.message.includes('500')) {
-        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-      } else if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
-        errorMessage = 'Langflow API 서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.';
-      } else if (error.message.includes('504') || error.message.includes('timeout')) {
-        errorMessage = 'netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎';
-      }
-      
-      // 이미 추가된 assistant 메시지를 업데이트
-      messages[messages.length - 1] = { 
-        role: 'assistant', 
-        content: errorMessage,
-        isTyping: false 
-      };
-      messages = [...messages]; // 리액티비티 트리거
-    } finally {
-      clearTimeout(timeoutId);
-      isLoading = false;
-    }
-  }
-  
-  function handleKeyPress(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      sendMessage();
-    }
-  }
-  
-  onMount(async () => {
-    //console.log('LangflowChatSimple: Initializing with Langflow API...');
-    
-    // 동적으로 marked와 katex 로드
-    try {
-      const markedModule = await import('marked');
-      marked = markedModule.marked;
-      
-      // Marked 설정
-      marked.setOptions({
-        breaks: true,
-        gfm: true,
-        headerIds: false,
-        mangle: false
-      });
-      
-      const katexModule = await import('katex');
-      katex = katexModule.default;
-    } catch (error) {
-      console.error('Failed to load markdown/katex modules:', error);
-    }
-    
-    // 클라이언트 사이드에서만 실행
-    sessionId = 'user_' + Date.now();
-    
-    // 프로덕션에서는 Netlify Functions 사용
-    LANGFLOW_API_URL = '/.netlify/functions/langflow-proxy';
-    
-    //console.log('API URL:', LANGFLOW_API_URL);
-    
-    // 초기 환영 메시지
-    messages = [{
-      role: 'assistant',
-      content: '안녕하세요!<br>토비라이프 블로그 채팅봇은<br>2024년12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br>궁금한 점이 있으시면 물어봐주세요.🤖<br>따라서 2025년 이후의 내용이나<br>실시간 데이터에 대한 질문에는<br>도움을 드리기 어려울 수 있습니다.😊!'
-    }];
-    
-    return () => {
-      // Cleanup if needed
-    };
-  });
+import { afterUpdate, onMount } from "svelte";
+
+let messages = [];
+let inputMessage = "";
+let isLoading = false;
+let chatVisible = false;
+let sessionId = null;
+let LANGFLOW_API_URL = "";
+let marked = null;
+let katex = null;
+let chatMessagesEl = null; // chat-messages 엘리먼트 참조
+
+// 채팅 메시지 스크롤을 가장 아래로 이동
+function scrollToBottom() {
+	if (chatMessagesEl) {
+		chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+	}
+}
+
+// 메시지가 업데이트될 때마다 스크롤
+afterUpdate(() => {
+	scrollToBottom();
+});
+
+// 마크다운을 렌더링하는 함수
+function renderMarkdown(text) {
+	if (!marked) return text;
+
+	try {
+		// 먼저 수식을 처리
+		let processedText = text;
+		if (katex) {
+			// 인라인 수식: $...$
+			processedText = processedText.replace(/\$([^\$]+)\$/g, (match, math) => {
+				try {
+					return katex.renderToString(math, { throwOnError: false });
+				} catch (e) {
+					return match;
+				}
+			});
+
+			// 블록 수식: $$...$$
+			processedText = processedText.replace(
+				/\$\$([^\$]+)\$\$/g,
+				(match, math) => {
+					try {
+						return katex.renderToString(math, {
+							throwOnError: false,
+							displayMode: true,
+						});
+					} catch (e) {
+						return match;
+					}
+				},
+			);
+		}
+
+		// 그 다음 마크다운 처리
+		return marked.parse(processedText);
+	} catch (error) {
+		console.error("Markdown parsing error:", error);
+		return text;
+	}
+}
+
+// 타이핑 효과 함수
+async function typeMessage(text, messageIndex) {
+	const typingSpeed = 15; // 각 문자 간 딜레이 (ms)
+	const words = text.split(" ");
+	let currentText = "";
+
+	for (let i = 0; i < words.length; i++) {
+		currentText += (i > 0 ? " " : "") + words[i];
+		messages[messageIndex] = {
+			...messages[messageIndex],
+			content: currentText,
+			isTyping: i < words.length - 1, // 마지막 단어가 아니면 아직 타이핑 중
+		};
+		messages = [...messages]; // 리액티비티 트리거
+
+		// 단어 사이에 짧은 딜레이
+		await new Promise((resolve) => setTimeout(resolve, typingSpeed));
+	}
+
+	// 타이핑 완료 후 isTyping 제거
+	messages[messageIndex] = {
+		...messages[messageIndex],
+		isTyping: false,
+	};
+	messages = [...messages];
+}
+
+async function sendMessage() {
+	if (!inputMessage.trim() || isLoading) return;
+
+	const userMessage = inputMessage;
+	inputMessage = "";
+
+	// 사용자 메시지 추가
+	messages = [...messages, { role: "user", content: userMessage }];
+
+	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
+	messages = [...messages, { role: "assistant", content: "", isTyping: true }];
+
+	isLoading = true;
+
+	// 타임아웃을 위한 AbortController 생성
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 9000); // 9초 타임아웃 (프록시보다 짧게)
+
+	try {
+		//console.log('Sending to:', LANGFLOW_API_URL);
+
+		// Langflow API 호출
+		const payload = {
+			input_value: userMessage,
+			output_type: "chat",
+			input_type: "chat",
+			stream: false,
+			session_id: sessionId,
+			tweaks: {},
+		};
+
+		//console.log('Request payload:', payload);
+
+		const response = await fetch(LANGFLOW_API_URL, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(payload),
+			signal: controller.signal,
+		});
+
+		const responseText = await response.text();
+		//console.log('Response status:', response.status);
+		//console.log('Response text:', responseText);
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const data = JSON.parse(responseText);
+		//console.log('Parsed response:', data);
+
+		// 응답 파싱 - 다양한 구조 시도
+		let botResponse = "Sorry, I could not generate a response.";
+
+		// Langflow 응답 구조 확인
+		if (data.outputs) {
+			//console.log('Found outputs:', data.outputs);
+
+			// outputs 배열 순회
+			if (Array.isArray(data.outputs)) {
+				for (const output of data.outputs) {
+					//console.log('Checking output:', output);
+
+					// 다양한 경로 시도
+					if (output.outputs?.[0]?.results?.message?.text) {
+						botResponse = output.outputs[0].results.message.text;
+						break;
+					}
+					if (output.outputs?.[0]?.results?.text?.text) {
+						botResponse = output.outputs[0].results.text.text;
+						break;
+					}
+					if (output.outputs?.[0]?.results?.text) {
+						botResponse = output.outputs[0].results.text;
+						break;
+					}
+					if (output.outputs?.[0]?.message) {
+						botResponse = output.outputs[0].message;
+						break;
+					}
+					if (output.message) {
+						botResponse = output.message;
+						break;
+					}
+					if (output.text) {
+						botResponse = output.text;
+						break;
+					}
+				}
+			}
+		}
+
+		// 직접 필드 확인
+		if (data.result) {
+			botResponse = data.result;
+		} else if (data.message) {
+			botResponse = data.message;
+		} else if (data.text) {
+			botResponse = data.text;
+		}
+
+		//console.log('Final bot response:', botResponse);
+
+		// <think> 태그 제거
+		if (botResponse.includes("<think>")) {
+			// <think>...</think> 패턴을 찾아서 제거
+			botResponse = botResponse.replace(/<think>.*?<\/think>/gs, "").trim();
+		}
+
+		// 이미 추가된 assistant 메시지에 타이핑 효과 적용
+		// 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)
+		await new Promise((resolve) => setTimeout(resolve, 300));
+
+		// 타이핑 효과 구현 (마지막 메시지 업데이트)
+		await typeMessage(botResponse, messages.length - 1);
+	} catch (error) {
+		clearTimeout(timeoutId);
+		console.error("Error calling Langflow API:", error);
+
+		let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
+
+		if (error.name === "AbortError") {
+			errorMessage =
+				"netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎";
+		} else if (error.message.includes("401")) {
+			errorMessage = "인증 오류가 발생했습니다. API 토큰을 확인해주세요.";
+		} else if (error.message.includes("404")) {
+			errorMessage = "Flow를 찾을 수 없습니다. Flow ID를 확인해주세요.";
+		} else if (error.message.includes("500")) {
+			errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+		} else if (
+			error.message.includes("502") ||
+			error.message.includes("Bad Gateway")
+		) {
+			errorMessage =
+				"Langflow API 서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.";
+		} else if (
+			error.message.includes("504") ||
+			error.message.includes("timeout")
+		) {
+			errorMessage =
+				"netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎";
+		}
+
+		// 이미 추가된 assistant 메시지를 업데이트
+		messages[messages.length - 1] = {
+			role: "assistant",
+			content: errorMessage,
+			isTyping: false,
+		};
+		messages = [...messages]; // 리액티비티 트리거
+	} finally {
+		clearTimeout(timeoutId);
+		isLoading = false;
+	}
+}
+
+function handleKeyPress(event) {
+	if (event.key === "Enter" && !event.shiftKey) {
+		event.preventDefault();
+		sendMessage();
+	}
+}
+
+onMount(async () => {
+	//console.log('LangflowChatSimple: Initializing with Langflow API...');
+
+	// 동적으로 marked와 katex 로드
+	try {
+		const markedModule = await import("marked");
+		marked = markedModule.marked;
+
+		// Marked 설정
+		marked.setOptions({
+			breaks: true,
+			gfm: true,
+			headerIds: false,
+			mangle: false,
+		});
+
+		const katexModule = await import("katex");
+		katex = katexModule.default;
+	} catch (error) {
+		console.error("Failed to load markdown/katex modules:", error);
+	}
+
+	// 클라이언트 사이드에서만 실행
+	sessionId = `user_${Date.now()}`;
+
+	// 프로덕션에서는 Netlify Functions 사용
+	LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy";
+
+	//console.log('API URL:', LANGFLOW_API_URL);
+
+	// 초기 환영 메시지
+	messages = [
+		{
+			role: "assistant",
+			content:
+				"안녕하세요!<br>토비라이프 블로그 채팅봇은<br>2024년12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br>궁금한 점이 있으시면 물어봐주세요.🤖<br>따라서 2025년 이후의 내용이나<br>실시간 데이터에 대한 질문에는<br>도움을 드리기 어려울 수 있습니다.😊!",
+		},
+	];
+
+	return () => {
+		// Cleanup if needed
+	};
+});
 </script>
 
 <svelte:head>
