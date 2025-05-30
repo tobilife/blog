@@ -633,7 +633,7 @@
     border: 1px solid #e0e0e0;
     border-radius: 24px;
     outline: none;
-    font-size: 14px;
+    font-size: 16px; /* iOS 자동 확대 방지 */
     font-family: inherit;
   }
   
