@@ -1,5 +1,6 @@
 export async function handler(event, context) {
   console.log('Langflow proxy called');
+  const startTime = Date.now(); // 시작 시간 기록
   
   // CORS headers
   const headers = {
@@ -40,7 +41,8 @@ export async function handler(event, context) {
 
     // Forward the request to Langflow with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25초 타임아웃
+    // Netlify Functions 무료 플랜은 10초, Pro는 26초 제한
+    const timeoutId = setTimeout(() => controller.abort(), 9500); // 9.5초 타임아웃 (안전 마진)
 
     try {
       const response = await fetch(LANGFLOW_API_URL, {
@@ -49,6 +51,7 @@ export async function handler(event, context) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${API_TOKEN}`,
           'Accept': 'application/json',
+          'X-Forwarded-For': event.headers['x-forwarded-for'] || event.headers['client-ip'] || '',
         },
         body: event.body,
         signal: controller.signal
@@ -58,9 +61,27 @@ export async function handler(event, context) {
 
       const responseText = await response.text();
       console.log('Langflow response status:', response.status);
+      console.log('Response time:', Date.now() - startTime, 'ms');
 
       if (!response.ok) {
         console.error('Langflow API error:', responseText);
+        
+        // 502 에러 명시적 처리
+        if (response.status === 502 || response.status === 503) {
+          return {
+            statusCode: 502,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              error: 'Bad Gateway',
+              message: 'Langflow API is currently unavailable. Please try again later.',
+              status: response.status
+            }),
+          };
+        }
+        
         return {
           statusCode: response.status,
           headers: {
@@ -87,24 +108,44 @@ export async function handler(event, context) {
       clearTimeout(timeoutId);
       
       if (fetchError.name === 'AbortError') {
-        console.error('Request timeout');
+        console.error('Request timeout after 9.5 seconds');
         return {
           statusCode: 504,
-          headers,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ 
             error: 'Gateway timeout',
-            message: 'The request took too long to complete. Please try again.'
+            message: 'The request took too long to complete. Please try with a simpler question.',
+            timeout: true
           }),
         };
       }
       
-      throw fetchError;
+      // 네트워크 에러 등으로 502 반환
+      console.error('Network error:', fetchError.message);
+      return {
+        statusCode: 502,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          error: 'Bad Gateway',
+          message: 'Failed to connect to Langflow API. Please try again.',
+          details: fetchError.message
+        }),
+      };
     }
   } catch (error) {
     console.error('Langflow proxy error:', error);
     return {
       statusCode: 500,
-      headers,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ 
         error: 'Internal server error',
         message: error.message 
