@@ -60,6 +60,26 @@
       return text;
     }
   }
+  
+  // 타이핑 효과 함수
+  async function typeMessage(text, messageIndex) {
+    const typingSpeed = 15; // 각 문자 간 딜레이 (ms)
+    const words = text.split(' ');
+    let currentText = '';
+    
+    for (let i = 0; i < words.length; i++) {
+      currentText += (i > 0 ? ' ' : '') + words[i];
+      messages[messageIndex] = {
+        ...messages[messageIndex],
+        content: currentText
+      };
+      messages = [...messages]; // 리액티비티 트리거
+      
+      // 단어 사이에 짧은 딜레이
+      await new Promise(resolve => setTimeout(resolve, typingSpeed));
+    }
+  }
+  
   async function sendMessage() {
     if (!inputMessage.trim() || isLoading) return;
     
@@ -167,7 +187,11 @@
         botResponse = botResponse.replace(/<think>.*?<\/think>/gs, '').trim();
       }
       
-      messages = [...messages, { role: 'assistant', content: botResponse }];
+      // 타이핑 효과를 위해 빈 메시지 먼저 추가
+      messages = [...messages, { role: 'assistant', content: '' }];
+      
+      // 타이핑 효과 구현
+      await typeMessage(botResponse, messages.length - 1);
       
     } catch (error) {
       clearTimeout(timeoutId);
@@ -275,7 +299,7 @@
       </div>
       
       <!-- 메시지 영역 -->
-            <div class="chat-messages" bind:this={chatMessagesEl}>
+      <div class="chat-messages" bind:this={chatMessagesEl}>
         {#each messages as message}
           <div class="message {message.role}">
             {#if message.role === 'assistant' && marked}
@@ -286,7 +310,7 @@
           </div>
         {/each}
         
-        {#if isLoading}
+        {#if isLoading && messages[messages.length - 1]?.content === ''}
           <div class="message assistant">
             <div class="typing-indicator">
               <span></span>
@@ -407,7 +431,7 @@
     margin-bottom: 12px;
     padding: 10px 14px;
     border-radius: 12px;
-        max-width: 100%;
+    max-width: 100%;
     word-wrap: break-word;
   }
   
