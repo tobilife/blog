@@ -1,3 +1,13 @@
+---
+title: "보험 IT 15년, 토비라이프의 기술 여정"
+published: 2025-05-25
+description: '손해보험사에서 쌓은 보험 IT 전문가의 포트폴리오'
+image: ''
+tags: [Portfolio, Insurance-IT, Java, Oracle, xPlatform]
+category: 'Portfolio'
+draft: false
+---
+
 ## 📊 🚀 토비라이프의 경력 Overview
 
 ### 전체 경력 마인드맵
