@@ -1,5 +1,7 @@
 <script>
 import { afterUpdate, onMount } from "svelte";
+import { ContextDetector } from "./ContextDetector";
+import { BlogRAGService } from "./BlogRAGService";
 
 let messages = [];
 let inputMessage = "";
@@ -10,6 +12,10 @@ let LANGFLOW_API_URL = "";
 let marked = null;
 let katex = null;
 let chatMessagesEl = null; // chat-messages 엘리먼트 참조
+
+// 블로그 RAG 서비스 인스턴스
+let contextDetector = null;
+let blogRAGService = null;
 
 // 채팅 메시지 스크롤을 가장 아래로 이동
 function scrollToBottom() {
@@ -103,6 +109,34 @@ async function sendMessage() {
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
 	messages = [...messages, { role: "assistant", content: "", isTyping: true, isSearching: false }];
 
+	// 블로그 컨텍스트 감지 및 RAG 검색
+	let contextualMessage = userMessage;
+	let searchResults = [];
+	let isAboutBlog = false;
+	
+	try {
+		// 블로그 관련 질문인지 확인
+		isAboutBlog = await contextDetector.isAboutBlog(userMessage);
+		
+		if (isAboutBlog) {
+			console.log('☝️ 블로그 컨텍스트 감지됨! 관련 포스트 검색 중...');
+			
+			// 질문에서 키워드 추출
+			const keywords = await contextDetector.extractSearchKeywords(userMessage);
+			console.log('Extracted keywords:', keywords);
+			
+			// 관련 포스트 검색
+			searchResults = await blogRAGService.searchRelevantPosts(userMessage);
+			console.log(`Found ${searchResults.length} relevant posts`);
+			
+			// LLM 프롬프트에 컨텍스트 추가
+			contextualMessage = blogRAGService.buildContextualPrompt(userMessage, searchResults);
+		}
+	} catch (error) {
+		console.error('Blog context detection error:', error);
+		// 오류 발생 시 원본 메시지 사용
+	}
+
 	isLoading = true;
 
 	// 타임아웃을 위한 AbortController 생성
@@ -118,7 +152,7 @@ async function sendMessage() {
 		const recentMessages = messages.slice(0, -2).filter(m => m.content && !m.isTyping).slice(-8);
 		console.log(`Sending ${recentMessages.length} conversation history messages`);
 		const payload = {
-			input_value: userMessage,
+			input_value: contextualMessage,  // 컨텍스트가 추가된 메시지 사용
 			output_type: "chat",
 			input_type: "chat",
 			stream: false,
@@ -224,6 +258,12 @@ async function sendMessage() {
 			botResponse = botResponse.replace(/<think>.*?<\/think>/gs, "").trim();
 		}
 
+		// 블로그 참조 링크 추가
+		if (isAboutBlog && searchResults.length > 0) {
+			const references = blogRAGService.formatReferences(searchResults);
+			botResponse += references;
+		}
+
 		// 이미 추가된 assistant 메시지에 타이핑 효과 적용
 		// 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)
 		await new Promise((resolve) => setTimeout(resolve, 300));
@@ -282,6 +322,20 @@ function handleKeyPress(event) {
 onMount(async () => {
 	//console.log('LangflowChatSimple: Initializing with Langflow API...');
 
+	// 블로그 RAG 서비스 초기화
+	contextDetector = new ContextDetector();
+	blogRAGService = new BlogRAGService();
+	
+	// 비동기로 초기화 (블로D킹하지 않음)
+	Promise.all([
+		contextDetector.initialize(),
+		blogRAGService.initialize()
+	]).then(() => {
+		console.log('✅ Blog RAG services initialized');
+	}).catch(error => {
+		console.error('Failed to initialize RAG services:', error);
+	});
+
 	// 동적으로 marked와 katex 로드
 	try {
 		const markedModule = await import("marked");
@@ -314,7 +368,7 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-			 "안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능이 추가되었습니다!</strong><br>'최신', '현재', '2025년' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>⚡ <strong>LAG 적응형 처리 시스템 적용!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+			 "안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능이 추가되었습니다!</strong><br>'최신', '현재', '2025년' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템 적용!</strong><br>블로그 관련 질문 시 자동으로 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>LAG 적응형 처리 시스템 적용!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
 			},
 	];
 
