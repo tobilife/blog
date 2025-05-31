@@ -18,11 +18,12 @@ async function searchBrave(query, apiKey) {
   // 날짜/시간 관련 질문은 검색 쿼리 최적화
   let searchQuery = query;
   if (query.includes('오늘') || query.includes('날짜') || query.includes('몇월') || query.includes('몇일')) {
-    searchQuery = '한국 현재 날짜 시간 2025년';
+    // 영어로 검색하면 더 정확한 결과를 얻을 수 있음
+    searchQuery = 'current date time Korea May 31 2025';
   }
   
   try {
-    const response = await fetch(`${BRAVE_API_URL}?q=${encodeURIComponent(searchQuery)}&count=5`, {
+    const response = await fetch(`${BRAVE_API_URL}?q=${encodeURIComponent(searchQuery)}&count=5&freshness=pw`, {
       headers: {
         'Accept': 'application/json',
         'Accept-Encoding': 'gzip',
@@ -59,7 +60,21 @@ function enhancePromptWithSearchResults(originalQuery, searchResults) {
     return originalQuery;
   }
   
+  // 현재 날짜를 서버에서 직접 제공
+  const now = new Date();
+  const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 한국 시간
+  const year = koreaTime.getUTCFullYear();
+  const month = koreaTime.getUTCMonth() + 1;
+  const day = koreaTime.getUTCDate();
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][koreaTime.getUTCDay()];
+  
   let enhancedPrompt = `사용자 질문: ${originalQuery}\n\n`;
+  
+  // 날짜 관련 질문인 경우 서버 시간 제공
+  if (originalQuery.includes('오늘') || originalQuery.includes('날짜') || originalQuery.includes('몇월') || originalQuery.includes('몇일')) {
+    enhancedPrompt += `현재 한국 시간: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n\n`;
+  }
+  
   enhancedPrompt += '다음은 최신 웹 검색 결과입니다. 이 정보를 참고하여 답변해주세요:\n\n';
   
   searchResults.forEach((result, index) => {
@@ -70,9 +85,9 @@ function enhancePromptWithSearchResults(originalQuery, searchResults) {
   });
   
   enhancedPrompt += '중요 지침:\n';
-  enhancedPrompt += '1. 검색 결과에 날짜/시간 정보가 있다면 그 정보를 명확하게 알려주세요.\n';
-  enhancedPrompt += '2. 검색 결과에 직접적인 날짜 정보가 없고 웹사이트 링크만 있다면, 사용자에게 웹사이트를 방문하라고 제안하지 마세요.\n';
-  enhancedPrompt += '3. "오늘 한국시간으로 몇월 몇일이냐?"와 같은 질문에는 가능한 한 구체적인 날짜를 제공하세요.\n';
+  enhancedPrompt += '1. 날짜 관련 질문에는 위에 제공된 "현재 한국 시간"을 기준으로 답변하세요.\n';
+  enhancedPrompt += '2. 검색 결과에 직접적인 날짜 정보가 없더라도 서버에서 제공한 날짜를 사용하세요.\n';
+  enhancedPrompt += '3. 사용자에게 웹사이트를 방문하라고 제안하지 마세요.\n';
   enhancedPrompt += '4. 검색 결과를 인용할 때는 출처를 명시해주세요.';
   
   return enhancedPrompt;
