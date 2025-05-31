@@ -129,8 +129,19 @@ async function sendMessage() {
 			searchResults = await blogRAGService.searchRelevantPosts(userMessage);
 			console.log(`Found ${searchResults.length} relevant posts`);
 			
+			if (searchResults.length > 0) {
+				// 검색 결과 로그
+				console.log('Search results:', searchResults.map(r => ({
+					title: r.post.title,
+					score: r.score
+				})));
+			}
+			
 			// LLM 프롬프트에 컨텍스트 추가
 			contextualMessage = blogRAGService.buildContextualPrompt(userMessage, searchResults);
+			console.log('Contextual prompt preview:', contextualMessage.substring(0, 200) + '...');
+		} else {
+			console.log('ℹ️ 일반 질문으로 판단됨');
 		}
 	} catch (error) {
 		console.error('Blog context detection error:', error);
