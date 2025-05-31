@@ -132,6 +132,17 @@ export class ContextDetector {
       await this.initialize();
     }
     const lowerMessage = userMessage.toLowerCase();
+    
+    // "이 블로그", "여기", "토비라이프" 등의 키워드가 있으면 전체 검색
+    if (lowerMessage.includes('이 블로그') || 
+        lowerMessage.includes('여기') || 
+        lowerMessage.includes('토비라이프') ||
+        lowerMessage.includes('뾰가') ||
+        lowerMessage.includes('뭐가')) {
+      console.log('Blog-wide search triggered');
+      return ['*']; // 전체 검색
+    }
+    
     const keywords = [];
     
     // 블로그 주제 키워드 먼저 추출
@@ -168,7 +179,7 @@ export class ContextDetector {
     const words = cleanedMessage
       .split(/\s+/)
       .filter(word => word.length > 2)
-      .filter(word => !['있어', '있나', '알려', '설명', '뭐야', '어떤', '알려줘', '해줘', '보여줘'].includes(word));
+      .filter(word => !['있어', '있나', '알려', '설명', '뾰야', '어떤', '알려줘', '해줘', '보여줘'].includes(word));
     
     keywords.push(...words);
     
