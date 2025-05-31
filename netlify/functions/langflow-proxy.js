@@ -61,11 +61,14 @@ function analyzeQueryIntent(query) {
     /날씨/,
     /기온/,
     /온도/,
-    /비.*오/,
-    /눈.*오/,
+    /\s비\s/,
+    /비가\s/,
+    /눈이\s/,
     /맑/,
     /흐림/,
-    /구름/
+    /구름/,
+    /바람/,
+    /습도/
   ];
   
   // 일반 검색이 필요한 패턴
@@ -150,8 +153,23 @@ function setCachedResponse(query, response) {
 
 // 날씨 정보가 필요한지 확인하는 함수
 function needsWeatherInfo(query) {
-  const weatherKeywords = ['날씨', '기온', '온도', '비', '눈', '맑음', '흐림', '구름', '바람'];
-  return weatherKeywords.some(keyword => query.includes(keyword));
+  // 더 정확한 날씨 키워드 패턴
+  const weatherPatterns = [
+    /날씨/,
+    /기온/,
+    /온도/,
+    /\s비\s/,  // 공백으로 분리된 '비'
+    /비가\s/,   // '비가' 로 시작
+    /눈이\s/,   // '눈이' 로 시작
+    /맑음/,
+    /흐림/,
+    /구름/,
+    /바람/,
+    /습도/,
+    /미세먼지/,
+    /황사/
+  ];
+  return weatherPatterns.some(pattern => pattern.test(query));
 }
 
 // 도시명을 추출하는 함수
