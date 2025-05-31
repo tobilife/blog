@@ -58,8 +58,21 @@
 - "2025년 트렌드가 뭐야?"
 - "오늘 한국시간으로 몇월 몇일이야?"
 - "현재 비트코인 가격"
+- "오늘 고양시 날씨 어때?"
+- "서울 날씨 알려줘"
+
+## 개선 사항 (3차) - OpenWeatherMap API 추가
+- OpenWeatherMap API 통합 (환경변수: OPENWEATHER_API_KEY)
+- 한국 주요 도시 날씨 정보 제공
+- 현재 기온, 체감 온도, 습도, 풍속 등 상세 정보
+- 날씨 관련 키워드 자동 감지
+### 필요한 설정
+1. OpenWeatherMap 가입 (https://openweathermap.org/)
+2. 무료 API 키 발급
+3. Netlify 환경변수에 OPENWEATHER_API_KEY 추가
 
 ## 다음 단계
 1. Git 커밋 및 푸시
 2. Netlify에서 빌드 확인
-3. 실제 환경에서 테스트
+3. OpenWeatherMap API 키 설정
+4. 실제 환경에서 날씨 기능 테스트
