@@ -114,7 +114,9 @@ async function sendMessage() {
 
 		// Langflow API 호출
 		// 최근 대화 히스토리를 포함 (LAG: 대화 맥락 유지)
-		const recentMessages = messages.slice(-5).filter(m => m.content && !m.isTyping); // 최근 5개 메시지
+		// 현재 입력 중인 메시지와 빈 메시지를 제외한 최근 8개 메시지 (서버에서 6개만 사용)
+		const recentMessages = messages.slice(0, -2).filter(m => m.content && !m.isTyping).slice(-8);
+		console.log(`Sending ${recentMessages.length} conversation history messages`);
 		const payload = {
 			input_value: userMessage,
 			output_type: "chat",

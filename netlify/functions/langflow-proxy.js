@@ -359,8 +359,8 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   // 대화 맥락이 있는 경우 포함
   if (conversationHistory.length > 0) {
     enhancedPrompt += '이전 대화 내용:\n';
-    // 최근 3개의 대화만 포함 (너무 길어지지 않도록)
-    const recentHistory = conversationHistory.slice(-3);
+    // 최근 6개의 대화만 포함 (적절한 맥락 유지)
+    const recentHistory = conversationHistory.slice(-6);
     recentHistory.forEach(msg => {
       enhancedPrompt += `${msg.role === 'user' ? '사용자' : 'AI'}: ${msg.content}\n`;
     });
@@ -491,6 +491,12 @@ export async function handler(event, context) {
     
     console.log('User query:', userQuery);
     console.log('Conversation history length:', conversationHistory.length);
+    if (conversationHistory.length > 0) {
+      console.log('Recent conversation context:');
+      conversationHistory.slice(-6).forEach((msg, idx) => {
+        console.log(`  [${idx}] ${msg.role}: ${msg.content.substring(0, 50)}...`);
+      });
+    }
     
     // LAG 방식: 복잡도 분석
     const complexity = analyzeQueryComplexity(userQuery);
