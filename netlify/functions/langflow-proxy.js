@@ -80,6 +80,9 @@ function analyzeQueryIntent(query) {
     /검색해/,
     /검색해줘/,
     /최신.*뉴스/,
+    /뉴스.*헤드라인/,
+    /헤드라인/,
+    /뉴스.*검색/,
     /최근.*동향/,
     /요즘.*트렌드/,
     /github.*트렌드/,
@@ -426,12 +429,11 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   
   // 검색 결과가 있는 경우
   if (searchResults && searchResults.length > 0) {
-    enhancedPrompt += '다음은 최신 웹 검색 결과입니다:\n\n';
+    enhancedPrompt += `[웹 검색 결과 - ${year}년 ${month}월 ${day}일 기준]\n\n`;
     
     searchResults.forEach((result, index) => {
-      enhancedPrompt += `[검색결과 ${index + 1}]\n`;
-      enhancedPrompt += `제목: ${result.title}\n`;
-      enhancedPrompt += `내용: ${result.description}\n`;
+      enhancedPrompt += `[${index + 1}] ${result.title}\n`;
+      enhancedPrompt += `${result.description}\n`;
       enhancedPrompt += `출처: ${result.url}\n\n`;
     });
   }
@@ -447,13 +449,19 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
     enhancedPrompt += '2. "현재 실시간 날씨 정보를 확인할 수 없습니다"라고 명확히 알려주세요.\n';
   } else if (searchResults && searchResults.length > 0) {
     // 일반 검색 결과에 대한 지침
-    enhancedPrompt += '1. 검색 결과를 바탕으로 사용자 질문에 직접적으로 답변하세요.\n';
-    enhancedPrompt += '2. 검색 결과의 내용을 요약하여 제공하고, 출처를 명시하세요.\n';
-    enhancedPrompt += '3. 사용자가 요청한 주제에 집중하여 답변하세요.\n';
+    enhancedPrompt += '1. 위에 제공된 최신 웹 검색 결과를 바탕으로 사용자 질문에 답변하세요.\n';
+    enhancedPrompt += '2. 검색 결과의 내용을 요약하여 제공하고, 필요시 출처를 명시하세요.\n';
+    enhancedPrompt += '3. "검색 기능이 없다"거나 "알 수 없다"라고 말하지 마세요. 검색 결과를 활용하세요.\n';
+    enhancedPrompt += '4. 사용자가 요청한 주제에 집중하여 답변하세요.\n';
+    
+    // 뉴스 검색에 대한 추가 지침
+    if (originalQuery.includes('뉴스') || originalQuery.includes('헤드라인')) {
+      enhancedPrompt += '5. 뉴스 헤드라인을 요약하여 주요 뉴스를 간결하게 제시하세요.\n';
+    }
     
     // GitHub 토픽 같은 특정 주제에 대한 추가 지침
     if (originalQuery.includes('github') || originalQuery.includes('깃허브')) {
-      enhancedPrompt += '4. GitHub 트렌드나 토픽에 대해 구체적인 프로젝트 이름, 설명, 주요 기능을 포함하세요.\n';
+      enhancedPrompt += '5. GitHub 트렌드나 토픽에 대해 구체적인 프로젝트 이름, 설명, 주요 기능을 포함하세요.\n';
     }
   }
   
@@ -592,18 +600,23 @@ export async function handler(event, context) {
       }
       
       // 검색이 필요한 경우 (복잡도에 따른 검색 제한 적용)
+      // 검색 요청이 명시적으로 있는 경우는 복잡도와 관계없이 항상 실행
+      const hasExplicitSearchRequest = /검색해|알려줘|찾아/.test(userQuery);
+      const effectiveSearchLimit = hasExplicitSearchRequest ? Math.max(3, complexity.recommendations.searchLimit) : complexity.recommendations.searchLimit;
+      
       if (BRAVE_API_KEY && intent.needsSearch && !weatherData && !intent.isDateTime && 
-          complexity.recommendations.searchLimit > 0) {
+          (hasExplicitSearchRequest || effectiveSearchLimit > 0)) {
         console.log('Searching web for additional context...');
         console.log('Original query:', userQuery);
-        console.log('Search limit based on complexity:', complexity.recommendations.searchLimit);
+        console.log('Has explicit search request:', hasExplicitSearchRequest);
+        console.log('Effective search limit:', effectiveSearchLimit);
         
         // 복잡도에 따른 검색 결과 수 조정
         const originalSearchBrave = searchBrave;
         searchBrave = async function(query, apiKey) {
           const results = await originalSearchBrave(query, apiKey);
           if (results) {
-            return results.slice(0, complexity.recommendations.searchLimit);
+            return results.slice(0, effectiveSearchLimit);
           }
           return results;
         };
