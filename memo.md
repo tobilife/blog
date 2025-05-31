@@ -70,9 +70,3 @@
 1. OpenWeatherMap 가입 (https://openweathermap.org/)
 2. 무료 API 키 발급
 3. Netlify 환경변수에 OPENWEATHER_API_KEY 추가
-
-## 다음 단계
-1. Git 커밋 및 푸시
-2. Netlify에서 빌드 확인
-3. OpenWeatherMap API 키 설정
-4. 실제 환경에서 날씨 기능 테스트

@@ -11,6 +11,93 @@ function shouldSearchWeb(query) {
   return searchKeywords.some(keyword => lowerQuery.includes(keyword));
 }
 
+// 날씨 정보가 필요한지 확인하는 함수
+function needsWeatherInfo(query) {
+  const weatherKeywords = ['날씨', '기온', '온도', '비', '눈', '맑음', '흐림', '구름', '바람'];
+  return weatherKeywords.some(keyword => query.includes(keyword));
+}
+
+// 도시명을 추출하는 함수
+function extractCity(query) {
+  const cities = [
+    '고양시', '고양', '서울', '부산', '대구', '인천', '광주', '대전', 
+    '울산', '세종', '제주', '수원', '성남', '의정부', '안양', '부천',
+    '광명', '평택', '동두천', '안산', '과천', '구리', '남양주', '오산',
+    '시흥', '군포', '의왕', '하남', '용인', '파주', '이천', '안성', '김포'
+  ];
+  
+  for (const city of cities) {
+    if (query.includes(city)) {
+      return city;
+    }
+  }
+  return null;
+}
+
+// OpenWeatherMap API 호출 함수
+async function getWeather(city, apiKey) {
+  const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+  
+  try {
+    // 도시명을 영어로 변환
+    const cityMap = {
+      '고양시': 'Goyang',
+      '고양': 'Goyang',
+      '서울': 'Seoul',
+      '부산': 'Busan',
+      '대구': 'Daegu',
+      '인천': 'Incheon',
+      '광주': 'Gwangju',
+      '대전': 'Daejeon',
+      '울산': 'Ulsan',
+      '세종': 'Sejong',
+      '제주': 'Jeju',
+      '수원': 'Suwon',
+      '성남': 'Seongnam',
+      '의정부': 'Uijeongbu',
+      '안양': 'Anyang',
+      '부천': 'Bucheon',
+      '광명': 'Gwangmyeong',
+      '평택': 'Pyeongtaek',
+      '안산': 'Ansan',
+      '과천': 'Gwacheon',
+      '구리': 'Guri',
+      '남양주': 'Namyangju',
+      '용인': 'Yongin',
+      '파주': 'Paju',
+      '김포': 'Gimpo'
+    };
+    
+    let searchCity = cityMap[city] || city;
+    
+    const response = await fetch(
+      `${WEATHER_API_URL}?q=${searchCity},KR&appid=${apiKey}&units=metric&lang=kr`
+    );
+    
+    if (!response.ok) {
+      console.error('Weather API error:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    return {
+      city: city,
+      temp: Math.round(data.main.temp),
+      feels_like: Math.round(data.main.feels_like),
+      humidity: data.main.humidity,
+      description: data.weather[0].description,
+      wind_speed: data.wind.speed,
+      clouds: data.clouds.all,
+      temp_min: Math.round(data.main.temp_min),
+      temp_max: Math.round(data.main.temp_max)
+    };
+  } catch (error) {
+    console.error('Weather API error:', error);
+    return null;
+  }
+}
+
 // Brave Search API 호출 함수
 async function searchBrave(query, apiKey) {
   const BRAVE_API_URL = 'https://api.search.brave.com/res/v1/web/search';
@@ -55,11 +142,7 @@ async function searchBrave(query, apiKey) {
 }
 
 // 검색 결과를 프롬프트에 포함시키는 함수
-function enhancePromptWithSearchResults(originalQuery, searchResults) {
-  if (!searchResults || searchResults.length === 0) {
-    return originalQuery;
-  }
-  
+function enhancePromptWithSearchResults(originalQuery, searchResults, weatherData) {
   // 현재 날짜를 서버에서 직접 제공
   const now = new Date();
   const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 한국 시간
@@ -75,25 +158,47 @@ function enhancePromptWithSearchResults(originalQuery, searchResults) {
     enhancedPrompt += `현재 한국 시간: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n\n`;
   }
   
-  enhancedPrompt += '다음은 최신 웹 검색 결과입니다. 이 정보를 참고하여 답변해주세요:\n\n';
+  // 날씨 정보가 있는 경우
+  if (weatherData) {
+    enhancedPrompt += `[실시간 날씨 정보]\n`;
+    enhancedPrompt += `${weatherData.city}의 현재 날씨:\n`;
+    enhancedPrompt += `- 현재 기온: ${weatherData.temp}°C (체감 ${weatherData.feels_like}°C)\n`;
+    enhancedPrompt += `- 최저/최고 기온: ${weatherData.temp_min}°C / ${weatherData.temp_max}°C\n`;
+    enhancedPrompt += `- 날씨 상태: ${weatherData.description}\n`;
+    enhancedPrompt += `- 습도: ${weatherData.humidity}%\n`;
+    enhancedPrompt += `- 풍속: ${weatherData.wind_speed}m/s\n`;
+    enhancedPrompt += `- 구름량: ${weatherData.clouds}%\n\n`;
+  }
   
-  searchResults.forEach((result, index) => {
-    enhancedPrompt += `[검색결과 ${index + 1}]\n`;
-    enhancedPrompt += `제목: ${result.title}\n`;
-    enhancedPrompt += `내용: ${result.description}\n`;
-    enhancedPrompt += `출처: ${result.url}\n\n`;
-  });
+  // 검색 결과가 있는 경우
+  if (searchResults && searchResults.length > 0) {
+    enhancedPrompt += '다음은 최신 웹 검색 결과입니다:\n\n';
+    
+    searchResults.forEach((result, index) => {
+      enhancedPrompt += `[검색결과 ${index + 1}]\n`;
+      enhancedPrompt += `제목: ${result.title}\n`;
+      enhancedPrompt += `내용: ${result.description}\n`;
+      enhancedPrompt += `출처: ${result.url}\n\n`;
+    });
+  }
   
-  enhancedPrompt += '중요 지침:\n';
-  enhancedPrompt += '1. 날짜 관련 질문에는 위에 제공된 "현재 한국 시간"을 기준으로 답변하세요.\n';
-  enhancedPrompt += '2. 검색 결과에 직접적인 날짜 정보가 없더라도 서버에서 제공한 날짜를 사용하세요.\n';
-  enhancedPrompt += '3. 사용자에게 웹사이트를 방문하라고 제안하지 마세요.\n';
-  enhancedPrompt += '4. 검색 결과를 인용할 때는 출처를 명시해주세요.';
+  enhancedPrompt += '답변 지침:\n';
   
+  if (weatherData) {
+    enhancedPrompt += '1. 위에 제공된 실시간 날씨 정보를 바탕으로 구체적으로 답변하세요.\n';
+    enhancedPrompt += `2. "오늘 ${weatherData.city} 날씨는..." 형식으로 시작하여 제공된 모든 날씨 정보를 포함하세요.\n`;
+    enhancedPrompt += '3. 일반적인 기후 설명이 아닌 위의 실시간 데이터만 사용하세요.\n';
+  } else if (needsWeatherInfo(originalQuery)) {
+    enhancedPrompt += '1. 날씨 정보를 요청했지만 실시간 데이터를 가져올 수 없었습니다.\n';
+    enhancedPrompt += '2. "현재 실시간 날씨 정보를 확인할 수 없습니다"라고 명확히 알려주세요.\n';
+  }
+  enhancedPrompt += '- 날짜 관련 질문에는 위에 제공된 "현재 한국 시간"을 기준으로 답변하세요.\n';
+  enhancedPrompt += '- 웹사이트 방문이나 날씨 앱 사용을 권하지 마세요.\n';
+  enhancedPrompt += '- 검색 결과를 인용할 때는 출처를 명시하세요.';
   return enhancedPrompt;
-}
-
-export async function handler(event, context) {
+  }
+  
+  export async function handler(event, context) {
   console.log('Langflow proxy called');
   const startTime = Date.now();
   
@@ -119,25 +224,20 @@ export async function handler(event, context) {
       statusCode: 405,
       headers,
       body: JSON.stringify({ error: 'Method not allowed' }),
-      };
-      }
-      
-      try {
-      // API 토큰들을 환경 변수에서 가져옴
-      const API_TOKEN = process.env.LANGFLOW_API_TOKEN;
-      const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
-      const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
-      console.log('Environment check:', {
-        hasLangflow: !!API_TOKEN,
-        hasBrave: !!BRAVE_API_KEY,
-        hasOpenWeather: !!OPENWEATHER_API_KEY
-      });
-      
-      if (!API_TOKEN) {
-        throw new Error('LANGFLOW_API_TOKEN is not configured');
-      }
-      
-      const LANGFLOW_API_URL = 'https://api.langflow.astra.datastax.com/lf/88f74398-7c51-4066-a0e2-c6a1992f0889/api/v1/run/790574cb-2624-492b-a3a5-e0e118c1416f';
+    };
+  }
+
+  try {
+    // API 토큰들을 환경 변수에서 가져옴
+    const API_TOKEN = process.env.LANGFLOW_API_TOKEN;
+    const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
+    const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+    
+    if (!API_TOKEN) {
+      throw new Error('LANGFLOW_API_TOKEN is not configured');
+    }
+    
+    const LANGFLOW_API_URL = 'https://api.langflow.astra.datastax.com/lf/88f74398-7c51-4066-a0e2-c6a1992f0889/api/v1/run/790574cb-2624-492b-a3a5-e0e118c1416f';
 
     // 요청 본문 파싱
     const requestBody = JSON.parse(event.body);
@@ -145,19 +245,35 @@ export async function handler(event, context) {
     
     console.log('User query:', userQuery);
     
-    // 검색이 필요한지 확인하고 검색 수행
+    let searchResults = null;
+    let weatherData = null;
     let enhancedQuery = userQuery;
-    if (BRAVE_API_KEY && shouldSearchWeb(userQuery)) {
+    
+    // 날씨 정보가 필요한 경우
+    if (OPENWEATHER_API_KEY && needsWeatherInfo(userQuery)) {
+      const city = extractCity(userQuery);
+      if (city) {
+        console.log(`Getting weather for ${city}...`);
+        weatherData = await getWeather(city, OPENWEATHER_API_KEY);
+        if (weatherData) {
+          console.log('Weather data retrieved successfully');
+        }
+      }
+    }
+    
+    // 검색이 필요한 경우
+    if (BRAVE_API_KEY && shouldSearchWeb(userQuery) && !weatherData) {
       console.log('Searching web for additional context...');
-      const searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
-      
+      searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
       if (searchResults) {
         console.log(`Found ${searchResults.length} search results`);
-        enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults);
-        
-        // 검색 결과가 포함된 것을 클라이언트에 알리기 위한 플래그 추가
-        requestBody.hasSearchResults = true;
       }
+    }
+    
+    // 날씨 데이터나 검색 결과가 있으면 프롬프트 향상
+    if (weatherData || searchResults) {
+      enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, weatherData);
+      requestBody.hasSearchResults = true;
     }
     
     // 향상된 쿼리로 요청 본문 업데이트
