@@ -345,7 +345,7 @@ async function searchBrave(query, apiKey) {
 }
 
 // 검색 결과를 프롬프트에 포함시키는 함수
-function enhancePromptWithSearchResults(originalQuery, searchResults, weatherData) {
+function enhancePromptWithSearchResults(originalQuery, searchResults, weatherData, conversationHistory = []) {
   // 현재 날짜를 서버에서 직접 제공
   const now = new Date();
   const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 한국 시간
@@ -354,7 +354,20 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   const day = koreaTime.getUTCDate();
   const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][koreaTime.getUTCDay()];
   
-  let enhancedPrompt = `사용자 질문: ${originalQuery}\n\n`;
+  let enhancedPrompt = '';
+  
+  // 대화 맥락이 있는 경우 포함
+  if (conversationHistory.length > 0) {
+    enhancedPrompt += '이전 대화 내용:\n';
+    // 최근 3개의 대화만 포함 (너무 길어지지 않도록)
+    const recentHistory = conversationHistory.slice(-3);
+    recentHistory.forEach(msg => {
+      enhancedPrompt += `${msg.role === 'user' ? '사용자' : 'AI'}: ${msg.content}\n`;
+    });
+    enhancedPrompt += '\n';
+  }
+  
+  enhancedPrompt += `현재 사용자 질문: ${originalQuery}\n\n`;
   
   // 질문 의도 분석
   const intent = analyzeQueryIntent(originalQuery);
@@ -415,6 +428,9 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   
   // 공통 지침
   enhancedPrompt += '\n공통 지침:\n';
+  if (conversationHistory.length > 0) {
+    enhancedPrompt += '- 이전 대화 내용을 참고하여 맥락에 맞게 답변하세요.\n';
+  }
   enhancedPrompt += '- 웹사이트 방문이나 앱 사용을 권하지 마세요.\n';
   enhancedPrompt += '- 질문의 주제와 관련 없는 정보는 포함하지 마세요.';
   
@@ -471,8 +487,10 @@ export async function handler(event, context) {
     // 요청 본문 파싱
     const requestBody = JSON.parse(event.body);
     const userQuery = requestBody.input_value;
+    const conversationHistory = requestBody.conversation_history || [];
     
     console.log('User query:', userQuery);
+    console.log('Conversation history length:', conversationHistory.length);
     
     // LAG 방식: 복잡도 분석
     const complexity = analyzeQueryComplexity(userQuery);
@@ -552,10 +570,10 @@ export async function handler(event, context) {
       console.log('Skipping enhancement for simple query');
     }
     
-    // 날씨 데이터나 검색 결과가 있으면 프롬프트 향상
-    if (weatherData || searchResults) {
-      enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, weatherData);
-      requestBody.hasSearchResults = true;
+    // 날씨 데이터나 검색 결과가 있거나 대화 맥락이 있으면 프롬프트 향상
+    if (weatherData || searchResults || conversationHistory.length > 0) {
+      enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, weatherData, conversationHistory);
+      requestBody.hasSearchResults = !!(weatherData || searchResults);
     }
     
     // 향상된 쿼리로 요청 본문 업데이트

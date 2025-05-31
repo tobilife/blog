@@ -113,12 +113,18 @@ async function sendMessage() {
 		//console.log('Sending to:', LANGFLOW_API_URL);
 
 		// Langflow API 호출
+		// 최근 대화 히스토리를 포함 (LAG: 대화 맥락 유지)
+		const recentMessages = messages.slice(-5).filter(m => m.content && !m.isTyping); // 최근 5개 메시지
 		const payload = {
 			input_value: userMessage,
 			output_type: "chat",
 			input_type: "chat",
 			stream: false,
 			session_id: sessionId,
+			conversation_history: recentMessages.map(m => ({
+				role: m.role,
+				content: m.content
+			})),
 			tweaks: {},
 		};
 
