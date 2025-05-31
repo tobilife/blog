@@ -98,6 +98,15 @@ export class BlogRAGService {
       return [];
     }
     
+    // 와일드카드 처리 - 모든 포스트 반환
+    if (query === '*' || query.includes('전체') || query.includes('모든')) {
+      return this.knowledgeBase.posts.slice(0, maxResults).map((post, index) => ({
+        post: post,
+        relevantChunks: post.chunks.slice(0, 1),
+        score: index * 0.1 // 순서대로 점수 부여
+      }));
+    }
+    
     // Fuse.js로 검색
     const searchResults = this.fuse.search(query);
     
@@ -143,7 +152,7 @@ export class BlogRAGService {
       return userMessage;
     }
     
-    let contextPrompt = `다음은 토비라이프 블로그의 관련 포스트 내용입니다:\n\n`;
+    let contextPrompt = `당신은 토비라이프 블로그의 AI 어시스턴트입니다.\n\n다음은 토비라이프 블로그의 현재 포스트 목록입니다:\n\n`;
     
     searchResults.forEach((result, index) => {
       contextPrompt += `[포스트 ${index + 1}]\n`;
@@ -161,8 +170,8 @@ export class BlogRAGService {
       contextPrompt += `\n`;
     });
     
-    contextPrompt += `위 블로그 포스트를 참고하여 다음 질문에 답변해주세요:\n${userMessage}\n\n`;
-    contextPrompt += `답변 시 참조한 포스트가 있다면 언급해주세요.`;
+    contextPrompt += `위 블로그 포스트를 기반으로 다음 질문에 답변해주세요:\n${userMessage}\n\n`;
+    contextPrompt += `중요: 토비라이프 블로그에는 현재 ${searchResults.length}개의 포스트만 있습니다. 위에 언급된 포스트만 참조하여 답변하고, 없는 포스트는 언급하지 마세요.`;
     
     return contextPrompt;
   }

@@ -134,28 +134,48 @@ export class ContextDetector {
     const lowerMessage = userMessage.toLowerCase();
     const keywords = [];
     
-    // 블로그 관련 키워드 제거하고 핵심 키워드 추출
-    let cleanedMessage = lowerMessage;
-    this.blogKeywords.forEach(keyword => {
-      cleanedMessage = cleanedMessage.replace(keyword.toLowerCase(), '');
-    });
-    
-    // 주제 키워드 추출
+    // 블로그 주제 키워드 먼저 추출
     this.blogTopics.forEach(topic => {
       if (lowerMessage.includes(topic.toLowerCase())) {
         keywords.push(topic);
       }
     });
     
+    // 카테고리 확인
+    this.blogCategories.forEach(category => {
+      if (lowerMessage.includes(category.toLowerCase())) {
+        keywords.push(category);
+      }
+    });
+    
+    // "글", "포스트", "작성한" 등이 있으면 전체 검색을 위한 와일드카드 추가
+    if (lowerMessage.includes('글') || lowerMessage.includes('포스트') || 
+        lowerMessage.includes('작성한') || lowerMessage.includes('모든') ||
+        lowerMessage.includes('전체')) {
+      // 키워드가 없으면 모든 포스트를 검색하도록
+      if (keywords.length === 0) {
+        keywords.push('*'); // 와일드카드로 전체 검색
+      }
+    }
+    
+    // 블로그 관련 키워드 제거하고 핵심 키워드 추출
+    let cleanedMessage = lowerMessage;
+    this.blogKeywords.forEach(keyword => {
+      cleanedMessage = cleanedMessage.replace(keyword.toLowerCase(), '');
+    });
+    
     // 명사 추출 (간단한 휴리스틱)
     const words = cleanedMessage
       .split(/\s+/)
       .filter(word => word.length > 2)
-      .filter(word => !['있어', '있나', '알려', '설명', '뭐야', '어떤'].includes(word));
+      .filter(word => !['있어', '있나', '알려', '설명', '뭐야', '어떤', '알려줘', '해줘', '보여줘'].includes(word));
     
     keywords.push(...words);
     
     // 중복 제거
-    return [...new Set(keywords)];
+    const uniqueKeywords = [...new Set(keywords)];
+    
+    // 키워드가 하나도 없으면 전체 검색
+    return uniqueKeywords.length === 0 ? ['*'] : uniqueKeywords;
   }
 }
