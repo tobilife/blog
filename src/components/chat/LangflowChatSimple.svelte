@@ -96,12 +96,12 @@ async function sendMessage() {
 
 	const userMessage = inputMessage;
 	inputMessage = "";
-
+	
 	// 사용자 메시지 추가
 	messages = [...messages, { role: "user", content: userMessage }];
-
+	
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
-	messages = [...messages, { role: "assistant", content: "", isTyping: true }];
+	messages = [...messages, { role: "assistant", content: "", isTyping: true, isSearching: false }];
 
 	isLoading = true;
 
@@ -143,11 +143,15 @@ async function sendMessage() {
 
 		const data = JSON.parse(responseText);
 		//console.log('Parsed response:', data);
-
+		
+		// 검색 수행 여부 확인
+		const hasSearchResults = data.hasSearchResults || false;
+		if (hasSearchResults) {
+		 console.log('최신 웹 검색 결과가 답변에 포함되었습니다.');
+		}
+		
 		// 응답 파싱 - 다양한 구조 시도
 		let botResponse = "Sorry, I could not generate a response.";
-
-		// Langflow 응답 구조 확인
 		if (data.outputs) {
 			//console.log('Found outputs:', data.outputs);
 
@@ -292,8 +296,8 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-				"안녕하세요!<br>토비라이프 블로그 채팅봇은<br>2024년12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br>궁금한 점이 있으시면 물어봐주세요.🤖<br>따라서 2025년 이후의 내용이나<br>실시간 데이터에 대한 질문에는<br>도움을 드리기 어려울 수 있습니다.😊!",
-		},
+			 "안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능이 추가되었습니다!</strong><br>'최신', '현재', '2025년' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+			},
 	];
 
 	return () => {

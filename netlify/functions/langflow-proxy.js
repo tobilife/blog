@@ -1,6 +1,76 @@
+// 검색이 필요한 키워드를 확인하는 함수
+function shouldSearchWeb(query) {
+  const searchKeywords = [
+    '최신', '현재', '요즘', '오늘', '어제', '최근',
+    '2025년', '2025', '올해', '이번달', '이번주',
+    '뉴스', '소식', '동향', '트렌드', '현황',
+    '실시간', '지금', '업데이트', '발표', '발매'
+  ];
+  
+  const lowerQuery = query.toLowerCase();
+  return searchKeywords.some(keyword => lowerQuery.includes(keyword));
+}
+
+// Brave Search API 호출 함수
+async function searchBrave(query, apiKey) {
+  const BRAVE_API_URL = 'https://api.search.brave.com/res/v1/web/search';
+  
+  try {
+    const response = await fetch(`${BRAVE_API_URL}?q=${encodeURIComponent(query)}&count=5`, {
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip',
+        'X-Subscription-Token': apiKey
+      }
+    });
+    
+    if (!response.ok) {
+      console.error('Brave Search API error:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // 검색 결과를 간단하게 포맷
+    if (data.web && data.web.results) {
+      return data.web.results.slice(0, 3).map(result => ({
+        title: result.title,
+        description: result.description,
+        url: result.url
+      }));
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Brave Search error:', error);
+    return null;
+  }
+}
+
+// 검색 결과를 프롬프트에 포함시키는 함수
+function enhancePromptWithSearchResults(originalQuery, searchResults) {
+  if (!searchResults || searchResults.length === 0) {
+    return originalQuery;
+  }
+  
+  let enhancedPrompt = `사용자 질문: ${originalQuery}\n\n`;
+  enhancedPrompt += '다음은 최신 웹 검색 결과입니다. 이 정보를 참고하여 답변해주세요:\n\n';
+  
+  searchResults.forEach((result, index) => {
+    enhancedPrompt += `[검색결과 ${index + 1}]\n`;
+    enhancedPrompt += `제목: ${result.title}\n`;
+    enhancedPrompt += `내용: ${result.description}\n`;
+    enhancedPrompt += `출처: ${result.url}\n\n`;
+  });
+  
+  enhancedPrompt += '위의 검색 결과를 참고하여 사용자의 질문에 답변해주세요. 검색 결과를 인용할 때는 출처를 명시해주세요.';
+  
+  return enhancedPrompt;
+}
+
 export async function handler(event, context) {
   console.log('Langflow proxy called');
-  const startTime = Date.now(); // 시작 시간 기록
+  const startTime = Date.now();
   
   // CORS headers
   const headers = {
@@ -28,8 +98,9 @@ export async function handler(event, context) {
   }
 
   try {
-    // API 토큰은 Netlify 환경 변수에서 가져옴
+    // API 토큰들을 환경 변수에서 가져옴
     const API_TOKEN = process.env.LANGFLOW_API_TOKEN;
+    const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
     
     if (!API_TOKEN) {
       throw new Error('LANGFLOW_API_TOKEN is not configured');
@@ -37,12 +108,35 @@ export async function handler(event, context) {
     
     const LANGFLOW_API_URL = 'https://api.langflow.astra.datastax.com/lf/88f74398-7c51-4066-a0e2-c6a1992f0889/api/v1/run/790574cb-2624-492b-a3a5-e0e118c1416f';
 
+    // 요청 본문 파싱
+    const requestBody = JSON.parse(event.body);
+    const userQuery = requestBody.input_value;
+    
+    console.log('User query:', userQuery);
+    
+    // 검색이 필요한지 확인하고 검색 수행
+    let enhancedQuery = userQuery;
+    if (BRAVE_API_KEY && shouldSearchWeb(userQuery)) {
+      console.log('Searching web for additional context...');
+      const searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
+      
+      if (searchResults) {
+        console.log(`Found ${searchResults.length} search results`);
+        enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults);
+        
+        // 검색 결과가 포함된 것을 클라이언트에 알리기 위한 플래그 추가
+        requestBody.hasSearchResults = true;
+      }
+    }
+    
+    // 향상된 쿼리로 요청 본문 업데이트
+    requestBody.input_value = enhancedQuery;
+
     console.log('Forwarding to Langflow...');
 
     // Forward the request to Langflow with timeout
     const controller = new AbortController();
-    // Netlify Functions 무료 플랜은 10초, Pro는 26초 제한
-    const timeoutId = setTimeout(() => controller.abort(), 9500); // 9.5초 타임아웃 (안전 마진)
+    const timeoutId = setTimeout(() => controller.abort(), 9500); // 9.5초 타임아웃
 
     try {
       const response = await fetch(LANGFLOW_API_URL, {
@@ -53,7 +147,7 @@ export async function handler(event, context) {
           'Accept': 'application/json',
           'X-Forwarded-For': event.headers['x-forwarded-for'] || event.headers['client-ip'] || '',
         },
-        body: event.body,
+        body: JSON.stringify(requestBody),
         signal: controller.signal
       });
 
@@ -96,13 +190,32 @@ export async function handler(event, context) {
         };
       }
 
+      // 응답에 검색 수행 여부 플래그 추가
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText);
+        if (requestBody.hasSearchResults) {
+          parsedResponse.hasSearchResults = true;
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 원본 반환
+        return {
+          statusCode: 200,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+          },
+          body: responseText,
+        };
+      }
+
       return {
         statusCode: 200,
         headers: {
           ...headers,
           'Content-Type': 'application/json',
         },
-        body: responseText,
+        body: JSON.stringify(parsedResponse),
       };
     } catch (fetchError) {
       clearTimeout(timeoutId);
