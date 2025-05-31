@@ -1,14 +1,73 @@
-// 검색이 필요한 키워드를 확인하는 함수
-function shouldSearchWeb(query) {
-  const searchKeywords = [
-    '최신', '현재', '요즘', '오늘', '어제', '최근',
-    '2025년', '2025', '올해', '이번달', '이번주',
-    '뉴스', '소식', '동향', '트렌드', '현황',
-    '실시간', '지금', '업데이트', '발표', '발매'
+// 질문의 주제를 분석하는 함수
+function analyzeQueryIntent(query) {
+  const lowerQuery = query.toLowerCase();
+  
+  // 날짜/시간 전용 패턴
+  const dateTimePatterns = [
+    /오늘.*날짜/,
+    /오늘.*몇.*일/,
+    /오늘.*무슨.*요일/,
+    /현재.*시간/,
+    /지금.*몇.*시/,
+    /오늘이.*며칠/,
+    /오늘.*날짜.*알려/,
+    /^오늘은?\s*(몇|며칠|무슨)/,
+    /^날짜/,
+    /^현재\s*(날짜|시간)/
   ];
   
-  const lowerQuery = query.toLowerCase();
-  return searchKeywords.some(keyword => lowerQuery.includes(keyword));
+  // 날씨 전용 패턴  
+  const weatherPatterns = [
+    /날씨/,
+    /기온/,
+    /온도/,
+    /비.*오/,
+    /눈.*오/,
+    /맑/,
+    /흐림/,
+    /구름/
+  ];
+  
+  // 일반 검색이 필요한 패턴
+  const searchPatterns = [
+    /최신.*뉴스/,
+    /최근.*동향/,
+    /요즘.*트렌드/,
+    /github.*트렌드/,
+    /github.*토픽/,
+    /깃허브/,
+    /깃헙/,
+    /현재.*가격/,
+    /최신.*정보/,
+    /업데이트/,
+    /발표/,
+    /출시/
+  ];
+  
+  // 날짜/시간 질문 확인
+  const isDateTime = dateTimePatterns.some(pattern => pattern.test(lowerQuery));
+  
+  // 날씨 질문 확인
+  const isWeather = weatherPatterns.some(pattern => pattern.test(lowerQuery));
+  
+  // 일반 검색 필요 확인
+  const needsSearch = searchPatterns.some(pattern => pattern.test(lowerQuery)) ||
+    (lowerQuery.includes('최신') || lowerQuery.includes('현재') || 
+     lowerQuery.includes('오늘') || lowerQuery.includes('요즘')) &&
+    !isDateTime && !isWeather;
+  
+  return {
+    isDateTime,
+    isWeather,
+    needsSearch,
+    originalQuery: query
+  };
+}
+
+// 검색이 필요한 키워드를 확인하는 함수 (기존 함수 유지)
+function shouldSearchWeb(query) {
+  const intent = analyzeQueryIntent(query);
+  return intent.needsSearch;
 }
 
 // 날씨 정보가 필요한지 확인하는 함수
@@ -101,16 +160,79 @@ async function getWeather(city, apiKey) {
   }
 }
 
+// 검색 쿼리를 최적화하는 함수
+function optimizeSearchQuery(query) {
+  const intent = analyzeQueryIntent(query);
+  
+  // 날짜/시간 전용 질문
+  if (intent.isDateTime) {
+    return 'current date time Korea May 31 2025';
+  }
+  
+  // 일반 검색 쿼리 최적화
+  let optimizedQuery = query;
+  
+  // GitHub 관련 질문 처리
+  if (query.includes('github') || query.includes('깃허브') || query.includes('깃헙')) {
+    // GitHub 관련 키워드를 영어로 변환
+    optimizedQuery = query
+      .replace(/깃허브|깃헙/g, 'GitHub')
+      .replace(/토픽/g, 'topics')
+      .replace(/트렌드/g, 'trending')
+      .replace(/트렌딩/g, 'trending')
+      .replace(/오늘/g, 'today')
+      .replace(/최신/g, 'latest')
+      .replace(/요약/g, 'summary');
+      
+    // 필요한 경우 날짜 추가
+    if (query.includes('오늘')) {
+      optimizedQuery += ' May 31 2025';
+    }
+  }
+  
+  // 한글 키워드를 영어로 변환 (일반적인 경우)
+  const keywordMap = {
+    '최신': 'latest',
+    '현재': 'current',
+    '요즘': 'recent',
+    '오늘': 'today',
+    '어제': 'yesterday',
+    '최근': 'recent',
+    '뉴스': 'news',
+    '소식': 'news',
+    '동향': 'trends',
+    '트렌드': 'trends',
+    '현황': 'status',
+    '실시간': 'real-time',
+    '지금': 'now',
+    '업데이트': 'update',
+    '발표': 'announcement',
+    '발매': 'release',
+    '가격': 'price',
+    '비트코인': 'bitcoin',
+    '이더리움': 'ethereum',
+    '주식': 'stock',
+    '코스피': 'KOSPI',
+    '코스닥': 'KOSDAQ'
+  };
+  
+  // 키워드 치환 (필요한 경우)
+  let processedQuery = optimizedQuery;
+  for (const [kor, eng] of Object.entries(keywordMap)) {
+    if (processedQuery.includes(kor)) {
+      processedQuery = processedQuery.replace(new RegExp(kor, 'g'), eng);
+    }
+  }
+  
+  return processedQuery;
+}
+
 // Brave Search API 호출 함수
 async function searchBrave(query, apiKey) {
   const BRAVE_API_URL = 'https://api.search.brave.com/res/v1/web/search';
   
-  // 날짜/시간 관련 질문은 검색 쿼리 최적화
-  let searchQuery = query;
-  if (query.includes('오늘') || query.includes('날짜') || query.includes('몇월') || query.includes('몇일')) {
-    // 영어로 검색하면 더 정확한 결과를 얻을 수 있음
-    searchQuery = 'current date time Korea May 31 2025';
-  }
+  // 검색 쿼리 최적화
+  const searchQuery = optimizeSearchQuery(query);
   
   try {
     const response = await fetch(`${BRAVE_API_URL}?q=${encodeURIComponent(searchQuery)}&count=5&freshness=pw`, {
@@ -156,9 +278,16 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   
   let enhancedPrompt = `사용자 질문: ${originalQuery}\n\n`;
   
-  // 날짜 관련 질문인 경우 서버 시간 제공
-  if (originalQuery.includes('오늘') || originalQuery.includes('날짜') || originalQuery.includes('몇월') || originalQuery.includes('몇일')) {
+  // 질문 의도 분석
+  const intent = analyzeQueryIntent(originalQuery);
+  
+  // 날짜/시간 전용 질문인 경우
+  if (intent.isDateTime) {
     enhancedPrompt += `현재 한국 시간: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n\n`;
+    enhancedPrompt += '답변 지침:\n';
+    enhancedPrompt += '- 위에 제공된 현재 한국 시간을 기준으로 정확히 답변하세요.\n';
+    enhancedPrompt += '- 다른 정보를 추가하지 마세요.\n';
+    return enhancedPrompt;
   }
   
   // 날씨 정보가 있는 경우
@@ -194,11 +323,22 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   } else if (needsWeatherInfo(originalQuery)) {
     enhancedPrompt += '1. 날씨 정보를 요청했지만 실시간 데이터를 가져올 수 없었습니다.\n';
     enhancedPrompt += '2. "현재 실시간 날씨 정보를 확인할 수 없습니다"라고 명확히 알려주세요.\n';
+  } else if (searchResults && searchResults.length > 0) {
+    // 일반 검색 결과에 대한 지침
+    enhancedPrompt += '1. 검색 결과를 바탕으로 사용자 질문에 직접적으로 답변하세요.\n';
+    enhancedPrompt += '2. 검색 결과의 내용을 요약하여 제공하고, 출처를 명시하세요.\n';
+    enhancedPrompt += '3. 사용자가 요청한 주제에 집중하여 답변하세요.\n';
+    
+    // GitHub 토픽 같은 특정 주제에 대한 추가 지침
+    if (originalQuery.includes('github') || originalQuery.includes('깃허브')) {
+      enhancedPrompt += '4. GitHub 트렌드나 토픽에 대해 구체적인 프로젝트 이름, 설명, 주요 기능을 포함하세요.\n';
+    }
   }
   
-  enhancedPrompt += '- 날짜 관련 질문에는 위에 제공된 "현재 한국 시간"을 기준으로 답변하세요.\n';
-  enhancedPrompt += '- 웹사이트 방문이나 날씨 앱 사용을 권하지 마세요.\n';
-  enhancedPrompt += '- 검색 결과를 인용할 때는 출처를 명시하세요.';
+  // 공통 지침
+  enhancedPrompt += '\n공통 지침:\n';
+  enhancedPrompt += '- 웹사이트 방문이나 앱 사용을 권하지 마세요.\n';
+  enhancedPrompt += '- 질문의 주제와 관련 없는 정보는 포함하지 마세요.';
   
   return enhancedPrompt;
 }
@@ -260,8 +400,12 @@ export async function handler(event, context) {
     let weatherData = null;
     let enhancedQuery = userQuery;
     
+    // 질문 의도 분석
+    const intent = analyzeQueryIntent(userQuery);
+    console.log('Query intent:', intent);
+    
     // 날씨 정보가 필요한 경우
-    if (OPENWEATHER_API_KEY && needsWeatherInfo(userQuery)) {
+    if (OPENWEATHER_API_KEY && intent.isWeather) {
       const city = extractCity(userQuery);
       console.log('Weather requested for city:', city);
       
@@ -278,12 +422,14 @@ export async function handler(event, context) {
       }
     }
     
-    // 검색이 필요한 경우 (날씨 데이터가 없을 때만)
-    if (BRAVE_API_KEY && shouldSearchWeb(userQuery) && !weatherData) {
+    // 검색이 필요한 경우 (날씨 데이터가 없고, 날짜/시간 전용 질문이 아닌 경우)
+    if (BRAVE_API_KEY && intent.needsSearch && !weatherData && !intent.isDateTime) {
       console.log('Searching web for additional context...');
+      console.log('Original query:', userQuery);
       searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
       if (searchResults) {
         console.log(`Found ${searchResults.length} search results`);
+        console.log('Optimized search query:', optimizeSearchQuery(userQuery));
       }
     }
     
