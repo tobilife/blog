@@ -45,8 +45,8 @@ if (!banner || typeof banner !== 'string' || banner.trim() === '') {
   banner = siteConfig.banner.src;
 }
 
-// TODO: Don't use post cover as banner for now
-banner = siteConfig.banner.src;
+// Now using post cover as og:image
+// banner = siteConfig.banner.src;
 
 const enableBanner = siteConfig.banner.enable;
 
@@ -98,6 +98,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
     <meta property="og:url" content={Astro.url} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description || pageTitle} />
+    <meta property="og:image" content={new URL(banner.startsWith('/') ? url(banner) : banner, Astro.url).href} />
     {setOGTypeArticle ? (
       <meta property="og:type" content="article" />
     ) : (
@@ -108,6 +109,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
     <meta property="twitter:url" content={Astro.url} />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description || pageTitle} />
+    <meta name="twitter:image" content={new URL(banner.startsWith('/') ? url(banner) : banner, Astro.url).href} />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
