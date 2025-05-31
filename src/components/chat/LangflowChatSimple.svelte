@@ -114,44 +114,48 @@ async function sendMessage() {
 	let searchResults = [];
 	let isAboutBlog = false;
 	
-	// RAG 시스템 임시 비활성화
-	/*
-	try {
-		// 블로그 관련 질문인지 확인
-		isAboutBlog = await contextDetector.isAboutBlog(userMessage);
-		
-		if (isAboutBlog) {
-			console.log('☝️ 블로그 컨텍스트 감지됨! 관련 포스트 검색 중...');
-			
-			// 질문에서 키워드 추출
-			const keywords = await contextDetector.extractSearchKeywords(userMessage);
-			console.log('Extracted keywords:', keywords);
-			
-			// 관련 포스트 검색
-			// 키워듍 배열을 문자열로 변환
-			const searchQuery = keywords.join(' ');
-			searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
-			console.log(`Found ${searchResults.length} relevant posts`);
-			
-			if (searchResults.length > 0) {
-				// 검색 결과 로그
-				console.log('Search results:', searchResults.map(r => ({
-					title: r.post.title,
-					score: r.score
-				})));
-			}
-			
-			// LLM 프롬프트에 컨텍스트 추가
-			contextualMessage = blogRAGService.buildContextualPrompt(userMessage, searchResults);
-			console.log('Contextual prompt preview:', contextualMessage.substring(0, 200) + '...');
-		} else {
-			console.log('ℹ️ 일반 질문으로 판단됨');
-		}
-	} catch (error) {
-		console.error('Blog context detection error:', error);
-		// 오류 발생 시 원본 메시지 사용
+	// RAG 시스템 - 우선순위에 따른 처리
+	// 우선순위 1: "블로그" + "검색" 패턴
+	const blogSearchPattern = /(블로그.*검색|검색.*블로그|이\s*블로그|여기|토비라이프)/i;
+	const isBlogSearchRequest = blogSearchPattern.test(userMessage);
+	
+	if (isBlogSearchRequest && contextDetector && blogRAGService) {
+	 // 블로그 검색 요청이면 RAG 시스템 사용
+	 try {
+	  console.log('☝️ 블로그 검색 요청 감지!');
+	  
+	  // 키워드 추출
+	  const keywords = await contextDetector.extractSearchKeywords(userMessage);
+	  console.log('Extracted keywords:', keywords);
+	  
+	  // 블로그 포스트 검색
+	  const searchQuery = keywords.join(' ');
+	  searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
+	  console.log(`Found ${searchResults.length} blog posts`);
+	  
+	  if (searchResults.length > 0) {
+	   console.log('Blog search results:', searchResults.map(r => ({
+	    title: r.post.title,
+	    score: r.score
+	   })));
+	   
+	   // LLM 프롬프트에 블로그 컨텍스트 추가
+	   contextualMessage = blogRAGService.buildContextualPrompt(userMessage, searchResults);
+	   isAboutBlog = true;
+	  }
+	 } catch (error) {
+	  console.error('Blog search error:', error);
+	 }
+	} else {
+	 // 우선순위 2: 일반 검색 요청은 langflow-proxy에서 처리
+	 const searchPatterns = /(검색해|알려줘|최신|현재|오늘|날씨|뉴스)/i;
+	 if (searchPatterns.test(userMessage)) {
+	  console.log('🔍 웹 검색이 필요한 질문으로 판단됨');
+	  // langflow-proxy에서 자동으로 처리됨
+	 } else {
+	  console.log('ℹ️ 일반 질문으로 판단됨');
+	 }
 	}
-	*/
 
 	isLoading = true;
 
@@ -168,7 +172,7 @@ async function sendMessage() {
 		const recentMessages = messages.slice(0, -2).filter(m => m.content && !m.isTyping).slice(-8);
 		console.log(`Sending ${recentMessages.length} conversation history messages`);
 		const payload = {
-			input_value: userMessage,  // 원본 메시지 사용 (RAG 임시 비활성화)
+			input_value: contextualMessage,  // 컨텍스트가 추가된 메시지 사용
 			output_type: "chat",
 			input_type: "chat",
 			stream: false,
@@ -274,13 +278,11 @@ async function sendMessage() {
 			botResponse = botResponse.replace(/<think>.*?<\/think>/gs, "").trim();
 		}
 
-		// 블로그 참조 링크 추가 (RAG 임시 비활성화)
-		/*
+		// 블로그 참조 링크 추가
 		if (isAboutBlog && searchResults.length > 0) {
 			const references = blogRAGService.formatReferences(searchResults);
 			botResponse += references;
 		}
-		*/
 
 		// 이미 추가된 assistant 메시지에 타이핑 효과 적용
 		// 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)

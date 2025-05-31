@@ -169,26 +169,20 @@ export class BlogRAGService {
       return userMessage;
     }
     
-    let contextPrompt = `당신은 토비라이프 블로그의 AI 어시스턴트입니다.\n\n다음은 토비라이프 블로그의 현재 포스트 목록입니다:\n\n`;
+    // 간결한 컨텍스트 프롬프트
+    let contextPrompt = `토비라이프 블로그에 있는 포스트:\n\n`;
     
     searchResults.forEach((result, index) => {
-      contextPrompt += `[포스트 ${index + 1}]\n`;
-      contextPrompt += `제목: ${result.post.title}\n`;
-      contextPrompt += `설명: ${result.post.description}\n`;
-      contextPrompt += `태그: ${result.post.tags.join(', ')}\n`;
-      
-      if (result.relevantChunks.length > 0) {
-        contextPrompt += `관련 내용:\n`;
-        result.relevantChunks.forEach(chunk => {
-          contextPrompt += `${chunk.content.substring(0, 500)}...\n`;
-        });
+      contextPrompt += `${index + 1}. ${result.post.title}\n`;
+      contextPrompt += `   - ${result.post.description}\n`;
+      if (result.post.tags && result.post.tags.length > 0) {
+        contextPrompt += `   - 태그: ${result.post.tags.slice(0, 5).join(', ')}\n`;
       }
-      
       contextPrompt += `\n`;
     });
     
-    contextPrompt += `위 블로그 포스트를 기반으로 다음 질문에 답변해주세요:\n${userMessage}\n\n`;
-    contextPrompt += `중요: 토비라이프 블로그에는 현재 ${searchResults.length}개의 포스트만 있습니다. 위에 언급된 포스트만 참조하여 답변하고, 없는 포스트는 언급하지 마세요.`;
+    contextPrompt += `\n질문: ${userMessage}\n`;
+    contextPrompt += `위 블로그 포스트를 참고하여 답변해주세요.`;
     
     return contextPrompt;
   }
