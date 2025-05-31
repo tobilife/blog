@@ -136,6 +136,16 @@ async function sendMessage() {
 		const responseText = await response.text();
 		//console.log('Response status:', response.status);
 		//console.log('Response text:', responseText);
+		
+		// LAG 방식: 복잡도 정보 확인
+		const complexity = response.headers.get('X-Query-Complexity');
+		const complexityScore = response.headers.get('X-Query-Score');
+		const responseTime = response.headers.get('X-Response-Time');
+		const cacheHit = response.headers.get('X-Cache') === 'HIT';
+		
+		if (complexity) {
+			console.log(`Query complexity: ${complexity} (score: ${complexityScore}), Response time: ${responseTime}ms, Cache: ${cacheHit ? 'HIT' : 'MISS'}`);
+		}
 
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
@@ -296,7 +306,7 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-			 "안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능이 추가되었습니다!</strong><br>'최신', '현재', '2025년' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+			 "안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 12월까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능이 추가되었습니다!</strong><br>'최신', '현재', '2025년' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>⚡ <strong>LAG 적응형 처리 시스템 적용!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
 			},
 	];
 

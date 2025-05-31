@@ -1,3 +1,43 @@
+// 질문의 복잡도를 분석하는 함수 (LAG 방식 적용)
+function analyzeQueryComplexity(query) {
+  const features = {
+    wordCount: query.split(' ').length,
+    hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
+    requiresReasoning: /왜|어떻게|분석|비교|설명|차이|장단점|평가/i.test(query),
+    requiresLatestInfo: /최신|현재|오늘|요즘|최근|실시간/i.test(query),
+    isSimpleFactCheck: /무엇|누구|언제|어디|몇/i.test(query) && query.split(' ').length < 8,
+    hasComplexTerms: /github|프로그래밍|개발|AI|기술|경제|정치/i.test(query)
+  };
+  
+  let complexityScore = 0;
+  if (features.wordCount > 20) complexityScore += 2;
+  if (features.wordCount > 40) complexityScore += 2;
+  if (features.hasMultipleQuestions) complexityScore += 3;
+  if (features.requiresReasoning) complexityScore += 2;
+  if (features.requiresLatestInfo) complexityScore += 1;
+  if (features.hasComplexTerms) complexityScore += 1;
+  if (features.isSimpleFactCheck) complexityScore -= 2;
+  
+  // 복잡도 레벨 결정
+  let level;
+  if (complexityScore <= 1) level = 'simple';
+  else if (complexityScore <= 4) level = 'moderate';
+  else level = 'complex';
+  
+  return {
+    score: complexityScore,
+    level: level,
+    features: features,
+    // 처리 권장사항
+    recommendations: {
+      timeout: level === 'simple' ? 5000 : level === 'moderate' ? 7000 : 9500,
+      useCache: level === 'simple',
+      searchLimit: level === 'simple' ? 0 : level === 'moderate' ? 3 : 5,
+      enhancePrompt: level !== 'simple'
+    }
+  };
+}
+
 // 질문의 주제를 분석하는 함수
 function analyzeQueryIntent(query) {
   const lowerQuery = query.toLowerCase();
@@ -68,6 +108,44 @@ function analyzeQueryIntent(query) {
 function shouldSearchWeb(query) {
   const intent = analyzeQueryIntent(query);
   return intent.needsSearch;
+}
+
+// 간단한 인메모리 캐시 시스템
+const queryCache = new Map();
+const CACHE_TTL = 3600000; // 1시간
+const MAX_CACHE_SIZE = 100;
+
+function getCachedResponse(query) {
+  const normalizedQuery = query.toLowerCase().trim();
+  const cached = queryCache.get(normalizedQuery);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log('Cache hit for query:', normalizedQuery);
+    return cached.response;
+  }
+  
+  if (cached) {
+    queryCache.delete(normalizedQuery); // 만료된 캐시 삭제
+  }
+  
+  return null;
+}
+
+function setCachedResponse(query, response) {
+  const normalizedQuery = query.toLowerCase().trim();
+  
+  queryCache.set(normalizedQuery, {
+    response: response,
+    timestamp: Date.now()
+  });
+  
+  // 캐시 크기 제한
+  if (queryCache.size > MAX_CACHE_SIZE) {
+    const firstKey = queryCache.keys().next().value;
+    queryCache.delete(firstKey);
+  }
+  
+  console.log(`Cache set for query: ${normalizedQuery}, total cache size: ${queryCache.size}`);
 }
 
 // 날씨 정보가 필요한지 확인하는 함수
@@ -396,6 +474,27 @@ export async function handler(event, context) {
     
     console.log('User query:', userQuery);
     
+    // LAG 방식: 복잡도 분석
+    const complexity = analyzeQueryComplexity(userQuery);
+    console.log('Query complexity:', complexity);
+    
+    // 단순한 질문의 경우 캐시 확인
+    if (complexity.recommendations.useCache) {
+      const cachedResponse = getCachedResponse(userQuery);
+      if (cachedResponse) {
+        console.log('Returning cached response');
+        return {
+          statusCode: 200,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            'X-Cache': 'HIT'
+          },
+          body: JSON.stringify(cachedResponse),
+        };
+      }
+    }
+    
     let searchResults = null;
     let weatherData = null;
     let enhancedQuery = userQuery;
@@ -404,33 +503,53 @@ export async function handler(event, context) {
     const intent = analyzeQueryIntent(userQuery);
     console.log('Query intent:', intent);
     
-    // 날씨 정보가 필요한 경우
-    if (OPENWEATHER_API_KEY && intent.isWeather) {
-      const city = extractCity(userQuery);
-      console.log('Weather requested for city:', city);
-      
-      if (city) {
-        console.log(`Getting weather for ${city}...`);
-        weatherData = await getWeather(city, OPENWEATHER_API_KEY);
-        if (weatherData) {
-          console.log('Weather data retrieved successfully');
-        } else {
-          console.log('Failed to retrieve weather data');
-        }
-      } else {
-        console.log('No city found in query');
-      }
-    }
+    // LAG 방식: 복잡도에 따른 선택적 처리
+    const skipEnhancement = complexity.level === 'simple' && !intent.needsSearch && !intent.isWeather;
     
-    // 검색이 필요한 경우 (날씨 데이터가 없고, 날짜/시간 전용 질문이 아닌 경우)
-    if (BRAVE_API_KEY && intent.needsSearch && !weatherData && !intent.isDateTime) {
-      console.log('Searching web for additional context...');
-      console.log('Original query:', userQuery);
-      searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
-      if (searchResults) {
-        console.log(`Found ${searchResults.length} search results`);
-        console.log('Optimized search query:', optimizeSearchQuery(userQuery));
+    if (!skipEnhancement) {
+      // 날씨 정보가 필요한 경우
+      if (OPENWEATHER_API_KEY && intent.isWeather) {
+        const city = extractCity(userQuery);
+        console.log('Weather requested for city:', city);
+        
+        if (city) {
+          console.log(`Getting weather for ${city}...`);
+          weatherData = await getWeather(city, OPENWEATHER_API_KEY);
+          if (weatherData) {
+            console.log('Weather data retrieved successfully');
+          } else {
+            console.log('Failed to retrieve weather data');
+          }
+        } else {
+          console.log('No city found in query');
+        }
       }
+      
+      // 검색이 필요한 경우 (복잡도에 따른 검색 제한 적용)
+      if (BRAVE_API_KEY && intent.needsSearch && !weatherData && !intent.isDateTime && 
+          complexity.recommendations.searchLimit > 0) {
+        console.log('Searching web for additional context...');
+        console.log('Original query:', userQuery);
+        console.log('Search limit based on complexity:', complexity.recommendations.searchLimit);
+        
+        // 복잡도에 따른 검색 결과 수 조정
+        const originalSearchBrave = searchBrave;
+        searchBrave = async function(query, apiKey) {
+          const results = await originalSearchBrave(query, apiKey);
+          if (results) {
+            return results.slice(0, complexity.recommendations.searchLimit);
+          }
+          return results;
+        };
+        
+        searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
+        if (searchResults) {
+          console.log(`Found ${searchResults.length} search results`);
+          console.log('Optimized search query:', optimizeSearchQuery(userQuery));
+        }
+      }
+    } else {
+      console.log('Skipping enhancement for simple query');
     }
     
     // 날씨 데이터나 검색 결과가 있으면 프롬프트 향상
@@ -444,9 +563,11 @@ export async function handler(event, context) {
 
     console.log('Forwarding to Langflow...');
 
-    // Forward the request to Langflow with timeout
+    // Forward the request to Langflow with timeout (LAG: 복잡도에 따른 타임아웃)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 9500); // 9.5초 타임아웃
+    const dynamicTimeout = complexity.recommendations.timeout;
+    console.log(`Using dynamic timeout: ${dynamicTimeout}ms for ${complexity.level} query`);
+    const timeoutId = setTimeout(() => controller.abort(), dynamicTimeout);
 
     try {
       const response = await fetch(LANGFLOW_API_URL, {
@@ -507,6 +628,11 @@ export async function handler(event, context) {
         if (requestBody.hasSearchResults) {
           parsedResponse.hasSearchResults = true;
         }
+        
+        // LAG: 단순한 질문의 응답은 캐시에 저장
+        if (complexity.recommendations.useCache && !requestBody.hasSearchResults) {
+          setCachedResponse(userQuery, parsedResponse);
+        }
       } catch (e) {
         // JSON 파싱 실패 시 원본 반환
         return {
@@ -519,11 +645,16 @@ export async function handler(event, context) {
         };
       }
 
+      // LAG: 복잡도 정보를 헤더에 추가
       return {
         statusCode: 200,
         headers: {
           ...headers,
           'Content-Type': 'application/json',
+          'X-Query-Complexity': complexity.level,
+          'X-Query-Score': String(complexity.score),
+          'X-Response-Time': String(Date.now() - startTime),
+          'X-Cache': 'MISS'
         },
         body: JSON.stringify(parsedResponse),
       };
