@@ -58,6 +58,10 @@ function analyzeQueryIntent(query) {
   
   // 날씨 전용 패턴  
   const weatherPatterns = [
+    /날씨.*검색/,
+    /날씨.*알려/,
+    /날씨.*어떤/,
+    /날씨.*어떻/,
     /날씨/,
     /기온/,
     /온도/,
@@ -155,6 +159,10 @@ function setCachedResponse(query, response) {
 function needsWeatherInfo(query) {
   // 더 정확한 날씨 키워드 패턴
   const weatherPatterns = [
+    /날씨.*검색/,
+    /날씨.*알려/,
+    /날씨.*어떤/,
+    /날씨.*어떻/,
     /날씨/,
     /기온/,
     /온도/,
@@ -551,7 +559,8 @@ export async function handler(event, context) {
     if (!skipEnhancement) {
       // 날씨 정보가 필요한 경우
       if (OPENWEATHER_API_KEY && intent.isWeather) {
-        const city = extractCity(userQuery);
+        console.log('Weather detection positive: isWeather =', intent.isWeather);
+        const city = extractCity(userQuery) || '고양시'; // 기본 도시 설정
         console.log('Weather requested for city:', city);
         
         if (city) {
