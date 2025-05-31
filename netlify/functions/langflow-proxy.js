@@ -77,11 +77,16 @@ function analyzeQueryIntent(query) {
   
   // 일반 검색이 필요한 패턴
   const searchPatterns = [
+    /검색해/,
+    /검색해줘/,
     /최신.*뉴스/,
     /최근.*동향/,
     /요즘.*트렌드/,
     /github.*트렌드/,
     /github.*토픽/,
+    /깃허브.*토픽/,
+    /깃헙.*토픽/,
+    /토픽.*검색/,
     /깃허브/,
     /깃헙/,
     /현재.*가격/,
@@ -549,9 +554,19 @@ export async function handler(event, context) {
     let weatherData = null;
     let enhancedQuery = userQuery;
     
-    // 질문 의도 분석
-    const intent = analyzeQueryIntent(userQuery);
+    // 질문 의도 분석 - 대화 맥락 고려
+    let intent = analyzeQueryIntent(userQuery);
     console.log('Query intent:', intent);
+    
+    // 대화 맥락에서 GitHub나 특정 주제가 언급되었는지 확인
+    if (!intent.needsSearch && conversationHistory.length > 0) {
+      const recentConversation = conversationHistory.slice(-2).map(m => m.content).join(' ').toLowerCase();
+      if ((recentConversation.includes('github') || recentConversation.includes('깃허브')) && 
+          (userQuery.includes('검색') || userQuery.includes('알려') || userQuery.includes('요약'))) {
+        console.log('Context-based search detected: GitHub topic continuation');
+        intent.needsSearch = true;
+      }
+    }
     
     // LAG 방식: 복잡도에 따른 선택적 처리
     const skipEnhancement = complexity.level === 'simple' && !intent.needsSearch && !intent.isWeather;
@@ -597,6 +612,13 @@ export async function handler(event, context) {
         if (searchResults) {
           console.log(`Found ${searchResults.length} search results`);
           console.log('Optimized search query:', optimizeSearchQuery(userQuery));
+          
+          // 검색 결과 로그 추가
+          searchResults.forEach((result, idx) => {
+            console.log(`Search result ${idx + 1}: ${result.title}`);
+          });
+        } else {
+          console.log('No search results found');
         }
       }
     } else {
