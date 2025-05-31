@@ -87,3 +87,34 @@
 - 명시적 검색 요청 시 항상 웹 검색 수행
 - 더 정확한 검색 의도 파악
 - 사용자 경험 개선
+
+## 2025-06-01 - Link Preview (Open Graph) 문제 해결
+
+### 문제점
+- 개별 포스트 페이지에서 Link Preview가 작동하지 않음
+- og:image 및 twitter:image 메타 태그 누락
+- 포스트 이미지가 Open Graph에 반영되지 않음
+
+### 해결 방법 (commit: 46f3c84, c1ed530)
+1. **Open Graph 메타 태그 추가**
+   - Layout.astro에 og:image 메타 태그 추가
+   - twitter:image 메타 태그 추가
+   - 포스트 이미지를 우선 사용, 없으면 기본 배너 이미지 사용
+
+2. **포스트 이미지 활용**
+   - 기존에 무시되던 포스트 이미지를 og:image로 활용
+   - banner = siteConfig.banner.src 코드 주석 처리
+
+3. **기본 이미지 보장**
+   - 포스트에 이미지가 없어도 기본 배너 이미지 표시
+   - 항상 og:image가 존재하도록 보장
+
+### 결과
+- 모든 포스트 페이지에서 Link Preview 작동
+- 소셜 미디어 공유 시 이미지 표시
+- SEO 및 사용자 경험 개선
+
+### 다음 단계
+- 포스트별 커스텀 이미지 추가
+- 이미지 최적화 (크기, 품질)
+- Open Graph 테스트 도구로 검증
