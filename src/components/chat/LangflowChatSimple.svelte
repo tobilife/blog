@@ -114,6 +114,8 @@ async function sendMessage() {
 	let searchResults = [];
 	let isAboutBlog = false;
 	
+	// RAG 시스템 임시 비활성화
+	/*
 	try {
 		// 블로그 관련 질문인지 확인
 		isAboutBlog = await contextDetector.isAboutBlog(userMessage);
@@ -126,7 +128,7 @@ async function sendMessage() {
 			console.log('Extracted keywords:', keywords);
 			
 			// 관련 포스트 검색
-			// 키워드 배열을 문자열로 변환
+			// 키워듍 배열을 문자열로 변환
 			const searchQuery = keywords.join(' ');
 			searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
 			console.log(`Found ${searchResults.length} relevant posts`);
@@ -149,6 +151,7 @@ async function sendMessage() {
 		console.error('Blog context detection error:', error);
 		// 오류 발생 시 원본 메시지 사용
 	}
+	*/
 
 	isLoading = true;
 
@@ -165,7 +168,7 @@ async function sendMessage() {
 		const recentMessages = messages.slice(0, -2).filter(m => m.content && !m.isTyping).slice(-8);
 		console.log(`Sending ${recentMessages.length} conversation history messages`);
 		const payload = {
-			input_value: contextualMessage,  // 컨텍스트가 추가된 메시지 사용
+			input_value: userMessage,  // 원본 메시지 사용 (RAG 임시 비활성화)
 			output_type: "chat",
 			input_type: "chat",
 			stream: false,
@@ -271,11 +274,13 @@ async function sendMessage() {
 			botResponse = botResponse.replace(/<think>.*?<\/think>/gs, "").trim();
 		}
 
-		// 블로그 참조 링크 추가
+		// 블로그 참조 링크 추가 (RAG 임시 비활성화)
+		/*
 		if (isAboutBlog && searchResults.length > 0) {
 			const references = blogRAGService.formatReferences(searchResults);
 			botResponse += references;
 		}
+		*/
 
 		// 이미 추가된 assistant 메시지에 타이핑 효과 적용
 		// 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)

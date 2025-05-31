@@ -114,6 +114,16 @@ export class BlogRAGService {
       return results;
     }
     
+    // 쿼리가 비어있거나 짧은 경우 전체 포스트 반환
+    if (!query || query.trim().length < 3) {
+      console.log('Empty or short query, returning all posts');
+      return this.knowledgeBase.posts.slice(0, maxResults).map((post, index) => ({
+        post: post,
+        relevantChunks: post.chunks.slice(0, 1),
+        score: index * 0.1
+      }));
+    }
+    
     // Fuse.js로 검색
     const searchResults = this.fuse.search(query);
     
