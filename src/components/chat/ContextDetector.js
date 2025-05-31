@@ -9,7 +9,7 @@ export class ContextDetector {
     '이 블로그', '여기서', '여기에', '토비라이프', 'tobilife',
     '포스트', '글', '작성한', '쓴', '올린',
     '블로그 주인', '블로그에서', '여기 있는',
-    '토비라이프가', '토비라이프의'
+    '토비라이프가', '토비라이프의', '목록', '어떤'
   ];
 
   // 블로그에 있는 주제들 (동적으로 로드)
@@ -84,13 +84,13 @@ export class ContextDetector {
     const lowerMessage = userMessage.toLowerCase();
     let score = 0;
     
-    // 1. 블로그 키워드 체크 (가중치: 0.5)
+    // 1. 블로그 키워드 체크 (가중치: 0.6)
     const keywordMatches = this.blogKeywords.filter(keyword => 
       lowerMessage.includes(keyword.toLowerCase())
     ).length;
     
     if (keywordMatches > 0) {
-      score += Math.min(keywordMatches * 0.25, 0.5);
+      score += Math.min(keywordMatches * 0.3, 0.6);
     }
     
     // 2. 블로그 주제 언급 체크 (가중치: 0.3)
@@ -117,7 +117,7 @@ export class ContextDetector {
   /**
    * 블로그 관련 질문인지 판단
    */
-  async isAboutBlog(userMessage, threshold = 0.3) {
+  async isAboutBlog(userMessage, threshold = 0.25) {  // 임계값을 낮춰 더 많은 쿼리를 블로그 컨텍스트로 인식
     const score = await this.calculateContextScore(userMessage);
     console.log(`Context score for "${userMessage}": ${score.toFixed(2)}`);
     return score >= threshold;

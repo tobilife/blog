@@ -89,6 +89,8 @@ export class BlogRAGService {
    * 관련 포스트 검색
    */
   async searchRelevantPosts(query, maxResults = 3) {
+    console.log('searchRelevantPosts called with query:', query);
+    
     if (!this.initialized) {
       await this.initialize();
     }
@@ -98,13 +100,18 @@ export class BlogRAGService {
       return [];
     }
     
+    console.log('Knowledge base posts count:', this.knowledgeBase.posts.length);
+    
     // 와일드카드 처리 - 모든 포스트 반환
     if (query === '*' || query.includes('전체') || query.includes('모든')) {
-      return this.knowledgeBase.posts.slice(0, maxResults).map((post, index) => ({
+      console.log('Wildcard search detected');
+      const results = this.knowledgeBase.posts.slice(0, maxResults).map((post, index) => ({
         post: post,
         relevantChunks: post.chunks.slice(0, 1),
         score: index * 0.1 // 순서대로 점수 부여
       }));
+      console.log('Wildcard search results:', results.length);
+      return results;
     }
     
     // Fuse.js로 검색

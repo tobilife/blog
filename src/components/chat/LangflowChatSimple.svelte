@@ -126,7 +126,9 @@ async function sendMessage() {
 			console.log('Extracted keywords:', keywords);
 			
 			// 관련 포스트 검색
-			searchResults = await blogRAGService.searchRelevantPosts(userMessage);
+			// 키워드 배열을 문자열로 변환
+			const searchQuery = keywords.join(' ');
+			searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
 			console.log(`Found ${searchResults.length} relevant posts`);
 			
 			if (searchResults.length > 0) {
