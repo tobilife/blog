@@ -167,10 +167,23 @@ async function sendMessage() {
 		//console.log('Sending to:', LANGFLOW_API_URL);
 
 		// Langflow API 호출
-		// 최근 대화 히스토리를 포함 (LAG: 대화 맥락 유지)
-		// 현재 입력 중인 메시지와 빈 메시지를 제외한 최근 8개 메시지 (서버에서 6개만 사용)
-		const recentMessages = messages.slice(0, -2).filter(m => m.content && !m.isTyping).slice(-8);
-		console.log(`Sending ${recentMessages.length} conversation history messages`);
+		// 대화 히스토리 최적화 - 성능 향상을 위해 메시지 수와 크기 제한
+		const MAX_HISTORY_MESSAGES = 4; // 8개에서 4개로 감소
+		const MAX_MESSAGE_LENGTH = 500; // 각 메시지 최대 길이
+		
+		// 메시지 필터링 및 압축
+		const recentMessages = messages
+		 .slice(0, -2) // 현재 입력 중인 메시지와 빈 메시지 제외
+		 .filter(m => m.content && !m.isTyping)
+		 .slice(-MAX_HISTORY_MESSAGES) // 최근 4개만
+		 .map(m => ({
+		  role: m.role,
+		  content: m.content.length > MAX_MESSAGE_LENGTH 
+		   ? m.content.substring(0, MAX_MESSAGE_LENGTH) + '...' 
+		   : m.content
+		 }));
+		
+		console.log(`Sending ${recentMessages.length} conversation history messages (optimized from ${messages.length - 2} total)`);
 		const payload = {
 			input_value: contextualMessage,  // 컨텍스트가 추가된 메시지 사용
 			output_type: "chat",
