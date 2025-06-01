@@ -45,6 +45,13 @@ if (!banner || typeof banner !== 'string' || banner.trim() === '') {
   banner = siteConfig.banner.src;
 }
 
+// Convert relative paths to absolute paths for post images
+if (banner && !banner.startsWith('/') && !banner.startsWith('http')) {
+  // If it's a relative path (like './cover.jpeg' or 'assets/images/banner.png'),
+  // use the default OG image from config instead
+  banner = siteConfig.banner.src;
+}
+
 // Now using post cover as og:image
 // banner = siteConfig.banner.src;
 
