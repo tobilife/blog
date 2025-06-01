@@ -36,9 +36,23 @@
 - `/images/banner.png`가 `url()` 함수를 거치면 `/assets/images/banner.png`로 변환됨
 - 카카오톡 등 일부 플랫폼에서 잘못된 경로로 인식
 - OG 이미지 태그에서 url() 함수 제거로 해결
-
 ### 추가 수정사항 (3차)
 - Facebook에서 이미지 비동기 처리 문제 발견
 - og:image:width와 og:image:height 태그 추가 필요
 - 1200x630 크기로 메타 태그 추가
 - Facebook이 즉시 이미지를 표시할 수 있도록 개선
+
+### 포스트별 OG 이미지 지원 (4차)
+- 포스트 frontmatter의 image 필드를 OG 이미지로 사용
+- image가 없거나 ''이면 기본 배너 사용
+- 절대 경로(/ 또는 http로 시작)만 허용
+- 상대 경로(./같은)는 OG 이미지로 작동 안 함
+
+**사용 방법:**
+```yaml
+# 기본 배너 사용
+image: ''
+
+# 커스텀 OG 이미지 사용
+image: '/images/posts/my-post-og.png'
+```

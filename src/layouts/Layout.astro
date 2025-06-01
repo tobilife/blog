@@ -42,13 +42,15 @@ const configHue = siteConfig.themeColor.hue;
 // Banner configuration
 let banner = propsBanner;
 if (!banner || typeof banner !== 'string' || banner.trim() === '') {
+  // No banner provided or empty string - use default
   banner = siteConfig.banner.src;
 }
 
-// Convert relative paths to absolute paths for post images
+// Only reject relative paths that don't start with '/'
+// Allow absolute paths starting with '/' or 'http'
 if (banner && !banner.startsWith('/') && !banner.startsWith('http')) {
-  // If it's a relative path (like './cover.jpeg' or 'assets/images/banner.png'),
-  // use the default OG image from config instead
+  // If it's a relative path like './cover.jpeg', use default banner
+  // because relative paths won't work for OG images
   banner = siteConfig.banner.src;
 }
 

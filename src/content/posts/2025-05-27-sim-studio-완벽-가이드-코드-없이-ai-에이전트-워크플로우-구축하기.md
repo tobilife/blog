@@ -3,6 +3,7 @@ title: "Sim Studio: 코딩 없이 만드는 AI 에이전트 워크플로우"
 published: 2025-05-27T10:01:00.000Z
 description: Sim Studio로 개발 자동화와 API 연동을 구현하는 초보자도 따라할 수 있는 상세 가이드입니다.
 category: AI
+image: ''
 tags:
   - Sim Studio
   - AI Agent
