@@ -36,3 +36,9 @@
 - `/images/banner.png`가 `url()` 함수를 거치면 `/assets/images/banner.png`로 변환됨
 - 카카오톡 등 일부 플랫폼에서 잘못된 경로로 인식
 - OG 이미지 태그에서 url() 함수 제거로 해결
+
+### 추가 수정사항 (3차)
+- Facebook에서 이미지 비동기 처리 문제 발견
+- og:image:width와 og:image:height 태그 추가 필요
+- 1200x630 크기로 메타 태그 추가
+- Facebook이 즉시 이미지를 표시할 수 있도록 개선

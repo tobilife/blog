@@ -106,6 +106,8 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description || pageTitle} />
     <meta property="og:image" content={new URL(banner, Astro.site || Astro.url.origin).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     {setOGTypeArticle ? (
       <meta property="og:type" content="article" />
     ) : (
