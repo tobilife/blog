@@ -4,6 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # Cache reset to force rebuild
+  CACHE_VERSION = "v2"
 
 [functions]
   directory = "netlify/functions"
