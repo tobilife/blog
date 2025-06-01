@@ -42,20 +42,11 @@ const configHue = siteConfig.themeColor.hue;
 // Banner configuration
 let banner = propsBanner;
 if (!banner || typeof banner !== 'string' || banner.trim() === '') {
-  // No banner provided or empty string - use default
   banner = siteConfig.banner.src;
 }
 
-// Only reject relative paths that don't start with '/'
-// Allow absolute paths starting with '/' or 'http'
-if (banner && !banner.startsWith('/') && !banner.startsWith('http')) {
-  // If it's a relative path like './cover.jpeg', use default banner
-  // because relative paths won't work for OG images
-  banner = siteConfig.banner.src;
-}
-
-// Now using post cover as og:image
-// banner = siteConfig.banner.src;
+// TODO don't use post cover as banner for now
+banner = siteConfig.banner.src;
 
 const enableBanner = siteConfig.banner.enable;
 
@@ -107,9 +98,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
     <meta property="og:url" content={Astro.url} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description || pageTitle} />
-    <meta property="og:image" content={new URL(banner, Astro.site || Astro.url.origin).href} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image" content={new URL(banner.startsWith('/') ? banner : url(banner), Astro.site || Astro.url.origin).href} />
     {setOGTypeArticle ? (
       <meta property="og:type" content="article" />
     ) : (
@@ -120,7 +109,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
     <meta property="twitter:url" content={Astro.url} />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description || pageTitle} />
-    <meta name="twitter:image" content={new URL(banner, Astro.site || Astro.url.origin).href} />
+    <meta name="twitter:image" content={new URL(banner.startsWith('/') ? banner : url(banner), Astro.site || Astro.url.origin).href} />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
