@@ -1,7 +1,7 @@
 <script>
 import { afterUpdate, onMount } from "svelte";
-import { ContextDetector } from "./ContextDetector";
 import { BlogRAGService } from "./BlogRAGService";
+import { ContextDetector } from "./ContextDetector";
 
 let messages = [];
 let inputMessage = "";
@@ -102,59 +102,69 @@ async function sendMessage() {
 
 	const userMessage = inputMessage;
 	inputMessage = "";
-	
+
 	// 사용자 메시지 추가
 	messages = [...messages, { role: "user", content: userMessage }];
-	
+
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
-	messages = [...messages, { role: "assistant", content: "", isTyping: true, isSearching: false }];
+	messages = [
+		...messages,
+		{ role: "assistant", content: "", isTyping: true, isSearching: false },
+	];
 
 	// 블로그 컨텍스트 감지 및 RAG 검색
 	let contextualMessage = userMessage;
 	let searchResults = [];
 	let isAboutBlog = false;
-	
+
 	// RAG 시스템 - 우선순위에 따른 처리
 	// 우선순위 1: "블로그" + "검색" 패턴
-	const blogSearchPattern = /(블로그.*검색|검색.*블로그|이\s*블로그|여기|토비라이프)/i;
+	const blogSearchPattern =
+		/(블로그.*검색|검색.*블로그|이\s*블로그|여기|토비라이프)/i;
 	const isBlogSearchRequest = blogSearchPattern.test(userMessage);
-	
+
 	if (isBlogSearchRequest && contextDetector && blogRAGService) {
-	 // 블로그 검색 요청이면 RAG 시스템 사용
-	 try {
-	  console.log('☝️ 블로그 검색 요청 감지!');
-	  
-	  // 키워드 추출
-	  const keywords = await contextDetector.extractSearchKeywords(userMessage);
-	  console.log('Extracted keywords:', keywords);
-	  
-	  // 블로그 포스트 검색
-	  const searchQuery = keywords.join(' ');
-	  searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
-	  console.log(`Found ${searchResults.length} blog posts`);
-	  
-	  if (searchResults.length > 0) {
-	   console.log('Blog search results:', searchResults.map(r => ({
-	    title: r.post.title,
-	    score: r.score
-	   })));
-	   
-	   // LLM 프롬프트에 블로그 컨텍스트 추가
-	   contextualMessage = blogRAGService.buildContextualPrompt(userMessage, searchResults);
-	   isAboutBlog = true;
-	  }
-	 } catch (error) {
-	  console.error('Blog search error:', error);
-	 }
+		// 블로그 검색 요청이면 RAG 시스템 사용
+		try {
+			console.log("☝️ 블로그 검색 요청 감지!");
+
+			// 키워드 추출
+			const keywords = await contextDetector.extractSearchKeywords(userMessage);
+			console.log("Extracted keywords:", keywords);
+
+			// 블로그 포스트 검색
+			const searchQuery = keywords.join(" ");
+			searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
+			console.log(`Found ${searchResults.length} blog posts`);
+
+			if (searchResults.length > 0) {
+				console.log(
+					"Blog search results:",
+					searchResults.map((r) => ({
+						title: r.post.title,
+						score: r.score,
+					})),
+				);
+
+				// LLM 프롬프트에 블로그 컨텍스트 추가
+				contextualMessage = blogRAGService.buildContextualPrompt(
+					userMessage,
+					searchResults,
+				);
+				isAboutBlog = true;
+			}
+		} catch (error) {
+			console.error("Blog search error:", error);
+		}
 	} else {
-	 // 우선순위 2: 일반 검색 요청은 langflow-proxy에서 처리
-	 const searchPatterns = /(검색해|알려줘|최신|현재|오늘|날씨|뉴스)/i;
-	 if (searchPatterns.test(userMessage)) {
-	  console.log('🔍 웹 검색이 필요한 질문으로 판단됨');
-	  // langflow-proxy에서 자동으로 처리됨
-	 } else {
-	  console.log('ℹ️ 일반 질문으로 판단됨');
-	 }
+		// 우선순위 2: 일반 검색 요청은 langflow-proxy에서 처리
+		const searchPatterns = /(검색해|알려줘|최신|현재|오늘|날씨|뉴스)/i;
+		if (searchPatterns.test(userMessage)) {
+			console.log("🔍 웹 검색이 필요한 질문으로 판단됨");
+			// langflow-proxy에서 자동으로 처리됨
+		} else {
+			console.log("ℹ️ 일반 질문으로 판단됨");
+		}
 	}
 
 	isLoading = true;
@@ -170,29 +180,32 @@ async function sendMessage() {
 		// 대화 히스토리 최적화 - 성능 향상을 위해 메시지 수와 크기 제한
 		const MAX_HISTORY_MESSAGES = 4; // 8개에서 4개로 감소
 		const MAX_MESSAGE_LENGTH = 500; // 각 메시지 최대 길이
-		
+
 		// 메시지 필터링 및 압축
 		const recentMessages = messages
-		 .slice(0, -2) // 현재 입력 중인 메시지와 빈 메시지 제외
-		 .filter(m => m.content && !m.isTyping)
-		 .slice(-MAX_HISTORY_MESSAGES) // 최근 4개만
-		 .map(m => ({
-		  role: m.role,
-		  content: m.content.length > MAX_MESSAGE_LENGTH 
-		   ? m.content.substring(0, MAX_MESSAGE_LENGTH) + '...' 
-		   : m.content
-		 }));
-		
-		console.log(`Sending ${recentMessages.length} conversation history messages (optimized from ${messages.length - 2} total)`);
+			.slice(0, -2) // 현재 입력 중인 메시지와 빈 메시지 제외
+			.filter((m) => m.content && !m.isTyping)
+			.slice(-MAX_HISTORY_MESSAGES) // 최근 4개만
+			.map((m) => ({
+				role: m.role,
+				content:
+					m.content.length > MAX_MESSAGE_LENGTH
+						? `${m.content.substring(0, MAX_MESSAGE_LENGTH)}...`
+						: m.content,
+			}));
+
+		console.log(
+			`Sending ${recentMessages.length} conversation history messages (optimized from ${messages.length - 2} total)`,
+		);
 		const payload = {
-			input_value: contextualMessage,  // 컨텍스트가 추가된 메시지 사용
+			input_value: contextualMessage, // 컨텍스트가 추가된 메시지 사용
 			output_type: "chat",
 			input_type: "chat",
 			stream: false,
 			session_id: sessionId,
-			conversation_history: recentMessages.map(m => ({
+			conversation_history: recentMessages.map((m) => ({
 				role: m.role,
-				content: m.content
+				content: m.content,
 			})),
 			tweaks: {},
 		};
@@ -211,15 +224,17 @@ async function sendMessage() {
 		const responseText = await response.text();
 		//console.log('Response status:', response.status);
 		//console.log('Response text:', responseText);
-		
+
 		// LAG 방식: 복잡도 정보 확인
-		const complexity = response.headers.get('X-Query-Complexity');
-		const complexityScore = response.headers.get('X-Query-Score');
-		const responseTime = response.headers.get('X-Response-Time');
-		const cacheHit = response.headers.get('X-Cache') === 'HIT';
-		
+		const complexity = response.headers.get("X-Query-Complexity");
+		const complexityScore = response.headers.get("X-Query-Score");
+		const responseTime = response.headers.get("X-Response-Time");
+		const cacheHit = response.headers.get("X-Cache") === "HIT";
+
 		if (complexity) {
-			console.log(`Query complexity: ${complexity} (score: ${complexityScore}), Response time: ${responseTime}ms, Cache: ${cacheHit ? 'HIT' : 'MISS'}`);
+			console.log(
+				`Query complexity: ${complexity} (score: ${complexityScore}), Response time: ${responseTime}ms, Cache: ${cacheHit ? "HIT" : "MISS"}`,
+			);
 		}
 
 		if (!response.ok) {
@@ -228,13 +243,13 @@ async function sendMessage() {
 
 		const data = JSON.parse(responseText);
 		//console.log('Parsed response:', data);
-		
+
 		// 검색 수행 여부 확인
 		const hasSearchResults = data.hasSearchResults || false;
 		if (hasSearchResults) {
-		 console.log('최신 웹 검색 결과가 답변에 포함되었습니다.');
+			console.log("최신 웹 검색 결과가 답변에 포함되었습니다.");
 		}
-		
+
 		// 응답 파싱 - 다양한 구조 시도
 		let botResponse = "Sorry, I could not generate a response.";
 		if (data.outputs) {
@@ -358,16 +373,15 @@ onMount(async () => {
 	// 블로그 RAG 서비스 초기화
 	contextDetector = new ContextDetector();
 	blogRAGService = new BlogRAGService();
-	
+
 	// 비동기로 초기화 (블로D킹하지 않음)
-	Promise.all([
-		contextDetector.initialize(),
-		blogRAGService.initialize()
-	]).then(() => {
-		console.log('✅ Blog RAG services initialized');
-	}).catch(error => {
-		console.error('Failed to initialize RAG services:', error);
-	});
+	Promise.all([contextDetector.initialize(), blogRAGService.initialize()])
+		.then(() => {
+			console.log("✅ Blog RAG services initialized");
+		})
+		.catch((error) => {
+			console.error("Failed to initialize RAG services:", error);
+		});
 
 	// 동적으로 marked와 katex 로드
 	try {
@@ -401,8 +415,8 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-			 "안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능이 추가되었습니다!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템 적용!</strong><br>블로그 관련 질문 시 자동으로 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>LAG 적응형 처리 시스템 적용!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
-			},
+				"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능이 추가되었습니다!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템 적용!</strong><br>블로그 관련 질문 시 자동으로 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>LAG 적응형 처리 시스템 적용!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+		},
 	];
 
 	return () => {
