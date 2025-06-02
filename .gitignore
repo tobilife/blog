@@ -32,3 +32,6 @@ yarn.lock
 
 # Local proxy server
 proxy-server.js
+
+# document md file
+memo.md
