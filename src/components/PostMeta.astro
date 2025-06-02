@@ -4,7 +4,6 @@ import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import { url, getTagUrl } from "../utils/url-utils";
-import TimeAgo from "./TimeAgo.astro";
 
 interface Props {
 	class: string;
@@ -32,7 +31,7 @@ const className = Astro.props.class;
         <div class="meta-icon">
             <Icon name="material-symbols:calendar-today-outline-rounded" class="text-xl"></Icon>
         </div>
-        <TimeAgo date={published} class="text-50 text-sm font-medium" />
+        <span class="text-50 text-sm font-medium">{formatDateToYYYYMMDD(published)}</span>
     </div>
 
     <!-- update date -->
@@ -41,7 +40,7 @@ const className = Astro.props.class;
             <div class="meta-icon">
                 <Icon name="material-symbols:edit-calendar-outline-rounded" class="text-xl"></Icon>
             </div>
-            <TimeAgo date={updated} class="text-50 text-sm font-medium" />
+            <span class="text-50 text-sm font-medium">{formatDateToYYYYMMDD(updated)}</span>
         </div>
     )}
 
