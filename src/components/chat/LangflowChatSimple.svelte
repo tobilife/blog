@@ -569,8 +569,14 @@ onMount(async () => {
           class="send-button" 
           on:click={sendMessage}
           disabled={!inputMessage.trim() || isLoading}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          aria-label="메시지 보내기"  >
+          <svg 
+            width="20" 
+            height="20" 
+            viewBox="0 0 20 20" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"  >
             <path d="M2 10L17 2L13 18L11 11L2 10Z" fill="currentColor"/>
           </svg>
         </button>
