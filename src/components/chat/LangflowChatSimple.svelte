@@ -24,50 +24,114 @@ function scrollToBottom() {
 	}
 }
 
-// 메시지가 업데이트될 때마다 스크롤
+// 메시지가 업데이트될 때마다 스크롤 및 Prism 하이라이팅
 afterUpdate(() => {
-	scrollToBottom();
+ scrollToBottom();
+ 
+ // Prism.js 하이라이팅 적용
+ if (typeof Prism !== 'undefined') {
+  setTimeout(() => {
+   Prism.highlightAll();
+  }, 100);
+ }
 });
 
 // 마크다운을 렌더링하는 함수
 function renderMarkdown(text) {
-	if (!marked) return text;
+ if (!marked) return text;
 
-	try {
-		// 먼저 수식을 처리
-		let processedText = text;
-		if (katex) {
-			// 인라인 수식: $...$
-			processedText = processedText.replace(/\$([^\$]+)\$/g, (match, math) => {
-				try {
-					return katex.renderToString(math, { throwOnError: false });
-				} catch (e) {
-					return match;
-				}
-			});
+ try {
+  // 먼저 수식을 처리
+  let processedText = text;
+  if (katex) {
+   // 인라인 수식: $...$
+   processedText = processedText.replace(/\$([^\$]+)\$/g, (match, math) => {
+    try {
+     return katex.renderToString(math, { throwOnError: false });
+    } catch (e) {
+     return match;
+    }
+   });
 
-			// 블록 수식: $$...$$
-			processedText = processedText.replace(
-				/\$\$([^\$]+)\$\$/g,
-				(match, math) => {
-					try {
-						return katex.renderToString(math, {
-							throwOnError: false,
-							displayMode: true,
-						});
-					} catch (e) {
-						return match;
-					}
-				},
-			);
-		}
+   // 블록 수식: $$...$$
+   processedText = processedText.replace(
+    /\$\$([^\$]+)\$\$/g,
+    (match, math) => {
+     try {
+      return katex.renderToString(math, {
+       throwOnError: false,
+       displayMode: true,
+      });
+     } catch (e) {
+      return match;
+     }
+    },
+   );
+  }
 
-		// 그 다음 마크다운 처리
-		return marked.parse(processedText);
-	} catch (error) {
-		console.error("Markdown parsing error:", error);
-		return text;
-	}
+  // 그 다음 마크다운 처리
+  let html = marked.parse(processedText);
+  
+  // 코드 블록에 복사 버튼 추가
+  html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (match, attrs, code) => {
+   // 언어 추출
+   const langMatch = attrs.match(/class="language-([^"]+)"/);
+   const language = langMatch ? langMatch[1] : 'plaintext';
+   
+   // HTML 엔티티 디코드
+   const decodedCode = code
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+   
+   // 고유 ID 생성
+   const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
+   
+   return `
+    <div class="code-block-wrapper">
+     <div class="code-block-header">
+      <span class="code-language">${language}</span>
+      <button class="copy-button" onclick="copyCode('${codeId}')">
+       <i class="fas fa-copy"></i>
+       <span class="copy-text">복사</span>
+      </button>
+     </div>
+     <pre><code id="${codeId}" class="language-${language}">${decodedCode}</code></pre>
+    </div>
+   `;
+  });
+  
+  return html;
+ } catch (error) {
+  console.error("Markdown parsing error:", error);
+  return text;
+ }
+}
+
+// 코드 복사 함수
+function copyCode(codeId) {
+ const codeElement = document.getElementById(codeId);
+ if (codeElement) {
+  const code = codeElement.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+   // 복사 성공 피드백
+   const button = codeElement.parentElement.previousElementSibling.querySelector('.copy-button');
+   const copyText = button.querySelector('.copy-text');
+   copyText.textContent = '복사됨!';
+   setTimeout(() => {
+    copyText.textContent = '복사';
+   }, 2000);
+  }).catch(err => {
+   console.error('코드 복사 실패:', err);
+  });
+ }
+}
+
+// 전역 함수로 등록
+if (typeof window !== 'undefined') {
+ window.copyCode = copyCode;
 }
 
 // 타이핑 효과 함수
@@ -428,6 +492,9 @@ onMount(async () => {
 <svelte:head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </svelte:head>
 <div class="chat-container">
   <!-- 챗봇 버튼 -->
@@ -802,6 +869,71 @@ onMount(async () => {
     background-color: transparent;
     padding: 0;
     color: #333;
+  }
+  
+  /* 코드 블록 래퍼 스타일 */
+  .message.assistant :global(.code-block-wrapper) {
+    position: relative;
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #1e1e1e;
+  }
+  
+  .message.assistant :global(.code-block-header) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #2d2d2d;
+    border-bottom: 1px solid #3e3e3e;
+  }
+  
+  .message.assistant :global(.code-language) {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  
+  .message.assistant :global(.copy-button) {
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .message.assistant :global(.copy-button:hover) {
+    background-color: #3e3e3e;
+    color: #fff;
+    border-color: #666;
+  }
+  
+  .message.assistant :global(.copy-button i) {
+    font-size: 12px;
+  }
+  
+  /* Prism 테마 오버라이드 - 코드 블록 래퍼 내부 */
+  .message.assistant :global(.code-block-wrapper pre) {
+    background-color: #1e1e1e !important;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 16px !important;
+  }
+  
+  .message.assistant :global(.code-block-wrapper pre code) {
+    background-color: transparent;
+    color: #d4d4d4;
+    font-size: 14px;
+    line-height: 1.6;
   }
   
   .message.assistant :global(blockquote) {
