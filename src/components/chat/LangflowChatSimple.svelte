@@ -26,70 +26,72 @@ function scrollToBottom() {
 
 // 메시지가 업데이트될 때마다 스크롤 및 Prism 하이라이팅
 afterUpdate(() => {
- scrollToBottom();
- 
- // Prism.js 하이라이팅 적용
- if (typeof Prism !== 'undefined') {
-  setTimeout(() => {
-   Prism.highlightAll();
-  }, 100);
- }
+	scrollToBottom();
+
+	// Prism.js 하이라이팅 적용
+	if (typeof Prism !== "undefined") {
+		setTimeout(() => {
+			Prism.highlightAll();
+		}, 100);
+	}
 });
 
 // 마크다운을 렌더링하는 함수
 function renderMarkdown(text) {
- if (!marked) return text;
+	if (!marked) return text;
 
- try {
-  // 먼저 수식을 처리
-  let processedText = text;
-  if (katex) {
-   // 인라인 수식: $...$
-   processedText = processedText.replace(/\$([^\$]+)\$/g, (match, math) => {
-    try {
-     return katex.renderToString(math, { throwOnError: false });
-    } catch (e) {
-     return match;
-    }
-   });
+	try {
+		// 먼저 수식을 처리
+		let processedText = text;
+		if (katex) {
+			// 인라인 수식: $...$
+			processedText = processedText.replace(/\$([^\$]+)\$/g, (match, math) => {
+				try {
+					return katex.renderToString(math, { throwOnError: false });
+				} catch (e) {
+					return match;
+				}
+			});
 
-   // 블록 수식: $$...$$
-   processedText = processedText.replace(
-    /\$\$([^\$]+)\$\$/g,
-    (match, math) => {
-     try {
-      return katex.renderToString(math, {
-       throwOnError: false,
-       displayMode: true,
-      });
-     } catch (e) {
-      return match;
-     }
-    },
-   );
-  }
+			// 블록 수식: $$...$$
+			processedText = processedText.replace(
+				/\$\$([^\$]+)\$\$/g,
+				(match, math) => {
+					try {
+						return katex.renderToString(math, {
+							throwOnError: false,
+							displayMode: true,
+						});
+					} catch (e) {
+						return match;
+					}
+				},
+			);
+		}
 
-  // 그 다음 마크다운 처리
-  let html = marked.parse(processedText);
-  
-  // 코드 블록에 복사 버튼 추가
-  html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (match, attrs, code) => {
-   // 언어 추출
-   const langMatch = attrs.match(/class="language-([^"]+)"/);
-   const language = langMatch ? langMatch[1] : 'plaintext';
-   
-   // HTML 엔티티 디코드
-   const decodedCode = code
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-   
-   // 고유 ID 생성
-   const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
-   
-   return `
+		// 그 다음 마크다운 처리
+		let html = marked.parse(processedText);
+
+		// 코드 블록에 복사 버튼 추가
+		html = html.replace(
+			/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g,
+			(match, attrs, code) => {
+				// 언어 추출
+				const langMatch = attrs.match(/class="language-([^"]+)"/);
+				const language = langMatch ? langMatch[1] : "plaintext";
+
+				// HTML 엔티티 디코드
+				const decodedCode = code
+					.replace(/&lt;/g, "<")
+					.replace(/&gt;/g, ">")
+					.replace(/&amp;/g, "&")
+					.replace(/&quot;/g, '"')
+					.replace(/&#39;/g, "'");
+
+				// 고유 ID 생성
+				const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
+
+				return `
     <div class="code-block-wrapper">
      <div class="code-block-header">
       <span class="code-language">${language}</span>
@@ -101,37 +103,44 @@ function renderMarkdown(text) {
      <pre><code id="${codeId}" class="language-${language}">${decodedCode}</code></pre>
     </div>
    `;
-  });
-  
-  return html;
- } catch (error) {
-  console.error("Markdown parsing error:", error);
-  return text;
- }
+			},
+		);
+
+		return html;
+	} catch (error) {
+		console.error("Markdown parsing error:", error);
+		return text;
+	}
 }
 
 // 코드 복사 함수
 function copyCode(codeId) {
- const codeElement = document.getElementById(codeId);
- if (codeElement) {
-  const code = codeElement.textContent;
-  navigator.clipboard.writeText(code).then(() => {
-   // 복사 성공 피드백
-   const button = codeElement.parentElement.previousElementSibling.querySelector('.copy-button');
-   const copyText = button.querySelector('.copy-text');
-   copyText.textContent = '복사됨!';
-   setTimeout(() => {
-    copyText.textContent = '복사';
-   }, 2000);
-  }).catch(err => {
-   console.error('코드 복사 실패:', err);
-  });
- }
+	const codeElement = document.getElementById(codeId);
+	if (codeElement) {
+		const code = codeElement.textContent;
+		navigator.clipboard
+			.writeText(code)
+			.then(() => {
+				// 복사 성공 피드백
+				const button =
+					codeElement.parentElement.previousElementSibling.querySelector(
+						".copy-button",
+					);
+				const copyText = button.querySelector(".copy-text");
+				copyText.textContent = "복사됨!";
+				setTimeout(() => {
+					copyText.textContent = "복사";
+				}, 2000);
+			})
+			.catch((err) => {
+				console.error("코드 복사 실패:", err);
+			});
+	}
 }
 
 // 전역 함수로 등록
-if (typeof window !== 'undefined') {
- window.copyCode = copyCode;
+if (typeof window !== "undefined") {
+	window.copyCode = copyCode;
 }
 
 // 타이핑 효과 함수
@@ -479,7 +488,7 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-				"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅-> 자동배포 -> 빌드 -> 자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+				"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅->  자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
 		},
 	];
 
