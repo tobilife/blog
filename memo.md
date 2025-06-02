@@ -115,3 +115,37 @@
 - 원본 Fuwari와 동일한 OG 이미지 처리
 - 일관된 소셜 미디어 프리뷰
 - src/assets/images 폴더의 이미지 사용
+
+- src/assets/images 폴더의 이미지 사용
+
+## 2025-06-02 - 링크 프리뷰 이슈 해결
+
+### 문제점
+1. **페이스북 디버거 오류**
+   - "잘못된 이미지 콘텐츠 유형" 오류
+   - og:image URL(https://tobilife.netlify.app/assets/images/banner.png) 접근 불가
+   - 빌드된 HTML에 og:image 메타 태그 누락
+
+2. **원인 분석**
+   - banner 변수가 null/undefined일 때 startsWith() 호출 시 에러 발생
+   - 이로 인해 메타 태그 렌더링 실패
+   - config.ts에서 banner.enable이 false로 설정되어 있었음
+
+### 해결 방법
+1. **메타 태그 안전 처리**
+   - Layout.astro에서 조건부 렌더링 추가
+   - `{banner && <meta property="og:image" .../>}`
+   - twitter:image도 동일하게 처리
+
+2. **config.ts 수정**
+   - banner.enable을 true로 변경
+   - mbanner.png를 public/images로 이동 완료
+
+3. **빌드 캐시 정리**
+   - dist 폴더 삭제 및 재빌드
+   - 이전 빌드 결과물 제거
+
+### 결과
+- 메타 태그가 정상적으로 렌더링됨
+- 페이스북/카카오 디버거에서 이미지 정상 표시
+- 링크 프리뷰 기능 정상 작동
