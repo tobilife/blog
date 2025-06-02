@@ -784,6 +784,24 @@ export async function handler(event, context) {
     
     // 향상된 쿼리로 요청 본문 업데이트
     requestBody.input_value = enhancedQuery;
+    
+    
+    // 복잡도에 따른 max_tokens 설정
+    const maxTokensMap = {
+      simple: 800,      // 짧은 응답: 500-1000 토큰 중간값
+      moderate: 1500,   // 일반 응답: 1000-2000 토큰 중간값
+      complex: 2500     // 복잡한 응답: 2000-3000 토큰 중간값
+    };
+    
+    // tweaks 객체에 max_tokens 추가
+    if (!requestBody.tweaks) {
+      requestBody.tweaks = {};
+    }
+    requestBody.tweaks.ChatOutput = {
+      max_tokens: maxTokensMap[complexity.level] || 1500
+    };
+    
+    console.log(`Setting max_tokens to ${requestBody.tweaks.ChatOutput.max_tokens} for ${complexity.level} query`);
 
     console.log('Forwarding to Langflow...');
 
