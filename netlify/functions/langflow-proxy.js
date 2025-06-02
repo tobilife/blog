@@ -378,6 +378,142 @@ async function searchBrave(query, apiKey) {
   }
 }
 
+// Tavily Search API 호출 함수
+async function searchTavily(query, apiKey) {
+  const TAVILY_API_URL = 'https://api.tavily.com/search';
+  
+  // 검색 쿼리 최적화
+  const searchQuery = optimizeSearchQuery(query);
+  
+  try {
+    const response = await fetch(TAVILY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query: searchQuery,
+        search_depth: 'basic', // 'basic' 또는 'advanced'
+        max_results: 5,
+        include_answer: true,
+        include_raw_content: false,
+        include_images: false
+      })
+    });
+    
+    if (!response.ok) {
+      console.error('Tavily Search API error:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // 검색 결과를 Brave와 동일한 포맷으로 변환
+    if (data.results && data.results.length > 0) {
+      return data.results.slice(0, 3).map(result => ({
+        title: result.title,
+        description: result.content || result.snippet,
+        url: result.url,
+        score: result.score || 0 // Tavily는 관련성 점수 제공
+      }));
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Tavily Search error:', error);
+    return null;
+  }
+}
+
+// 두 검색 결과를 병합하는 함수
+function mergeSearchResults(braveResults, tavilyResults) {
+  const allResults = [];
+  const urlSet = new Set();
+  
+  // 결과가 없는 경우 처리
+  if (!braveResults && !tavilyResults) {
+    return null;
+  }
+  
+  // Tavily 결과 먼저 추가 (AI 최적화되어 있으므로)
+  if (tavilyResults) {
+    tavilyResults.forEach(result => {
+      const normalizedUrl = result.url.toLowerCase().replace(/\/$/, '');
+      if (!urlSet.has(normalizedUrl)) {
+        urlSet.add(normalizedUrl);
+        allResults.push({
+          ...result,
+          source: 'tavily'
+        });
+      }
+    });
+  }
+  
+  // Brave 결과 추가 (중복 제거)
+  if (braveResults) {
+    braveResults.forEach(result => {
+      const normalizedUrl = result.url.toLowerCase().replace(/\/$/, '');
+      if (!urlSet.has(normalizedUrl)) {
+        urlSet.add(normalizedUrl);
+        allResults.push({
+          ...result,
+          source: 'brave',
+          score: 0.8 // Brave는 점수가 없으므로 기본값
+        });
+      }
+    });
+  }
+  
+  // 스코어 기반 정렬 (있는 경우)
+  allResults.sort((a, b) => {
+    const scoreA = a.score || 0;
+    const scoreB = b.score || 0;
+    return scoreB - scoreA;
+  });
+  
+  // 최대 5개 결과 반환
+  return allResults.slice(0, 5).map(result => ({
+    title: result.title,
+    description: result.description,
+    url: result.url
+  }));
+}
+
+// 병렬로 두 API를 호출하는 함수
+async function performDualSearch(query, braveApiKey, tavilyApiKey) {
+  console.log('Performing dual search for:', query);
+  
+  // 타임아웃 설정 (각 API별 3초)
+  const searchWithTimeout = async (searchFn, apiKey, timeout = 3000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const result = await searchFn(query, apiKey);
+      clearTimeout(timeoutId);
+      return result;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.error(`Search timeout after ${timeout}ms`);
+      }
+      return null;
+    }
+  };
+  
+  // 병렬 실행
+  const [braveResults, tavilyResults] = await Promise.all([
+    braveApiKey ? searchWithTimeout(searchBrave, braveApiKey) : Promise.resolve(null),
+    tavilyApiKey ? searchWithTimeout(searchTavily, tavilyApiKey) : Promise.resolve(null)
+  ]);
+  
+  console.log(`Search results - Brave: ${braveResults ? braveResults.length : 0}, Tavily: ${tavilyResults ? tavilyResults.length : 0}`);
+  
+  // 결과 병합
+  return mergeSearchResults(braveResults, tavilyResults);
+}
+
 // 검색 결과를 프롬프트에 포함시키는 함수
 function enhancePromptWithSearchResults(originalQuery, searchResults, weatherData, conversationHistory = []) {
   // 현재 날짜를 서버에서 직접 제공
@@ -510,11 +646,13 @@ export async function handler(event, context) {
     const API_TOKEN = process.env.LANGFLOW_API_TOKEN;
     const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
     const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+    const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
     
     console.log('Environment check:', {
       hasLangflow: !!API_TOKEN,
       hasBrave: !!BRAVE_API_KEY,
-      hasOpenWeather: !!OPENWEATHER_API_KEY
+      hasOpenWeather: !!OPENWEATHER_API_KEY,
+      hasTavily: !!TAVILY_API_KEY
     });
     
     if (!API_TOKEN) {
@@ -621,7 +759,7 @@ export async function handler(event, context) {
           return results;
         };
         
-        searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
+        searchResults = await performDualSearch(userQuery, BRAVE_API_KEY, TAVILY_API_KEY);
         if (searchResults) {
           console.log(`Found ${searchResults.length} search results`);
           console.log('Optimized search query:', optimizeSearchQuery(userQuery));
