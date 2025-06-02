@@ -427,8 +427,8 @@ onMount(async () => {
 
 <svelte:head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </svelte:head>
-
 <div class="chat-container">
   <!-- 챗봇 버튼 -->
   <button 
@@ -436,15 +436,17 @@ onMount(async () => {
     class:active={chatVisible}
     on:click={() => chatVisible = !chatVisible}
   >
-    {#if chatVisible}
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    {:else}
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="currentColor"/>
-      </svg>
+    <!-- 알림 배지 -->
+    {#if !chatVisible}
+      <span class="notification-badge">3</span>
     {/if}
+    
+    {#if chatVisible}
+      <i class="fas fa-times"></i>
+    {:else}
+      <i class="fas fa-robot"></i>
+    {/if}
+  
   </button>
   
   <!-- 챗봇 창 -->
@@ -510,28 +512,164 @@ onMount(async () => {
   }
   
   .chat-button {
-    width: 56px;
-    height: 56px;
-    background-color: #4A90E2;
+    /* 버튼 기본 스타일 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 그라디언트 배경 */
     color: white;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); /* 색상에 맞는 그림자 */
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* 부드러운 애니메이션 */
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* 호버 효과를 위한 가상 요소 */
+  .chat-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: scale(0);
+    transition: transform 0.4s ease;
   }
   
   .chat-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+  
+  .chat-button:hover::before {
+    transform: scale(1);
+  }
+  
+  .chat-button:active {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   }
   
   .chat-button.active {
-    background-color: #357ABD;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse 2s infinite;
   }
+  
+  /* 맥박 애니메이션 */
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    }
+    50% {
+      box-shadow: 0 4px 30px rgba(240, 147, 251, 0.6);
+    }
+    100% {
+      box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    }
+  }
+  
+  /* 아이콘 회전 애니메이션 */
+  .chat-button i {
+    font-size: 26px;
+    transition: all 0.3s ease;
+  }
+  
+  .chat-button:hover i {
+    transform: scale(1.2) rotate(360deg);
+  }
+  
+  .chat-button.active i {
+    animation: wiggle 0.5s ease;
+  }
+  
+  /* 알림 배지 */
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    animation: bounce 2s infinite;
+    box-shadow: 0 2px 5px rgba(255, 71, 87, 0.5);
+  }
+  
+  /* 바운스 애니메이션 */
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-10px);
+    }
+    60% {
+      transform: translateY(-5px);
+    }
+  }
+  
+  /* 추가 애니메이션 - 레인보우 효과 */
+  @keyframes rainbow {
+    0% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    20% { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    40% { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    60% { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    80% { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+    100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  }
+  
+  /* 호버 시 레인보우 효과 */
+  .chat-button:hover {
+    animation: rainbow 3s ease infinite;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+  
+  /* 리플 효과를 위한 가상 요소 */
+  .chat-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: ripple 4s infinite;
+  }
+  @keyframes ripple {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(15);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+  }
+  
+  
+  
   
   .chat-window {
     position: absolute;
