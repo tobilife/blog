@@ -561,9 +561,9 @@ onMount(async () => {
             title={useEdgeFunction ? 'Edge Function 사용 중' : '일반 Function 사용 중'}
           >
             {#if useEdgeFunction}
-              <i class="fas fa-rocket"></i>
+              <span class="edge-icon">🚀</span>
             {:else}
-              <i class="fas fa-server"></i>
+              <span class="edge-icon">🖥️</span>
             {/if}
           </button>
           <button on:click={() => chatVisible = false} class="close-button">×</button>
@@ -822,8 +822,8 @@ onMount(async () => {
   
   .edge-toggle {
     position: relative;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -836,26 +836,42 @@ onMount(async () => {
     /* 기본 상태 (Regular Function) */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
   }
   
   /* Edge Function 활성화 상태 */
   .edge-toggle.active {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    animation: edgePulse 2s infinite;
-    box-shadow: 0 2px 12px rgba(240, 147, 251, 0.4);
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 50%, #f5576c 100%);
+    animation: edgePulse 2s infinite, colorShift 4s ease-in-out infinite;
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.6);
   }
   
   /* 맥박 애니메이션 */
   @keyframes edgePulse {
     0% {
-      box-shadow: 0 2px 12px rgba(240, 147, 251, 0.4);
+      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.6);
     }
     50% {
-      box-shadow: 0 2px 20px rgba(240, 147, 251, 0.6);
+      box-shadow: 0 6px 25px rgba(245, 87, 108, 0.8);
     }
     100% {
-      box-shadow: 0 2px 12px rgba(240, 147, 251, 0.4);
+      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.6);
+    }
+  }
+  
+  /* 색상 변화 애니메이션 */
+  @keyframes colorShift {
+    0%, 100% {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 50%, #f5576c 100%);
+    }
+    25% {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff6b6b 100%);
+    }
+    50% {
+      background: linear-gradient(135deg, #feca57 0%, #ff9ff3 50%, #ff6b6b 100%);
+    }
+    75% {
+      background: linear-gradient(135deg, #ff9ff3 0%, #feca57 50%, #f093fb 100%);
     }
   }
   
@@ -891,14 +907,37 @@ onMount(async () => {
   }
   
   /* 아이콘 스타일 */
-  .edge-toggle i {
-    font-size: 18px;
+  .edge-icon {
+    font-size: 20px;
     z-index: 1;
-    transition: all 0.3s ease;
+    display: inline-block;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   }
   
-  .edge-toggle:hover i {
-    transform: rotate(360deg) scale(1.1);
+  .edge-toggle:hover .edge-icon {
+    transform: rotate(360deg) scale(1.2);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  }
+  
+  /* Edge Function 활성화 시 특별 효과 */
+  .edge-toggle.active .edge-icon {
+    animation: rocketBoost 2s ease-in-out infinite;
+  }
+  
+  @keyframes rocketBoost {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    25% {
+      transform: translateY(-3px) scale(1.1) rotate(5deg);
+    }
+    50% {
+      transform: translateY(-5px) scale(1.15) rotate(-5deg);
+    }
+    75% {
+      transform: translateY(-3px) scale(1.1) rotate(3deg);
+    }
   }
   
   /* 리플 효과 */
@@ -927,9 +966,6 @@ onMount(async () => {
   }
   
   /* 상태 전환 애니메이션 */
-  .edge-toggle {
-    animation: toggleSwitch 0.5s ease;
-  }
   
   @keyframes toggleSwitch {
     0%, 100% {
