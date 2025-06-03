@@ -782,9 +782,49 @@ function enhancePromptWithSearchResults(
 	}
 
 	return enhancedPrompt;
-}
-
-export async function handler(event, context) {
+	}
+	
+	// 중국어 문자를 제거하는 함수
+	function removeChinese(text) {
+	// 중국어 문자 범위: \u4E00-\u9FFF (기본 CJK 통합 한자)
+	// 한글에서 사용하는 한자는 보통 사용 빈도가 낮으므로
+	// 특정 패턴을 찾아 제거 (예: 集中 - 집중)
+	const chinesePatterns = [
+	 /集中/g, // 集中 -> 집중
+	 /[\u4E00-\u9FFF][中國語]/g, // 중국어 패턴
+	 /[中國][\u4E00-\u9FFF]/g, // 중국 패턴
+	];
+	
+	let result = text;
+	// 알려진 중국어 패턴 대체
+	result = result.replace(/集中/g, '집중');
+	
+	// 잘못된 문자 조합 제거 (한글 문장 내 고립된 중국어 한자)
+	// 한글 문자와 한자가 함께 있을 때, 고립된 한자만 제거
+	result = result.replace(/([\uAC00-\uD7AF\s]+)([\u4E00-\u9FFF]+)([\uAC00-\uD7AF\s]+)/g, '$1 $3');
+	
+	return result.trim();
+	}
+	
+	// 중국어 문자를 재귀적으로 제거하는 함수 (객체와 배열 포함)
+	function deepRemoveChinese(obj) {
+	if (typeof obj === 'string') {
+	 return removeChinese(obj);
+	} else if (Array.isArray(obj)) {
+	 return obj.map(item => deepRemoveChinese(item));
+	} else if (obj !== null && typeof obj === 'object') {
+	 const newObj = {};
+	 for (const key in obj) {
+	  if (obj.hasOwnProperty(key)) {
+	   newObj[key] = deepRemoveChinese(obj[key]);
+	  }
+	 }
+	 return newObj;
+	}
+	return obj;
+	}
+	
+	export async function handler(event, context) {
 	console.log("Langflow proxy called");
 	const startTime = Date.now();
 
@@ -1083,10 +1123,14 @@ export async function handler(event, context) {
 			// 응답에 검색 수행 여부 플래그 추가
 			let parsedResponse;
 			try {
-				parsedResponse = JSON.parse(responseText);
-				if (requestBody.hasSearchResults) {
-					parsedResponse.hasSearchResults = true;
-				}
+			 parsedResponse = JSON.parse(responseText);
+			 
+			 // 중국어 문자 제거
+			 parsedResponse = deepRemoveChinese(parsedResponse);
+			 
+			 if (requestBody.hasSearchResults) {
+			  parsedResponse.hasSearchResults = true;
+			 }
 
 				// LAG: 단순한 질문의 응답은 캐시에 저장
 				if (
