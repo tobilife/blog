@@ -164,11 +164,11 @@ function analyzeQueryIntent(query) {
 
 	// 일반 검색 필요 확인
 	const needsSearch = searchPatterns.some((pattern) => {
-	 const matches = pattern.test(lowerQuery);
-	 if (matches) {
-	  console.log(`Pattern ${pattern} matched for query: ${lowerQuery}`);
-	 }
-	 return matches;
+		const matches = pattern.test(lowerQuery);
+		if (matches) {
+			console.log(`Pattern ${pattern} matched for query: ${lowerQuery}`);
+		}
+		return matches;
 	});
 
 	return {
@@ -631,8 +631,8 @@ async function performDualSearch(
 ) {
 	console.log("Performing dual search for:", query);
 
-	// 타임아웃 설정 (각 API별 5초)
-	const searchWithTimeout = async (searchFn, apiKey, timeout = 5000) => {
+	// 타임아웃 설정 (각 API별 9.5초)
+	const searchWithTimeout = async (searchFn, apiKey, timeout = 9500) => {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -933,9 +933,9 @@ export async function handler(event, context) {
 			// 검색 요청이 명시적으로 있는 경우는 복잡도와 관계없이 항상 실행
 			const hasExplicitSearchRequest = /검색해|알려줘|찾아/.test(userQuery);
 			const effectiveSearchLimit = hasExplicitSearchRequest
-			 ? Math.max(3, complexity.recommendations.searchLimit)
-			 : complexity.recommendations.searchLimit;
-			
+				? Math.max(3, complexity.recommendations.searchLimit)
+				: complexity.recommendations.searchLimit;
+
 			console.log("Search decision factors:");
 			console.log("  - BRAVE_API_KEY exists:", !!BRAVE_API_KEY);
 			console.log("  - intent.needsSearch:", intent.needsSearch);
@@ -944,12 +944,12 @@ export async function handler(event, context) {
 			console.log("  - hasExplicitSearchRequest:", hasExplicitSearchRequest);
 			console.log("  - effectiveSearchLimit:", effectiveSearchLimit);
 			console.log("  - complexity level:", complexity.level);
-			
+
 			if (
-			 BRAVE_API_KEY &&
-			 intent.needsSearch &&
-			 !weatherData &&
-			 !intent.isDateTime
+				BRAVE_API_KEY &&
+				intent.needsSearch &&
+				!weatherData &&
+				!intent.isDateTime
 			) {
 				console.log("Searching web for additional context...");
 				console.log("Original query:", userQuery);
@@ -1124,22 +1124,22 @@ export async function handler(event, context) {
 			clearTimeout(timeoutId);
 
 			if (fetchError.name === "AbortError") {
-			 console.error(`Request timeout after ${dynamicTimeout}ms`);
-			 return {
-			  statusCode: 504,
-			  headers: {
-			   ...headers,
-			   "Content-Type": "application/json",
-			  },
-			  body: JSON.stringify({
-			   error: "Gateway timeout",
-			   message:
-			    "The request took too long to complete. Please try with a simpler question or try again later.",
-			   timeout: true,
-			   timeoutDuration: dynamicTimeout,
-			   complexityLevel: complexity.level,
-			  }),
-			 };
+				console.error(`Request timeout after ${dynamicTimeout}ms`);
+				return {
+					statusCode: 504,
+					headers: {
+						...headers,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						error: "Gateway timeout",
+						message:
+							"The request took too long to complete. Please try with a simpler question or try again later.",
+						timeout: true,
+						timeoutDuration: dynamicTimeout,
+						complexityLevel: complexity.level,
+					}),
+				};
 			}
 
 			// 네트워크 에러 등으로 502 반환
