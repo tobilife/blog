@@ -31,7 +31,7 @@ function analyze_query_complexity(query) {
 		features: features,
 		// 처리 권장사항
 		recommendations: {
-			timeout: level === "simple" ? 5000 : level === "moderate" ? 7000 : 9500,
+			timeout: level === "simple" ? 8000 : level === "moderate" ? 12000 : 15000,
 			useCache: level === "simple",
 			searchLimit: level === "simple" ? 3 : level === "moderate" ? 3 : 5,
 			enhancePrompt: level !== "simple",
@@ -631,8 +631,8 @@ async function performDualSearch(
 ) {
 	console.log("Performing dual search for:", query);
 
-	// 타임아웃 설정 (각 API별 3초)
-	const searchWithTimeout = async (searchFn, apiKey, timeout = 3000) => {
+	// 타임아웃 설정 (각 API별 5초)
+	const searchWithTimeout = async (searchFn, apiKey, timeout = 5000) => {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -1124,20 +1124,22 @@ export async function handler(event, context) {
 			clearTimeout(timeoutId);
 
 			if (fetchError.name === "AbortError") {
-				console.error("Request timeout after 9.5 seconds");
-				return {
-					statusCode: 504,
-					headers: {
-						...headers,
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						error: "Gateway timeout",
-						message:
-							"The request took too long to complete. Please try with a simpler question.",
-						timeout: true,
-					}),
-				};
+			 console.error(`Request timeout after ${dynamicTimeout}ms`);
+			 return {
+			  statusCode: 504,
+			  headers: {
+			   ...headers,
+			   "Content-Type": "application/json",
+			  },
+			  body: JSON.stringify({
+			   error: "Gateway timeout",
+			   message:
+			    "The request took too long to complete. Please try with a simpler question or try again later.",
+			   timeout: true,
+			   timeoutDuration: dynamicTimeout,
+			   complexityLevel: complexity.level,
+			  }),
+			 };
 			}
 
 			// 네트워크 에러 등으로 502 반환
