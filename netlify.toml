@@ -13,7 +13,7 @@
 
 # Edge Functions 설정
 [[edge_functions]]
-  path = "/api/langflow-edge/*"
+  path = "/api/chat"
   function = "langflow-proxy-edge"
 
 [[headers]]
@@ -26,10 +26,4 @@
 [[redirects]]
   from = "/api/langflow/*"
   to = "/.netlify/functions/langflow-proxy"
-  status = 200
-
-# Edge Function용 새로운 경로
-[[redirects]]
-  from = "/api/chat/*"
-  to = "/.netlify/edge-functions/langflow-proxy-edge"
   status = 200
