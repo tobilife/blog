@@ -33,7 +33,7 @@ function analyze_query_complexity(query) {
 		recommendations: {
 			timeout: level === "simple" ? 5000 : level === "moderate" ? 7000 : 9500,
 			useCache: level === "simple",
-			searchLimit: level === "simple" ? 0 : level === "moderate" ? 3 : 5,
+			searchLimit: level === "simple" ? 3 : level === "moderate" ? 3 : 5,
 			enhancePrompt: level !== "simple",
 		},
 	};
@@ -163,9 +163,13 @@ function analyzeQueryIntent(query) {
 	const isWeather = weatherPatterns.some((pattern) => pattern.test(lowerQuery));
 
 	// 일반 검색 필요 확인
-	const needsSearch = searchPatterns.some((pattern) =>
-		pattern.test(lowerQuery),
-	);
+	const needsSearch = searchPatterns.some((pattern) => {
+	 const matches = pattern.test(lowerQuery);
+	 if (matches) {
+	  console.log(`Pattern ${pattern} matched for query: ${lowerQuery}`);
+	 }
+	 return matches;
+	});
 
 	return {
 		isDateTime,
@@ -874,6 +878,10 @@ export async function handler(event, context) {
 		// 질문 의도 분석 - 대화 맥락 고려
 		const intent = analyzeQueryIntent(userQuery);
 		console.log("Query intent:", intent);
+		console.log("User query:", userQuery);
+		console.log("Query includes '이재명':", userQuery.includes("이재명"));
+		console.log("Query includes '대통령':", userQuery.includes("대통령"));
+		console.log("Query includes '될거':", userQuery.includes("될거"));
 
 		// 대화 맥락에서 GitHub나 특정 주제가 언급되었는지 확인
 		if (!intent.needsSearch && conversationHistory.length > 0) {
@@ -925,15 +933,23 @@ export async function handler(event, context) {
 			// 검색 요청이 명시적으로 있는 경우는 복잡도와 관계없이 항상 실행
 			const hasExplicitSearchRequest = /검색해|알려줘|찾아/.test(userQuery);
 			const effectiveSearchLimit = hasExplicitSearchRequest
-				? Math.max(3, complexity.recommendations.searchLimit)
-				: complexity.recommendations.searchLimit;
-
+			 ? Math.max(3, complexity.recommendations.searchLimit)
+			 : complexity.recommendations.searchLimit;
+			
+			console.log("Search decision factors:");
+			console.log("  - BRAVE_API_KEY exists:", !!BRAVE_API_KEY);
+			console.log("  - intent.needsSearch:", intent.needsSearch);
+			console.log("  - weatherData:", !!weatherData);
+			console.log("  - intent.isDateTime:", intent.isDateTime);
+			console.log("  - hasExplicitSearchRequest:", hasExplicitSearchRequest);
+			console.log("  - effectiveSearchLimit:", effectiveSearchLimit);
+			console.log("  - complexity level:", complexity.level);
+			
 			if (
-				BRAVE_API_KEY &&
-				intent.needsSearch &&
-				!weatherData &&
-				!intent.isDateTime &&
-				(hasExplicitSearchRequest || effectiveSearchLimit > 0)
+			 BRAVE_API_KEY &&
+			 intent.needsSearch &&
+			 !weatherData &&
+			 !intent.isDateTime
 			) {
 				console.log("Searching web for additional context...");
 				console.log("Original query:", userQuery);
