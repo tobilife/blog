@@ -252,7 +252,7 @@ async function sendMessage() {
 		// Langflow API 호출
 		// 대화 히스토리 최적화 - 성능 향상을 위해 메시지 수와 크기 제한
 		const MAX_HISTORY_MESSAGES = 4; // 8개에서 4개로 감소
-		const MAX_MESSAGE_LENGTH = 500; // 각 메시지 최대 길이
+		const MAX_MESSAGE_LENGTH = 3000; // 각 메시지 최대 길이
 
 		// 메시지 필터링 및 압축
 		const recentMessages = messages
@@ -399,7 +399,7 @@ async function sendMessage() {
 
 		if (error.name === "AbortError") {
 			errorMessage =
-				"netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎";
+				"netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎";
 		} else if (error.message.includes("401")) {
 			errorMessage = "인증 오류가 발생했습니다. API 토큰을 확인해주세요.";
 		} else if (error.message.includes("404")) {
@@ -416,8 +416,27 @@ async function sendMessage() {
 			error.message.includes("504") ||
 			error.message.includes("timeout")
 		) {
+			// 504 타임아웃 발생 시 모든 메시지 히스토리 삭제
+			console.log("504 Timeout detected - clearing all message history");
+
+			// 초기 환영 메시지만 남기고 모든 메시지 삭제
+			messages = [
+				{
+					role: "assistant",
+					content:
+						"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅->  자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+				},
+			];
+
 			errorMessage =
-				"netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>이런 극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎";
+				"⚠️ 타임아웃이 발생하여 대화 기록을 초기화했습니다.<br><br>netlify 무료 플랜의 10초 제한으로 인한 타임아웃입니다.<br>더 간단한 질문으로 다시 시작해주세요! 😊";
+
+			// 타임아웃 메시지 추가
+			messages = [
+				...messages,
+				{ role: "assistant", content: errorMessage, isTyping: false },
+			];
+			return; // 추가 처리 중단
 		}
 
 		// 이미 추가된 assistant 메시지를 업데이트
