@@ -285,7 +285,7 @@ async function sendMessage() {
 		console.log(
 			`Sending ${recentMessages.length} conversation history messages (optimized from ${messages.length - 2} total)`,
 		);
-		
+
 		const payload = {
 			input_value: contextualMessage, // 컨텍스트가 추가된 메시지 사용
 			output_type: "chat",
@@ -299,7 +299,9 @@ async function sendMessage() {
 			tweaks: {},
 		};
 
-		console.log(`Using ${useEdgeFunction ? 'Edge Function' : 'Regular Function'}: ${LANGFLOW_API_URL}`);
+		console.log(
+			`Using ${useEdgeFunction ? "Edge Function" : "Regular Function"}: ${LANGFLOW_API_URL}`,
+		);
 
 		const response = await fetch(LANGFLOW_API_URL, {
 			method: "POST",
@@ -315,7 +317,7 @@ async function sendMessage() {
 		// 복잡도 정보 확인
 		const complexity = response.headers.get("X-Query-Complexity");
 		const responseTime = response.headers.get("X-Response-Time");
-		
+
 		if (complexity) {
 			console.log(
 				`Query complexity: ${complexity}, Response time: ${responseTime}ms`,
@@ -403,7 +405,7 @@ async function sendMessage() {
 		let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
 
 		if (error.name === "AbortError") {
-			errorMessage = useEdgeFunction 
+			errorMessage = useEdgeFunction
 				? "Edge Function에서도 타임아웃이 발생했습니다. 질문을 더 간단하게 해주세요."
 				: "netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br><br>💡 Edge Function 모드로 전환하면 더 긴 시간 처리가 가능합니다!";
 		} else if (error.message.includes("401")) {
@@ -430,7 +432,7 @@ async function sendMessage() {
 				{
 					role: "assistant",
 					content:
-						"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅->  자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>🚀 <strong>Edge Function 모드</strong><br>타임아웃이 자주 발생한다면 Edge Function 모드를 사용해보세요!<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+						"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>🚀 <strong>Edge Function 모드</strong><br>타임아웃이 자주 발생한다면 Edge Function 모드를 사용해보세요!<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
 				},
 			];
 
