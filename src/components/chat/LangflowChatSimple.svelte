@@ -231,7 +231,8 @@ async function sendMessage() {
 		}
 	} else {
 		// 우선순위 2: 일반 검색 요청은 langflow-proxy에서 처리
-		const searchPatterns = /(검색해|알려줘|최신|현재|오늘|날씨|뉴스)/i;
+		const searchPatterns =
+			/(검색해|알려줘|최신|현재|지금|이번달|올해|오늘|방금|아까|좀전|나중에|아직|벌써|곧|이제|이전에|이후에|다음|항상|늘|내일|어제|모레|글피|그제|지난달|다음달|작년|내년|몇년전|며칠전|요즘|최근|동시에|즉시|당장|시절|한때|날씨|뉴스)/i;
 		if (searchPatterns.test(userMessage)) {
 			console.log("🔍 웹 검색이 필요한 질문으로 판단됨");
 			// langflow-proxy에서 자동으로 처리됨
