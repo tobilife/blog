@@ -604,46 +604,56 @@ function mergeSearchResults(braveResults, tavilyResults) {
 }
 
 // 병렬로 두 API를 호출하는 함수
-async function performDualSearch(query, braveApiKey, tavilyApiKey) {
-	console.log("Performing dual search for:", query);
+// 병렬로 두 API를 호출하는 함수
+async function performDualSearch(query, braveApiKey, tavilyApiKey, searchLimit = 3) {
+ console.log("Performing dual search for:", query);
 
-	// 타임아웃 설정 (각 API별 3초)
-	const searchWithTimeout = async (searchFn, apiKey, timeout = 3000) => {
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), timeout);
+ // 타임아웃 설정 (각 API별 3초)
+ const searchWithTimeout = async (searchFn, apiKey, timeout = 3000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-		try {
-			const result = await searchFn(query, apiKey);
-			clearTimeout(timeoutId);
-			return result;
-		} catch (error) {
-			clearTimeout(timeoutId);
-			if (error.name === "AbortError") {
-				console.error(`Search timeout after ${timeout}ms`);
-			}
-			return null;
-		}
-	};
+  try {
+   const result = await searchFn(query, apiKey);
+   clearTimeout(timeoutId);
+   return result;
+  } catch (error) {
+   clearTimeout(timeoutId);
+   if (error.name === "AbortError") {
+    console.error(`Search timeout after ${timeout}ms`);
+   }
+   return null;
+  }
+ };
 
-	// 병렬 실행
-	const [braveResults, tavilyResults] = await Promise.all([
-		braveApiKey
-			? searchWithTimeout(limitedSearchBrave || searchBrave, braveApiKey)
-			: Promise.resolve(null),
-		tavilyApiKey
-			? searchWithTimeout(searchTavily, tavilyApiKey)
-			: Promise.resolve(null),
-	]);
+ // 검색 결과 수를 제한하는 함수
+ const limitedSearchBrave = async (query, apiKey) => {
+  const results = await searchBrave(query, apiKey);
+  if (results) {
+   return results.slice(0, searchLimit);
+  }
+  return results;
+ };
 
-	console.log(
-		`Search results - Brave: ${braveResults ? braveResults.length : 0}, Tavily: ${tavilyResults ? tavilyResults.length : 0}`,
-	);
-
-	// 결과 병합
-	return mergeSearchResults(braveResults, tavilyResults);
-}
-
-// 검색 결과를 프롬프트에 포함시키는 함수
+ // 병렬 실행
+ const [braveResults, tavilyResults] = await Promise.all([
+  braveApiKey
+   ? searchWithTimeout(limitedSearchBrave, braveApiKey)
+   : Promise.resolve(null),
+  tavilyApiKey
+   ? searchWithTimeout(searchTavily, tavilyApiKey)
+   : Promise.resolve(null),
+ ]);
+ 
+ console.log(
+  `Search results - Brave: ${braveResults ? braveResults.length : 0}, Tavily: ${tavilyResults ? tavilyResults.length : 0}`,
+ );
+ 
+ // 결과 병합
+ return mergeSearchResults(braveResults, tavilyResults);
+ }
+ 
+ // 검색 결과를 프롬프트에 포함시키는 함수
 function enhancePromptWithSearchResults(
 	originalQuery,
 	searchResults,
@@ -908,23 +918,12 @@ export async function handler(event, context) {
 				console.log("Has explicit search request:", hasExplicitSearchRequest);
 				console.log("Effective search limit:", effectiveSearchLimit);
 
-				// 복잡도에 따른 검색 결과 수 조정
-				// 검색 결과 수를 제한하는 래퍼 함수 생성
-				const limitedSearchBrave = async (query, apiKey) => {
-					const results = await searchBrave(query, apiKey);
-					if (results) {
-						return results.slice(0, effectiveSearchLimit);
-					}
-					return results;
-				};
-
-				// searchBrave 대신 limitedSearchBrave 사용
-
-				searchResults = await performDualSearch(
-					userQuery,
-					BRAVE_API_KEY,
-					TAVILY_API_KEY,
-				);
+    searchResults = await performDualSearch(
+     userQuery,
+     BRAVE_API_KEY,
+     TAVILY_API_KEY,
+     effectiveSearchLimit
+    );
 				if (searchResults) {
 					console.log(`Found ${searchResults.length} search results`);
 					console.log(
