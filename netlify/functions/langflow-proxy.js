@@ -472,8 +472,8 @@ function mergeSearchResults(braveResults, tavilyResults) {
     return scoreB - scoreA;
   });
   
-  // 최대 5개 결과 반환
-  return allResults.slice(0, 5).map(result => ({
+  // 최대 3개 결과 반환
+  return allResults.slice(0, 3).map(result => ({
     title: result.title,
     description: result.description,
     url: result.url
@@ -529,10 +529,12 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   // 대화 맥락이 있는 경우 포함
   if (conversationHistory.length > 0) {
     enhancedPrompt += '이전 대화 내용:\n';
-    // 최근 6개의 대화만 포함 (적절한 맥락 유지)
-    const recentHistory = conversationHistory.slice(-6);
+    // 최근 3개의 대화만 포함 (반응 속도 최적화)
+    const recentHistory = conversationHistory.slice(-3);
     recentHistory.forEach(msg => {
-      enhancedPrompt += `${msg.role === 'user' ? '사용자' : 'AI'}: ${msg.content}\n`;
+      // 길이 제한: 각 메시지를 100자로 제한
+      const truncatedContent = msg.content.length > 100 ? msg.content.substring(0, 100) + '...' : msg.content;
+      enhancedPrompt += `${msg.role === 'user' ? '사용자' : 'AI'}: ${truncatedContent}\n`;
     });
     enhancedPrompt += '\n';
   }
@@ -569,9 +571,11 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
     
     searchResults.forEach((result, index) => {
       enhancedPrompt += `[${index + 1}] ${result.title}\n`;
-      enhancedPrompt += `${result.description}\n`;
-      enhancedPrompt += `출처: ${result.url}\n\n`;
-    });
+      // 설명을 80자로 제한
+      const shortDescription = result.description.length > 80 ? 
+        result.description.substring(0, 80) + '...' : result.description;
+      enhancedPrompt += `${shortDescription}\n\n`;
+      });
   }
   
   enhancedPrompt += '답변 지침:\n';
@@ -584,30 +588,15 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
     enhancedPrompt += '1. 날씨 정보를 요청했지만 실시간 데이터를 가져올 수 없었습니다.\n';
     enhancedPrompt += '2. "현재 실시간 날씨 정보를 확인할 수 없습니다"라고 명확히 알려주세요.\n';
   } else if (searchResults && searchResults.length > 0) {
-    // 일반 검색 결과에 대한 지침
-    enhancedPrompt += '1. 위에 제공된 최신 웹 검색 결과를 바탕으로 사용자 질문에 답변하세요.\n';
-    enhancedPrompt += '2. 검색 결과의 내용을 요약하여 제공하고, 필요시 출처를 명시하세요.\n';
-    enhancedPrompt += '3. "검색 기능이 없다"거나 "알 수 없다"라고 말하지 마세요. 검색 결과를 활용하세요.\n';
-    enhancedPrompt += '4. 사용자가 요청한 주제에 집중하여 답변하세요.\n';
-    
-    // 뉴스 검색에 대한 추가 지침
-    if (originalQuery.includes('뉴스') || originalQuery.includes('헤드라인')) {
-      enhancedPrompt += '5. 뉴스 헤드라인을 요약하여 주요 뉴스를 간결하게 제시하세요.\n';
-    }
-    
-    // GitHub 토픽 같은 특정 주제에 대한 추가 지침
-    if (originalQuery.includes('github') || originalQuery.includes('깃허브')) {
-      enhancedPrompt += '5. GitHub 트렌드나 토픽에 대해 구체적인 프로젝트 이름, 설명, 주요 기능을 포함하세요.\n';
-    }
+    // 간소화된 검색 결과 지침
+    enhancedPrompt += '위 검색 결과를 바탕으로 간결하게 답변하세요.\n';
   }
   
-  // 공통 지침
-  enhancedPrompt += '\n공통 지침:\n';
+  
+  // 간소화된 공통 지침
   if (conversationHistory.length > 0) {
-    enhancedPrompt += '- 이전 대화 내용을 참고하여 맥락에 맞게 답변하세요.\n';
+    enhancedPrompt += '\n이전 대화를 참고하여 답변하세요.\n';
   }
-  enhancedPrompt += '- 웹사이트 방문이나 앱 사용을 권하지 마세요.\n';
-  enhancedPrompt += '- 질문의 주제와 관련 없는 정보는 포함하지 마세요.';
   
   return enhancedPrompt;
 }
@@ -670,7 +659,7 @@ export async function handler(event, context) {
     console.log('Conversation history length:', conversationHistory.length);
     if (conversationHistory.length > 0) {
       console.log('Recent conversation context:');
-      conversationHistory.slice(-6).forEach((msg, idx) => {
+            conversationHistory.slice(-3).forEach((msg, idx) => {
         console.log(`  [${idx}] ${msg.role}: ${msg.content.substring(0, 50)}...`);
       });
     }
