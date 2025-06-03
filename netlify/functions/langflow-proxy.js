@@ -78,80 +78,80 @@ function analyzeQueryIntent(query) {
 
 	// 일반 검색이 필요한 패턴
 	const searchPatterns = [
-	 /검색해/,
-	 /검색해줘/,
-	 /검색/,
-	 /알려줘/,
-	 /최신.*뉴스/,
-	 /뉴스.*헤드라인/,
-	 /헤드라인/,
-	 /뉴스.*검색/,
-	 /뉴스/,
-	 /최근.*동향/,
-	 /요즘.*트렌드/,
-	 /github.*트렌드/,
-	 /github.*토픽/,
-	 /깃허브.*토픽/,
-	 /깃헙.*토픽/,
-	 /토픽.*검색/,
-	 /깃허브/,
-	 /깃헙/,
-	 /현재.*가격/,
-	 /최신.*정보/,
-	 /업데이트/,
-	 /발표/,
-	 /출시/,
-	 /최신/,
-	 /현재/,
-	 /지금/,
-	 /이번달/,
-	 /올해/,
-	 /오늘/,
-	 /방금/,
-	 /아까/,
-	 /좀전/,
-	 /나중에/,
-	 /아직/,
-	 /벌써/,
-	 /곱/,
-	 /이제/,
-	 /이전에/,
-	 /이후에/,
-	 /다음/,
-	 /항상/,
-	 /늘/,
-	 /내일/,
-	 /어제/,
-	 /모레/,
-	 /글피/,
-	 /그제/,
-	 /지난달/,
-	 /다음달/,
-	 /작년/,
-	 /내년/,
-	 /몇년전/,
-	 /며칠전/,
-	 /요즘/,
-	 /최근/,
-	 /동시에/,
-	 /즉시/,
-	 /당장/,
-	 /시절/,
-	 /한때/,
-	 /정치/,
-	 /선거/,
-	 /대통령/,
-	 /이재명/,
-	 /윤석열/,
-	 /국회/,
-	 /의원/,
-	 /여당/,
-	 /야당/,
-	 /민주당/,
-	 /국민의힘/,
-	 /될거/,
-	 /될거 같/,
-	 /될 것 같/,
+		/검색해/,
+		/검색해줘/,
+		/검색/,
+		/알려줘/,
+		/최신.*뉴스/,
+		/뉴스.*헤드라인/,
+		/헤드라인/,
+		/뉴스.*검색/,
+		/뉴스/,
+		/최근.*동향/,
+		/요즘.*트렌드/,
+		/github.*트렌드/,
+		/github.*토픽/,
+		/깃허브.*토픽/,
+		/깃헙.*토픽/,
+		/토픽.*검색/,
+		/깃허브/,
+		/깃헙/,
+		/현재/,
+		/최신/,
+		/업데이트/,
+		/발표/,
+		/출시/,
+		/최신/,
+		/현재/,
+		/지금/,
+		/이번달/,
+		/올해/,
+		/오늘/,
+		/방금/,
+		/아까/,
+		/좀전/,
+		/나중에/,
+		/아직/,
+		/벌써/,
+		/곱/,
+		/이제/,
+		/이전에/,
+		/이후에/,
+		/다음/,
+		/항상/,
+		/늘/,
+		/내일/,
+		/어제/,
+		/모레/,
+		/글피/,
+		/그제/,
+		/지난달/,
+		/다음달/,
+		/작년/,
+		/내년/,
+		/몇년전/,
+		/며칠전/,
+		/요즘/,
+		/최근/,
+		/동시에/,
+		/즉시/,
+		/당장/,
+		/시절/,
+		/한때/,
+		/정치/,
+		/선거/,
+		/대통령/,
+		/이재명/,
+		/윤석열/,
+		/국회/,
+		/의원/,
+		/여당/,
+		/야당/,
+		/민주당/,
+		/국민의힘/,
+		/될거/,
+		/될거 같/,
+		/될 것 같/,
 	];
 
 	// 날짜/시간 질문 확인
@@ -619,55 +619,60 @@ function mergeSearchResults(braveResults, tavilyResults) {
 
 // 병렬로 두 API를 호출하는 함수
 // 병렬로 두 API를 호출하는 함수
-async function performDualSearch(query, braveApiKey, tavilyApiKey, searchLimit = 3) {
- console.log("Performing dual search for:", query);
+async function performDualSearch(
+	query,
+	braveApiKey,
+	tavilyApiKey,
+	searchLimit = 3,
+) {
+	console.log("Performing dual search for:", query);
 
- // 타임아웃 설정 (각 API별 3초)
- const searchWithTimeout = async (searchFn, apiKey, timeout = 3000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+	// 타임아웃 설정 (각 API별 3초)
+	const searchWithTimeout = async (searchFn, apiKey, timeout = 3000) => {
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  try {
-   const result = await searchFn(query, apiKey);
-   clearTimeout(timeoutId);
-   return result;
-  } catch (error) {
-   clearTimeout(timeoutId);
-   if (error.name === "AbortError") {
-    console.error(`Search timeout after ${timeout}ms`);
-   }
-   return null;
-  }
- };
+		try {
+			const result = await searchFn(query, apiKey);
+			clearTimeout(timeoutId);
+			return result;
+		} catch (error) {
+			clearTimeout(timeoutId);
+			if (error.name === "AbortError") {
+				console.error(`Search timeout after ${timeout}ms`);
+			}
+			return null;
+		}
+	};
 
- // 검색 결과 수를 제한하는 함수
- const limitedSearchBrave = async (query, apiKey) => {
-  const results = await searchBrave(query, apiKey);
-  if (results) {
-   return results.slice(0, searchLimit);
-  }
-  return results;
- };
+	// 검색 결과 수를 제한하는 함수
+	const limitedSearchBrave = async (query, apiKey) => {
+		const results = await searchBrave(query, apiKey);
+		if (results) {
+			return results.slice(0, searchLimit);
+		}
+		return results;
+	};
 
- // 병렬 실행
- const [braveResults, tavilyResults] = await Promise.all([
-  braveApiKey
-   ? searchWithTimeout(limitedSearchBrave, braveApiKey)
-   : Promise.resolve(null),
-  tavilyApiKey
-   ? searchWithTimeout(searchTavily, tavilyApiKey)
-   : Promise.resolve(null),
- ]);
- 
- console.log(
-  `Search results - Brave: ${braveResults ? braveResults.length : 0}, Tavily: ${tavilyResults ? tavilyResults.length : 0}`,
- );
- 
- // 결과 병합
- return mergeSearchResults(braveResults, tavilyResults);
- }
- 
- // 검색 결과를 프롬프트에 포함시키는 함수
+	// 병렬 실행
+	const [braveResults, tavilyResults] = await Promise.all([
+		braveApiKey
+			? searchWithTimeout(limitedSearchBrave, braveApiKey)
+			: Promise.resolve(null),
+		tavilyApiKey
+			? searchWithTimeout(searchTavily, tavilyApiKey)
+			: Promise.resolve(null),
+	]);
+
+	console.log(
+		`Search results - Brave: ${braveResults ? braveResults.length : 0}, Tavily: ${tavilyResults ? tavilyResults.length : 0}`,
+	);
+
+	// 결과 병합
+	return mergeSearchResults(braveResults, tavilyResults);
+}
+
+// 검색 결과를 프롬프트에 포함시키는 함수
 function enhancePromptWithSearchResults(
 	originalQuery,
 	searchResults,
@@ -703,7 +708,7 @@ function enhancePromptWithSearchResults(
 	}
 
 	enhancedPrompt += `현재 사용자 질문: ${originalQuery}\n`;
-	enhancedPrompt += `현재 날짜: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일 (2025년 6월 4일)\n\n`;
+	enhancedPrompt += `현재 날짜: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n\n`;
 
 	// 질문 의도 분석
 	const intent = analyzeQueryIntent(originalQuery);
@@ -759,10 +764,12 @@ function enhancePromptWithSearchResults(
 		enhancedPrompt +=
 			'2. "현재 실시간 날씨 정보를 확인할 수 없습니다"라고 명확히 알려주세요.\n';
 	} else if (searchResults && searchResults.length > 0) {
-	 // 검색 결과 지침 강화
-	 enhancedPrompt += "위에 제공된 웹 검색 결과를 반드시 참고하여 답변하세요.\n";
-	 enhancedPrompt += "자체 지식이 아닌 검색 결과의 내용을 기반으로 현재 상황을 설명하세요.\n";
-	 enhancedPrompt += '"알 수 없다"거나 과거 지식으로 답변하지 마세요.\n';
+		// 검색 결과 지침 강화
+		enhancedPrompt +=
+			"위에 제공된 웹 검색 결과를 반드시 참고하여 답변하세요.\n";
+		enhancedPrompt +=
+			"자체 지식이 아닌 검색 결과의 내용을 기반으로 현재 상황을 설명하세요.\n";
+		enhancedPrompt += '"알 수 없다"거나 과거 지식으로 답변하지 마세요.\n';
 	}
 
 	// 간소화된 공통 지침
@@ -933,12 +940,12 @@ export async function handler(event, context) {
 				console.log("Has explicit search request:", hasExplicitSearchRequest);
 				console.log("Effective search limit:", effectiveSearchLimit);
 
-    searchResults = await performDualSearch(
-     userQuery,
-     BRAVE_API_KEY,
-     TAVILY_API_KEY,
-     effectiveSearchLimit
-    );
+				searchResults = await performDualSearch(
+					userQuery,
+					BRAVE_API_KEY,
+					TAVILY_API_KEY,
+					effectiveSearchLimit,
+				);
 				if (searchResults) {
 					console.log(`Found ${searchResults.length} search results`);
 					console.log(
