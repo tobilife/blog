@@ -11,7 +11,10 @@ let sessionId = null;
 let LANGFLOW_API_URL = "";
 let marked = null;
 let katex = null;
-let chatMessagesEl = null; // chat-messages 엘리먼트 참조
+let chatMessagesEl = null;
+
+// Edge Function 사용 여부를 결정하는 플래그
+let useEdgeFunction = false;
 
 // 블로그 RAG 서비스 인스턴스
 let contextDetector = null;
@@ -170,6 +173,18 @@ async function typeMessage(text, messageIndex) {
 	messages = [...messages];
 }
 
+// Edge Function 사용 여부 토글
+function toggleEdgeFunction() {
+	useEdgeFunction = !useEdgeFunction;
+	if (useEdgeFunction) {
+		LANGFLOW_API_URL = "/api/chat";
+		console.log("🚀 Switched to Edge Function");
+	} else {
+		LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy";
+		console.log("🔄 Switched to regular Function");
+	}
+}
+
 async function sendMessage() {
 	if (!inputMessage.trim() || isLoading) return;
 
@@ -243,13 +258,12 @@ async function sendMessage() {
 
 	isLoading = true;
 
-	// 타임아웃을 위한 AbortController 생성
+	// Edge Function은 더 긴 타임아웃 설정 가능
+	const timeoutDuration = useEdgeFunction ? 20000 : 9000;
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), 9000); // 9초 타임아웃 (프록시보다 짧게)
+	const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 
 	try {
-		//console.log('Sending to:', LANGFLOW_API_URL);
-
 		// Langflow API 호출
 		// 대화 히스토리 최적화 - 성능 향상을 위해 메시지 수와 크기 제한
 		const MAX_HISTORY_MESSAGES = 4; // 8개에서 4개로 감소
@@ -271,6 +285,7 @@ async function sendMessage() {
 		console.log(
 			`Sending ${recentMessages.length} conversation history messages (optimized from ${messages.length - 2} total)`,
 		);
+		
 		const payload = {
 			input_value: contextualMessage, // 컨텍스트가 추가된 메시지 사용
 			output_type: "chat",
@@ -284,7 +299,7 @@ async function sendMessage() {
 			tweaks: {},
 		};
 
-		//console.log('Request payload:', payload);
+		console.log(`Using ${useEdgeFunction ? 'Edge Function' : 'Regular Function'}: ${LANGFLOW_API_URL}`);
 
 		const response = await fetch(LANGFLOW_API_URL, {
 			method: "POST",
@@ -296,18 +311,14 @@ async function sendMessage() {
 		});
 
 		const responseText = await response.text();
-		//console.log('Response status:', response.status);
-		//console.log('Response text:', responseText);
 
-		// LAG 방식: 복잡도 정보 확인
+		// 복잡도 정보 확인
 		const complexity = response.headers.get("X-Query-Complexity");
-		const complexityScore = response.headers.get("X-Query-Score");
 		const responseTime = response.headers.get("X-Response-Time");
-		const cacheHit = response.headers.get("X-Cache") === "HIT";
-
+		
 		if (complexity) {
 			console.log(
-				`Query complexity: ${complexity} (score: ${complexityScore}), Response time: ${responseTime}ms, Cache: ${cacheHit ? "HIT" : "MISS"}`,
+				`Query complexity: ${complexity}, Response time: ${responseTime}ms`,
 			);
 		}
 
@@ -316,7 +327,6 @@ async function sendMessage() {
 		}
 
 		const data = JSON.parse(responseText);
-		//console.log('Parsed response:', data);
 
 		// 검색 수행 여부 확인
 		const hasSearchResults = data.hasSearchResults || false;
@@ -327,13 +337,9 @@ async function sendMessage() {
 		// 응답 파싱 - 다양한 구조 시도
 		let botResponse = "Sorry, I could not generate a response.";
 		if (data.outputs) {
-			//console.log('Found outputs:', data.outputs);
-
 			// outputs 배열 순회
 			if (Array.isArray(data.outputs)) {
 				for (const output of data.outputs) {
-					//console.log('Checking output:', output);
-
 					// 다양한 경로 시도
 					if (output.outputs?.[0]?.results?.message?.text) {
 						botResponse = output.outputs[0].results.message.text;
@@ -372,8 +378,6 @@ async function sendMessage() {
 			botResponse = data.text;
 		}
 
-		//console.log('Final bot response:', botResponse);
-
 		// <think> 태그 제거
 		if (botResponse.includes("<think>")) {
 			// <think>...</think> 패턴을 찾아서 제거
@@ -399,8 +403,9 @@ async function sendMessage() {
 		let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
 
 		if (error.name === "AbortError") {
-			errorMessage =
-				"netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br>극한의 환경에서 프롬프트 입력 능력을 키운다는 긍정적인 생각을 해주시면 감사하겠습니다.😎";
+			errorMessage = useEdgeFunction 
+				? "Edge Function에서도 타임아웃이 발생했습니다. 질문을 더 간단하게 해주세요."
+				: "netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br><br>💡 Edge Function 모드로 전환하면 더 긴 시간 처리가 가능합니다!";
 		} else if (error.message.includes("401")) {
 			errorMessage = "인증 오류가 발생했습니다. API 토큰을 확인해주세요.";
 		} else if (error.message.includes("404")) {
@@ -425,12 +430,12 @@ async function sendMessage() {
 				{
 					role: "assistant",
 					content:
-						"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅->  자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+						"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅->  자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>🚀 <strong>Edge Function 모드</strong><br>타임아웃이 자주 발생한다면 Edge Function 모드를 사용해보세요!<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
 				},
 			];
 
 			errorMessage =
-				"⚠️ 타임아웃이 발생하여 대화 기록을 초기화했습니다.<br><br>netlify 무료 플랜의 10초 제한으로 인한 타임아웃입니다.<br>더 간단한 질문으로 다시 시작해주세요! 😊";
+				"⚠️ 타임아웃이 발생하여 대화 기록을 초기화했습니다.<br><br>더 간단한 질문으로 다시 시작해주세요! 😊";
 
 			// 타임아웃 메시지 추가
 			messages = [
@@ -461,13 +466,11 @@ function handleKeyPress(event) {
 }
 
 onMount(async () => {
-	//console.log('LangflowChatSimple: Initializing with Langflow API...');
-
 	// 블로그 RAG 서비스 초기화
 	contextDetector = new ContextDetector();
 	blogRAGService = new BlogRAGService();
 
-	// 비동기로 초기화 (블로D킹하지 않음)
+	// 비동기로 초기화 (블로킹하지 않음)
 	Promise.all([contextDetector.initialize(), blogRAGService.initialize()])
 		.then(() => {
 			console.log("✅ Blog RAG services initialized");
@@ -498,17 +501,15 @@ onMount(async () => {
 	// 클라이언트 사이드에서만 실행
 	sessionId = `user_${Date.now()}`;
 
-	// 프로덕션에서는 Netlify Functions 사용
+	// 기본값은 일반 Function 사용
 	LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy";
-
-	//console.log('API URL:', LANGFLOW_API_URL);
 
 	// 초기 환영 메시지
 	messages = [
 		{
 			role: "assistant",
 			content:
-				"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅->  자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+				"안녕하세요!<br>토비라이프 블로그 챗봇은<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 포스팅->  자동 컨텐츠 인덱싱 작업<br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>🚀 <strong>Edge Function 모드</strong><br>타임아웃이 자주 발생한다면 Edge Function 모드를 사용해보세요!<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
 		},
 	];
 
@@ -551,7 +552,22 @@ onMount(async () => {
       <!-- 헤더 -->
       <div class="chat-header">
         <span>토비라이프 블로그 챗봇</span>
-        <button on:click={() => chatVisible = false} class="close-button">×</button>
+        <div class="header-controls">
+          <!-- Edge Function 토글 버튼 -->
+          <button 
+            class="edge-toggle"
+            class:active={useEdgeFunction}
+            on:click={toggleEdgeFunction}
+            title={useEdgeFunction ? 'Edge Function 사용 중' : '일반 Function 사용 중'}
+          >
+            {#if useEdgeFunction}
+              <i class="fas fa-rocket"></i>
+            {:else}
+              <i class="fas fa-server"></i>
+            {/if}
+          </button>
+          <button on:click={() => chatVisible = false} class="close-button">×</button>
+        </div>
       </div>
       
       <!-- 메시지 영역 -->
@@ -606,6 +622,7 @@ onMount(async () => {
 </div>
 
 <style>
+  /* 기존 스타일 유지 */
   .chat-container {
     position: fixed;
     bottom: 20px;
@@ -771,8 +788,6 @@ onMount(async () => {
   }
   
   
-  
-  
   .chat-window {
     position: absolute;
     bottom: 70px;
@@ -797,6 +812,46 @@ onMount(async () => {
     justify-content: space-between;
     align-items: center;
     font-weight: 600;
+  }
+  
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .edge-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+  
+  .edge-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
+  
+  .edge-toggle.active {
+    background: rgba(255, 255, 255, 0.4);
+    animation: glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    }
   }
   
   .close-button {
