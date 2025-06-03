@@ -821,18 +821,151 @@ onMount(async () => {
   }
   
   .edge-toggle {
-    background: rgba(255, 255, 255, 0.2);
+    position: relative;
+    width: 36px;
+    height: 36px;
     border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
-    width: 32px;
-    height: 32px;
     border-radius: 50%;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    
+    /* 기본 상태 (Regular Function) */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+  
+  /* Edge Function 활성화 상태 */
+  .edge-toggle.active {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: edgePulse 2s infinite;
+    box-shadow: 0 2px 12px rgba(240, 147, 251, 0.4);
+  }
+  
+  /* 맥박 애니메이션 */
+  @keyframes edgePulse {
+    0% {
+      box-shadow: 0 2px 12px rgba(240, 147, 251, 0.4);
+    }
+    50% {
+      box-shadow: 0 2px 20px rgba(240, 147, 251, 0.6);
+    }
+    100% {
+      box-shadow: 0 2px 12px rgba(240, 147, 251, 0.4);
+    }
+  }
+  
+  /* 호버 효과를 위한 가상 요소 */
+  .edge-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: scale(0);
+    transition: transform 0.4s ease;
+  }
+  
+  .edge-toggle:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+  }
+  
+  .edge-toggle.active:hover {
+    box-shadow: 0 4px 20px rgba(240, 147, 251, 0.6);
+  }
+  
+  .edge-toggle:hover::before {
+    transform: scale(1);
+  }
+  
+  .edge-toggle:active {
+    transform: translateY(0) scale(0.98);
+  }
+  
+  /* 아이콘 스타일 */
+  .edge-toggle i {
+    font-size: 18px;
+    z-index: 1;
     transition: all 0.3s ease;
+  }
+  
+  .edge-toggle:hover i {
+    transform: rotate(360deg) scale(1.1);
+  }
+  
+  /* 리플 효과 */
+  .edge-toggle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: edgeRipple 3s infinite;
+  }
+  
+  @keyframes edgeRipple {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(12);
+      opacity: 0;
+    }
+  }
+  
+  /* 상태 전환 애니메이션 */
+  .edge-toggle {
+    animation: toggleSwitch 0.5s ease;
+  }
+  
+  @keyframes toggleSwitch {
+    0%, 100% {
+      transform: rotate(0deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(0.8);
+    }
+  }
+  
+  /* 툴팁 스타일 (선택사항) */
+  .edge-toggle[title] {
+    position: relative;
+  }
+  
+  .edge-toggle[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    animation: tooltipFade 0.3s ease forwards;
+  }
+  
+  @keyframes tooltipFade {
+    to {
+      opacity: 1;
+    }
   }
   
   .edge-toggle:hover {
