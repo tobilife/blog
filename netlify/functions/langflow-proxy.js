@@ -734,8 +734,10 @@ function enhancePromptWithSearchResults(
 		enhancedPrompt +=
 			'2. "현재 실시간 날씨 정보를 확인할 수 없습니다"라고 명확히 알려주세요.\n';
 	} else if (searchResults && searchResults.length > 0) {
-		// 간소화된 검색 결과 지침
-		enhancedPrompt += "위 검색 결과를 바탕으로 간결하게 답변하세요.\n";
+	 // 검색 결과 지침 강화
+	 enhancedPrompt += "위에 제공된 웹 검색 결과를 반드시 참고하여 답변하세요.\n";
+	 enhancedPrompt += "자체 지식이 아닌 검색 결과의 내용을 기반으로 현재 상황을 설명하세요.\n";
+	 enhancedPrompt += '"알 수 없다"거나 과거 지식으로 답변하지 마세요.\n';
 	}
 
 	// 간소화된 공통 지침
