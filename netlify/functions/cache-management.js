@@ -62,58 +62,37 @@ exports.handler = async (event, context) => {
         };
       }
       
-      // 패턴 기반 삭제 (예: "날씨" 포함된 모든 캐시)
+      // 패턴 기반 삭제 (현재 비활성화)
       if (pattern) {
-        const result = await client.request('GET', '/chat_cache?page-size=1000');
-        let deletedCount = 0;
-        
-        if (result.data && result.data.length > 0) {
-          for (const entry of result.data) {
-            if (entry.query && entry.query.includes(pattern)) {
-              try {
-                const path = `/chat_cache/${encodeURIComponent(entry.cache_key)}`;
-                await client.request('DELETE', path);
-                deletedCount++;
-              } catch (err) {
-                console.error('Failed to delete:', entry.cache_key);
-              }
-            }
-          }
-        }
-        
         return {
-          statusCode: 200,
+          statusCode: 501,
           headers,
           body: JSON.stringify({ 
-            success: true, 
-            message: `Deleted ${deletedCount} cache entries matching pattern "${pattern}"` 
+            error: 'Not implemented',
+            message: '패턴 기반 삭제는 현재 지원되지 않습니다. 개별 질문을 지정하여 삭제해주세요.' 
           }),
         };
       }
     }
     
-    // GET 요청: 캐시 통계 조회
+    // GET 요청: 캐시 통계 조회 (현재는 기본 정보만 반환)
     if (event.httpMethod === 'GET') {
-      // 모든 캐시 항목 조회 (제한적)
-      const path = '/chat_cache?page-size=100';
-      const result = await client.request('GET', path);
-      
-      const stats = {
-        totalEntries: result.data?.length || 0,
-        entries: result.data?.map(entry => ({
-          query: entry.query,
-          cacheKey: entry.cache_key,
-          createdAt: entry.created_at,
-          expiresAt: entry.expires_at,
-          complexity: entry.complexity,
-          hasSearch: entry.has_search
-        })) || []
-      };
-      
+      // Astra DB REST API v2는 전체 테이블 스캔을 직접 지원하지 않음
+      // 추후 CQL 쿼리나 다른 방법으로 구현 필요
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(stats),
+        body: JSON.stringify({
+          totalEntries: 'N/A',
+          entries: [],
+          message: 'Astra DB 캐시 관리 시스템이 활성화되어 있습니다. 개별 캐시 삭제 기능을 사용할 수 있습니다.',
+          features: {
+            deleteByQuery: true,
+            deleteByPattern: false, // 현재 전체 조회가 불가능하므로 비활성화
+            clearAll: false, // 현재 전체 조회가 불가능하므로 비활성화
+            viewStats: false // 현재 구현되지 않음
+          }
+        }),
       };
     }
     
@@ -137,29 +116,13 @@ exports.handler = async (event, context) => {
       }
       
       if (action === 'clear-all') {
-        // 모든 캐시 삭제 (주의: 위험한 작업)
-        // TRUNCATE는 REST API로 불가능하므로 개별 삭제 필요
-        const result = await client.request('GET', '/chat_cache?page-size=1000');
-        const deletedCount = 0;
-        
-        if (result.data && result.data.length > 0) {
-          for (const entry of result.data) {
-            try {
-              const path = `/chat_cache/${encodeURIComponent(entry.cache_key)}`;
-              await client.request('DELETE', path);
-              deletedCount++;
-            } catch (err) {
-              console.error('Failed to delete:', entry.cache_key);
-            }
-          }
-        }
-        
+        // 전체 삭제 (현재 비활성화)
         return {
-          statusCode: 200,
+          statusCode: 501,
           headers,
           body: JSON.stringify({ 
-            success: true, 
-            message: `Deleted ${deletedCount} cache entries` 
+            error: 'Not implemented',
+            message: '전체 캐시 삭제는 현재 지원되지 않습니다. 개별 질문을 지정하여 삭제해주세요.' 
           }),
         };
       }
