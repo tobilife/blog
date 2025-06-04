@@ -1,5 +1,105 @@
 import { Context } from "https://edge.netlify.com";
 
+// Astra DB 캐시 클래스
+class AstraDBCache {
+  private baseUrl: string;
+  private token: string;
+  private keyspace: string;
+
+  constructor(baseUrl: string, token: string, keyspace: string) {
+    this.baseUrl = baseUrl;
+    this.token = token;
+    this.keyspace = keyspace;
+  }
+
+  private generateCacheKey(question: string): string {
+    return question.toLowerCase().trim().replace(/\s+/g, ' ');
+  }
+
+  async getCacheEntry(question: string): Promise<any> {
+    const cacheKey = this.generateCacheKey(question);
+    const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/chat_cache/${encodeURIComponent(cacheKey)}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Cassandra-Token': this.token,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('Cache miss:', cacheKey);
+          return null;
+        }
+        throw new Error(`Cache fetch error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.data && result.data.length > 0) {
+        const entry = result.data[0];
+        const expiresAt = new Date(entry.expires_at);
+        if (expiresAt > new Date()) {
+          console.log('Cache hit:', cacheKey);
+          return {
+            hit: true,
+            answer: entry.response,
+            complexity: entry.complexity,
+            createdAt: entry.created_at
+          };
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Cache get error:', error);
+      return null;
+    }
+  }
+
+  async setCacheEntry(question: string, answer: string, context: any = {}): Promise<boolean> {
+    const cacheKey = this.generateCacheKey(question);
+    const ttlSeconds = 3600; // 1시간
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+    
+    const data = {
+      query: question,
+      response: answer,
+      created_at: new Date().toISOString(),
+      expires_at: expiresAt,
+      complexity: String(context.complexity || 0),
+      has_search: context.hasSearchResults || false,
+      popularity: 1,
+      response_time: context.responseTime || 0
+    };
+
+    const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/chat_cache/${encodeURIComponent(cacheKey)}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'X-Cassandra-Token': this.token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        console.log('Cache saved:', cacheKey);
+        return true;
+      }
+      
+      console.error('Cache save error:', response.status, await response.text());
+      return false;
+    } catch (error) {
+      console.error('Cache set error:', error);
+      return false;
+    }
+  }
+}
+
 // 질문의 복잡도를 분석하는 함수
 function analyzeQueryComplexity(query: string) {
   const features = {
@@ -140,7 +240,8 @@ async function searchBrave(query: string, apiKey: string) {
 // 프롬프트 향상 함수
 function enhancePromptWithSearchResults(
   originalQuery: string,
-  searchResults: any[] | null
+  searchResults: any[] | null,
+  conversationHistory: any[] = []
 ) {
   const now = new Date();
   const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
@@ -148,9 +249,24 @@ function enhancePromptWithSearchResults(
   const month = koreaTime.getUTCMonth() + 1;
   const day = koreaTime.getUTCDate();
   const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][koreaTime.getUTCDay()];
-
-  let enhancedPrompt = `현재 사용자 질문: ${originalQuery}\n`;
-  enhancedPrompt += `현재 날짜: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일 (2025년 6월 4일)\n\n`;
+  
+  let enhancedPrompt = '';
+  
+  // 대화 맥락이 있는 경우 포함
+  if (conversationHistory.length > 0) {
+    enhancedPrompt += '이전 대화:\n';
+    // 최근 3개의 대화만 포함
+    const recentHistory = conversationHistory.slice(-3);
+    recentHistory.forEach((msg: any) => {
+      const content = msg.content.length > 100 ? 
+        msg.content.substring(0, 100) + '...' : msg.content;
+      enhancedPrompt += `${msg.role === 'user' ? 'U' : 'A'}: ${content}\n`;
+    });
+    }
+    
+    enhancedPrompt += `현재 사용자 질문: ${originalQuery}\n`;
+    enhancedPrompt += `현재 날짜: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n\n`;
+  
 
   if (searchResults && searchResults.length > 0) {
     enhancedPrompt += `[웹 검색 결과 - ${year}년 ${month}월 ${day}일 기준]\n\n`;
@@ -219,21 +335,61 @@ export default async (request: Request, context: Context) => {
 
     // 요청 본문 파싱
     const requestBody = await request.json();
-    const userQuery = requestBody.input_value;
-
+    const userQuery = requestBody.input_value || '';
+    const conversationHistory = requestBody.conversation_history || [];
+    
+    // 빈 쿼리 체크
+    if (!userQuery || !userQuery.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'Query is required' }),
+        { status: 400, headers: { ...headers, "Content-Type": "application/json" } }
+      );
+    }
+    
     console.log("User query:", userQuery);
-
+    console.log("Conversation history length:", conversationHistory.length);
+    
     // 복잡도 분석
     const complexity = analyzeQueryComplexity(userQuery);
     console.log("Query complexity:", complexity);
-
-    // 의도 분석
-    const intent = analyzeQueryIntent(userQuery);
-    console.log("Query intent:", intent);
+    
+    // Astra DB 캐시 초기화 및 확인
+    let cacheService: AstraDBCache | null = null;
+    let cachedResult = null;
+    
+    if (ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
+      try {
+        cacheService = new AstraDBCache(ASTRA_DB_REST_URL, ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_KEYSPACE);
+        cachedResult = await cacheService.getCacheEntry(userQuery);
+        
+        if (cachedResult?.hit) {
+          console.log('Returning cached response');
+          return new Response(
+            cachedResult.answer,
+            {
+              status: 200,
+              headers: {
+                ...headers,
+                "Content-Type": "application/json",
+                "X-Cache": "HIT",
+                "X-Response-Time": String(Date.now() - startTime)
+              },
+            }
+          );
+        }
+      } catch (cacheError) {
+        console.error('Cache service error:', cacheError);
+        // 캐시 오류는 무시하고 계속 진행
+      }
+    }
 
     let searchResults = null;
     let enhancedQuery = userQuery;
-
+    
+    // 의도 분석
+    const intent = analyzeQueryIntent(userQuery);
+    console.log("Query intent:", intent);
+    
     // 검색이 필요한 경우
     if (BRAVE_API_KEY && intent.needsSearch) {
       console.log("Searching web...");
@@ -244,9 +400,9 @@ export default async (request: Request, context: Context) => {
     }
 
     // 프롬프트 향상
-    if (searchResults) {
-      enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults);
-      requestBody.hasSearchResults = true;
+    if (searchResults || conversationHistory.length > 0) {
+      enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, conversationHistory);
+      requestBody.hasSearchResults = !!searchResults;
     }
 
     requestBody.input_value = enhancedQuery;
@@ -299,8 +455,22 @@ export default async (request: Request, context: Context) => {
     if (requestBody.hasSearchResults) {
       parsedResponse.hasSearchResults = true;
     }
-
+    
     console.log("Response time:", Date.now() - startTime, "ms");
+    
+    // 응답 캐싱
+    if (cacheService) {
+      try {
+        await cacheService.setCacheEntry(userQuery, JSON.stringify(parsedResponse), {
+          complexity: complexity.score,
+          hasSearchResults: requestBody.hasSearchResults,
+          responseTime: Date.now() - startTime
+        });
+      } catch (cacheError) {
+        console.error('Cache save error:', cacheError);
+        // 캐시 저장 실패는 무시
+      }
+    }
 
     return new Response(
       JSON.stringify(parsedResponse),
