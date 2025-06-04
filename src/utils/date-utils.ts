@@ -34,13 +34,15 @@ export function getRelativeTime(date: Date): string {
 
 	if (diffInSeconds < 60) {
 		return "방금 전";
-	} else if (diffInMinutes < 60) {
-		return `${diffInMinutes}분 전`;
-	} else if (diffInHours < 24) {
-		return `${diffInHours}시간 전`;
-	} else if (diffInDays < 365) {
-		return `${diffInDays}일 전`;
-	} else {
-		return `${diffInYears}년 전`;
 	}
+	if (diffInMinutes < 60) {
+		return `${diffInMinutes}분 전`;
+	}
+	if (diffInHours < 24) {
+		return `${diffInHours}시간 전`;
+	}
+	if (diffInDays < 365) {
+		return `${diffInDays}일 전`;
+	}
+	return `${diffInYears}년 전`;
 }

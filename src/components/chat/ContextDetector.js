@@ -66,7 +66,7 @@ export class ContextDetector {
 			this.blogTitles = knowledgeBase.posts.map((post) => post.title);
 
 			// 제목에서 주요 단어 추출하여 토픽에 추가
-			knowledgeBase.posts.forEach((post) => {
+			for (const post of knowledgeBase.posts) {
 				// 제목에서 3글자 이상의 단어 추출
 				const titleWords = post.title
 					.split(/[\s:,\-]/)
@@ -77,7 +77,7 @@ export class ContextDetector {
 					);
 
 				this.blogTopics.push(...titleWords);
-			});
+			}
 
 			// 중복 제거
 			this.blogTopics = [...new Set(this.blogTopics)];
@@ -167,18 +167,18 @@ export class ContextDetector {
 		const keywords = [];
 
 		// 블로그 주제 키워드 먼저 추출
-		this.blogTopics.forEach((topic) => {
+		for (const topic of this.blogTopics) {
 			if (lowerMessage.includes(topic.toLowerCase())) {
 				keywords.push(topic);
 			}
-		});
+		}
 
 		// 카테고리 확인
-		this.blogCategories.forEach((category) => {
+		for (const category of this.blogCategories) {
 			if (lowerMessage.includes(category.toLowerCase())) {
 				keywords.push(category);
 			}
-		});
+		}
 
 		// "글", "포스트", "작성한" 등이 있으면 전체 검색을 위한 와일드카드 추가
 		if (
@@ -196,9 +196,9 @@ export class ContextDetector {
 
 		// 블로그 관련 키워드 제거하고 핵심 키워드 추출
 		let cleanedMessage = lowerMessage;
-		this.blogKeywords.forEach((keyword) => {
+		for (const keyword of this.blogKeywords) {
 			cleanedMessage = cleanedMessage.replace(keyword.toLowerCase(), "");
-		});
+		}
 
 		// 명사 추출 (간단한 휴리스틱)
 		const words = cleanedMessage
