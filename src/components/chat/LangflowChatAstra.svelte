@@ -342,31 +342,37 @@ async function sendMessage() {
 		if (useAstraOptimization && optimizedChatService) {
 			console.log("🚀 Astra DB 최적화 모드로 메시지 전송");
 
-			const response = await optimizedChatService.sendMessage(
-				contextualMessage,
-				sessionId,
-				recentMessages,
-			);
+			const response = await optimizedChatService.sendMessage({
+			 input_value: contextualMessage,
+			 session_id: sessionId,
+			 conversation_history: recentMessages
+			});
 
-			if (response.status === "cached" || response.status === "completed") {
-				// 캐시 히트 또는 즉시 완료
-				await new Promise((resolve) => setTimeout(resolve, 300));
-				await typeMessage(response.result, messageIndex);
-			} else if (response.status === "accepted" && response.taskId) {
-				// 비동기 처리 시작
-				activeTaskId = response.taskId;
-				console.log(`📋 비동기 작업 시작: ${activeTaskId}`);
-
-				// 폴링 시작
-				pollTaskStatus(activeTaskId, messageIndex);
-			} else {
-				// 오류 처리
-				messages[messageIndex] = {
-					role: "assistant",
-					content: response.error || "처리 중 오류가 발생했습니다.",
-					isTyping: false,
-				};
-				messages = [...messages];
+			if (response.type === "sync") {
+			 // 캐시 히트 또는 즉시 완료
+			 if (response.cacheHit) {
+			  console.log("🎯 Cache hit!");
+			 }
+			 await new Promise((resolve) => setTimeout(resolve, 300));
+			 const parsedResponse = optimizedChatService.parseResponse(response.data);
+			 await typeMessage(parsedResponse, messageIndex);
+			} else if (response.type === "async") {
+			 // 비동기 처리 시작
+			 activeTaskId = response.taskId;
+			 console.log(`📋 비동기 작업 시작: ${activeTaskId}`);
+			 
+			 // 비동기 상태 표시
+			 messages[messageIndex] = {
+			  ...messages[messageIndex],
+			  isAsync: true,
+			  taskStatus: 'pending',
+			  progress: 0,
+			  isTyping: false
+			 };
+			 messages = [...messages];
+			 
+			 // 폴링 시작
+			 pollTaskStatus(activeTaskId, messageIndex);
 			}
 		} else {
 			// 기존 방식으로 처리

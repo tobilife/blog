@@ -4,6 +4,21 @@ import { getAsyncTaskService } from './utils/async-task-service.js';
 
 // 질문의 복잡도를 분석하는 함수 (기존 코드 재사용)
 function analyzeQueryComplexity(query) {
+  if (!query || typeof query !== 'string') {
+    return {
+      score: 0,
+      level: 'simple',
+      features: {},
+      recommendations: {
+        timeout: 5000,
+        useCache: true,
+        useAsync: false,
+        searchLimit: 0,
+        enhancePrompt: false
+      }
+    };
+  }
+  
   const features = {
     wordCount: query.split(' ').length,
     hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
@@ -615,8 +630,20 @@ export async function handler(event, context) {
 
     // 요청 본문 파싱
     const requestBody = JSON.parse(event.body);
-    const userQuery = requestBody.input_value;
+    const userQuery = requestBody.input_value || '';
     const conversationHistory = requestBody.conversation_history || [];
+    
+    // 빈 쿼리 체크
+    if (!userQuery || !userQuery.trim()) {
+      return {
+        statusCode: 400,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ error: 'Query is required' }),
+      };
+    }
     
     console.log('User query:', userQuery);
     console.log('Conversation history length:', conversationHistory.length);
