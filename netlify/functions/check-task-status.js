@@ -1,7 +1,7 @@
 // 작업 상태 확인 전용 함수
-import { getAsyncTaskService } from './utils/async-task-service.js';
+const { getAsyncTaskService } = require('./utils/async-task-service.js');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // CORS 헤더
   const headers = {
     'Access-Control-Allow-Origin': '*',

@@ -1,6 +1,6 @@
 // Langflow proxy with Astra DB caching and async task handling
-import { getCacheService } from './utils/cache-service.js';
-import { getAsyncTaskService } from './utils/async-task-service.js';
+const { getCacheService } = require('./utils/cache-service.js');
+const { getAsyncTaskService } = require('./utils/async-task-service.js');
 
 // 질문의 복잡도를 분석하는 함수 (기존 코드 재사용)
 function analyzeQueryComplexity(query) {
@@ -574,7 +574,7 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
   }
 }
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   console.log('Langflow proxy with Astra DB called');
   const startTime = Date.now();
   

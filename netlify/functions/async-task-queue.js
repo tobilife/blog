@@ -1,8 +1,8 @@
 // 비동기 작업 큐 처리 함수
-import { getCacheService } from './utils/cache-service.js';
-import { getAsyncTaskService } from './utils/async-task-service.js';
+const { getCacheService } = require('./utils/cache-service.js');
+const { getAsyncTaskService } = require('./utils/async-task-service.js');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // CORS 헤더
   const headers = {
     'Access-Control-Allow-Origin': '*',

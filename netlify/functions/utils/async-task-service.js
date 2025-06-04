@@ -1,7 +1,7 @@
 // 비동기 작업 관리 서비스
-import AstraDBClient from './astra-db-client.js';
+const AstraDBClient = require('./astra-db-client.js');
 
-export class AsyncTaskService {
+class AsyncTaskService {
   constructor() {
     this.client = new AstraDBClient();
   }
@@ -97,7 +97,7 @@ export class AsyncTaskService {
 // 싱글톤 인스턴스
 let taskInstance;
 
-export function getAsyncTaskService() {
+function getAsyncTaskService() {
   if (!taskInstance) {
     try {
       // 환경 변수 체크
@@ -116,4 +116,7 @@ export function getAsyncTaskService() {
   return taskInstance;
 }
 
-export default AsyncTaskService;
+module.exports = {
+  AsyncTaskService,
+  getAsyncTaskService
+};
