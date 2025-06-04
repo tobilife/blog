@@ -1,6 +1,5 @@
 // Astra DB REST API 클라이언트
 
-
 export class AstraDBClient {
   constructor() {
     this.baseUrl = process.env.ASTRA_DB_REST_URL;
@@ -60,16 +59,27 @@ export class AstraDBClient {
 
   // chat_cache 테이블 조회
   async getCacheEntry(question) {
-    const path = `/chat_cache/rows?question=${encodeURIComponent(question)}`;
-    const result = await this.request('GET', path);
+    // Astra DB REST API v2에서는 테이블별로 primary key를 사용해야 함
+    const encodedQuestion = encodeURIComponent(question);
+    const path = `/chat_cache/${encodedQuestion}`;
     
-    if (result && result.data && result.data.length > 0) {
-      const entry = result.data[0];
-      // 만료 시간 확인
-      const expiresAt = new Date(entry.expires_at);
-      if (expiresAt > new Date()) {
-        return entry;
+    try {
+      const result = await this.request('GET', path);
+      
+      if (result && result.data && result.data.length > 0) {
+        const entry = result.data[0];
+        // 만료 시간 확인
+        const expiresAt = new Date(entry.expires_at);
+        if (expiresAt > new Date()) {
+          return entry;
+        }
       }
+    } catch (error) {
+      // 404는 정상적인 캐시 미스
+      if (error.message.includes('404')) {
+        return null;
+      }
+      throw error;
     }
     
     return null;
@@ -88,9 +98,10 @@ export class AstraDBClient {
       expires_at: expiresAt,
     };
 
-    // REST API v2에서는 /rows 엔드포인트 사용
-    const path = '/chat_cache/rows';
-    return await this.request('POST', path, data);
+    // CQL 테이블에 대한 INSERT는 primary key를 URL에 포함
+    const encodedQuestion = encodeURIComponent(question);
+    const path = `/chat_cache/${encodedQuestion}`;
+    return await this.request('PUT', path, data);
   }
 
   // async_tasks 테이블 생성
@@ -105,20 +116,29 @@ export class AstraDBClient {
       updated_at: new Date().toISOString(),
     };
 
-    // REST API v2에서는 /rows 엔드포인트 사용
-    const path = '/async_tasks/rows';
-    await this.request('POST', path, data);
+    // Primary key를 URL에 포함
+    const path = `/async_tasks/${taskId}`;
+    await this.request('PUT', path, data);
     
     return taskId;
   }
 
   // async_tasks 테이블 조회
   async getTask(taskId) {
-    const path = `/async_tasks/rows?task_id=${encodeURIComponent(taskId)}`;
-    const result = await this.request('GET', path);
+    const path = `/async_tasks/${taskId}`;
     
-    if (result && result.data && result.data.length > 0) {
-      return result.data[0];
+    try {
+      const result = await this.request('GET', path);
+      
+      if (result && result.data && result.data.length > 0) {
+        return result.data[0];
+      }
+    } catch (error) {
+      // 404는 정상적인 경우 (작업이 없음)
+      if (error.message.includes('404')) {
+        return null;
+      }
+      throw error;
     }
     
     return null;
@@ -127,12 +147,20 @@ export class AstraDBClient {
   // async_tasks 테이블 업데이트
   async updateTask(taskId, updates) {
     const path = `/async_tasks/${taskId}`;
+    
+    // 기존 데이터를 먼저 가져옴
+    const existing = await this.getTask(taskId);
+    if (!existing) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    
     const data = {
+      ...existing,
       ...updates,
       updated_at: new Date().toISOString(),
     };
     
-    return await this.request('PATCH', path, data);
+    return await this.request('PUT', path, data);
   }
 
   // 작업 완료 처리
