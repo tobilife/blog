@@ -1,26 +1,26 @@
 ---
 export interface Props {
-  title: string;
-  description: string;
-  image?: string;
-  canonical?: string;
-  type?: 'website' | 'article';
-  publishedTime?: string;
-  tags?: string[];
+	title: string;
+	description: string;
+	image?: string;
+	canonical?: string;
+	type?: "website" | "article";
+	publishedTime?: string;
+	tags?: string[];
 }
 
-const { 
-  title, 
-  description, 
-  image = '/images/default-og.png', 
-  canonical, 
-  type = 'website',
-  publishedTime,
-  tags = []
+const {
+	title,
+	description,
+	image = "/images/default-og.png",
+	canonical,
+	type = "website",
+	publishedTime,
+	tags = [],
 } = Astro.props;
 
-const siteUrl = Astro.site || 'https://tobilife.netlify.app';
-const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
+const siteUrl = Astro.site || "https://tobilife.netlify.app";
+const fullImageUrl = image.startsWith("http") ? image : `${siteUrl}${image}`;
 const canonicalUrl = canonical || Astro.url.href;
 ---
 

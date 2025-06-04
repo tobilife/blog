@@ -15,7 +15,7 @@ let pagefindLoaded = false;
 // Debounce utility
 function debounce<T extends (...args: any[]) => any>(
 	func: T,
-	wait: number
+	wait: number,
 ): (...args: Parameters<T>) => void {
 	let timeout: ReturnType<typeof setTimeout> | null = null;
 	return (...args: Parameters<T>) => {
@@ -58,7 +58,10 @@ const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 	}
 };
 
-const searchImpl = async (keyword: string, isDesktop: boolean): Promise<void> => {
+const searchImpl = async (
+	keyword: string,
+	isDesktop: boolean,
+): Promise<void> => {
 	if (!keyword) {
 		setPanelVisibility(false, isDesktop);
 		result = [];
@@ -91,8 +94,14 @@ const searchImpl = async (keyword: string, isDesktop: boolean): Promise<void> =>
 };
 
 // Debounced search functions
-const searchDesktop = debounce((keyword: string) => searchImpl(keyword, true), 300);
-const searchMobile = debounce((keyword: string) => searchImpl(keyword, false), 300);
+const searchDesktop = debounce(
+	(keyword: string) => searchImpl(keyword, true),
+	300,
+);
+const searchMobile = debounce(
+	(keyword: string) => searchImpl(keyword, false),
+	300,
+);
 
 onMount(async () => {
 	pagefindLoaded = typeof window !== "undefined" && "pagefind" in window;

@@ -183,26 +183,28 @@ async function typeMessage(text, messageIndex) {
 // Astra DB 최적화 토글
 function toggleAstraOptimization() {
 	useAstraOptimization = !useAstraOptimization;
-	console.log(`🚀 Astra DB 최적화: ${useAstraOptimization ? "활성화" : "비활성화"}`);
+	console.log(
+		`🚀 Astra DB 최적화: ${useAstraOptimization ? "활성화" : "비활성화"}`,
+	);
 }
 
 // 비동기 작업 폴링
 async function pollTaskStatus(taskId, messageIndex) {
 	if (!taskId || isPolling) return;
-	
+
 	isPolling = true;
 	const maxPollingTime = 30000; // 최대 30초
 	const pollingInterval = 1000; // 1초마다 확인
 	const startTime = Date.now();
-	
+
 	while (Date.now() - startTime < maxPollingTime) {
 		try {
 			const status = await optimizedChatService.checkTaskStatus(taskId);
-			
+
 			// 진행률 업데이트
 			taskProgress = status.progress || 0;
 			taskStatusMessage = status.message || "처리 중...";
-			
+
 			// 메시지 업데이트
 			messages[messageIndex] = {
 				...messages[messageIndex],
@@ -211,29 +213,29 @@ async function pollTaskStatus(taskId, messageIndex) {
 				taskStatusMessage,
 			};
 			messages = [...messages];
-			
-			if (status.status === 'completed' && status.result) {
+
+			if (status.status === "completed" && status.result) {
 				// 작업 완료 - 결과를 타이핑 효과로 표시
 				activeTaskId = null;
 				taskProgress = 0;
 				taskStatusMessage = "";
-				
+
 				messages[messageIndex] = {
 					...messages[messageIndex],
 					isAsync: false,
 					content: "",
 				};
 				messages = [...messages];
-				
+
 				// 타이핑 효과 적용
 				await typeMessage(status.result, messageIndex);
 				break;
-			} else if (status.status === 'failed') {
+			} else if (status.status === "failed") {
 				// 작업 실패
 				activeTaskId = null;
 				taskProgress = 0;
 				taskStatusMessage = "";
-				
+
 				messages[messageIndex] = {
 					...messages[messageIndex],
 					isAsync: false,
@@ -243,15 +245,15 @@ async function pollTaskStatus(taskId, messageIndex) {
 				messages = [...messages];
 				break;
 			}
-			
+
 			// 다음 폴링까지 대기
-			await new Promise(resolve => setTimeout(resolve, pollingInterval));
+			await new Promise((resolve) => setTimeout(resolve, pollingInterval));
 		} catch (error) {
 			console.error("Task polling error:", error);
 			break;
 		}
 	}
-	
+
 	isPolling = false;
 }
 
@@ -339,22 +341,22 @@ async function sendMessage() {
 		// Astra DB 최적화 사용 여부에 따라 다른 처리
 		if (useAstraOptimization && optimizedChatService) {
 			console.log("🚀 Astra DB 최적화 모드로 메시지 전송");
-			
+
 			const response = await optimizedChatService.sendMessage(
 				contextualMessage,
 				sessionId,
-				recentMessages
+				recentMessages,
 			);
-			
-			if (response.status === 'cached' || response.status === 'completed') {
+
+			if (response.status === "cached" || response.status === "completed") {
 				// 캐시 히트 또는 즉시 완료
 				await new Promise((resolve) => setTimeout(resolve, 300));
 				await typeMessage(response.result, messageIndex);
-			} else if (response.status === 'accepted' && response.taskId) {
+			} else if (response.status === "accepted" && response.taskId) {
 				// 비동기 처리 시작
 				activeTaskId = response.taskId;
 				console.log(`📋 비동기 작업 시작: ${activeTaskId}`);
-				
+
 				// 폴링 시작
 				pollTaskStatus(activeTaskId, messageIndex);
 			} else {
@@ -369,7 +371,7 @@ async function sendMessage() {
 		} else {
 			// 기존 방식으로 처리
 			console.log("📡 일반 모드로 메시지 전송");
-			
+
 			const payload = {
 				input_value: contextualMessage,
 				output_type: "chat",
@@ -460,7 +462,7 @@ function handleKeyPress(event) {
 onMount(async () => {
 	// Astra DB 최적화 서비스 초기화
 	optimizedChatService = new OptimizedChatService();
-	
+
 	// 블로그 RAG 서비스 초기화
 	contextDetector = new ContextDetector();
 	blogRAGService = new BlogRAGService();

@@ -1,8 +1,8 @@
 ---
 import path from "node:path";
+import GiscusComments from "@components/misc/GiscusComments.svelte";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
-import GiscusComments from "@components/misc/GiscusComments.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
@@ -11,8 +11,8 @@ import { getDir, getPostUrlBySlug } from "@utils/url-utils";
 import { Icon } from "astro-icon/components";
 import { licenseConfig } from "src/config";
 import PostMetadata from "../../components/PostMeta.astro";
-import ImageWrapper from "../../components/misc/ImageWrapper.astro";
 import TimeAgo from "../../components/TimeAgo.astro";
+import ImageWrapper from "../../components/misc/ImageWrapper.astro";
 import { profileConfig, siteConfig } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 

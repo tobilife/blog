@@ -1,17 +1,17 @@
 // Optimized Chat Service with Astra DB integration
 export class OptimizedChatService {
 	constructor() {
-		this.LANGFLOW_API_URL = '/.netlify/functions/langflow-proxy-astra';
-		this.CHECK_STATUS_URL = '/.netlify/functions/check-task-status';
+		this.LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy-astra";
+		this.CHECK_STATUS_URL = "/.netlify/functions/check-task-status";
 		this.pollingIntervals = new Map(); // 진행 중인 폴링 관리
 	}
 
 	// 메시지 전송
 	async sendMessage(payload) {
 		const response = await fetch(this.LANGFLOW_API_URL, {
-			method: 'POST',
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json',
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify(payload),
 		});
@@ -21,7 +21,7 @@ export class OptimizedChatService {
 		// 202 Accepted - 비동기 처리
 		if (response.status === 202) {
 			return {
-				type: 'async',
+				type: "async",
 				taskId: responseData.taskId,
 				message: responseData.message,
 				estimatedTime: responseData.estimatedTime,
@@ -32,16 +32,16 @@ export class OptimizedChatService {
 		// 200 OK - 동기 처리 완료
 		if (response.status === 200) {
 			return {
-				type: 'sync',
+				type: "sync",
 				data: responseData,
-				cacheHit: response.headers.get('X-Cache') === 'HIT',
-				complexity: response.headers.get('X-Query-Complexity'),
-				responseTime: response.headers.get('X-Response-Time'),
+				cacheHit: response.headers.get("X-Cache") === "HIT",
+				complexity: response.headers.get("X-Query-Complexity"),
+				responseTime: response.headers.get("X-Response-Time"),
 			};
 		}
 
 		// 오류 처리
-		throw new Error(responseData.error || 'Unknown error occurred');
+		throw new Error(responseData.error || "Unknown error occurred");
 	}
 
 	// 작업 상태 확인
@@ -50,7 +50,7 @@ export class OptimizedChatService {
 		const data = await response.json();
 
 		if (!response.ok) {
-			throw new Error(data.error || 'Failed to check task status');
+			throw new Error(data.error || "Failed to check task status");
 		}
 
 		return data;
@@ -85,7 +85,7 @@ export class OptimizedChatService {
 				}
 
 				// 완료된 경우
-				if (status.status === 'completed') {
+				if (status.status === "completed") {
 					this.stopPolling(taskId);
 					if (onComplete) {
 						onComplete({
@@ -97,10 +97,10 @@ export class OptimizedChatService {
 				}
 
 				// 실패한 경우
-				if (status.status === 'failed') {
+				if (status.status === "failed") {
 					this.stopPolling(taskId);
 					if (onError) {
-						onError(new Error(status.error || 'Task failed'));
+						onError(new Error(status.error || "Task failed"));
 					}
 					return;
 				}
@@ -109,7 +109,7 @@ export class OptimizedChatService {
 				if (attempts >= maxAttempts) {
 					this.stopPolling(taskId);
 					if (onError) {
-						onError(new Error('Task timeout - exceeded maximum attempts'));
+						onError(new Error("Task timeout - exceeded maximum attempts"));
 					}
 					return;
 				}
@@ -118,9 +118,8 @@ export class OptimizedChatService {
 				currentInterval = Math.min(currentInterval * 1.2, 5000); // 최대 5초
 				const timeoutId = setTimeout(poll, currentInterval);
 				this.pollingIntervals.set(taskId, timeoutId);
-
 			} catch (error) {
-				console.error('Polling error:', error);
+				console.error("Polling error:", error);
 				this.stopPolling(taskId);
 				if (onError) {
 					onError(error);
@@ -153,7 +152,7 @@ export class OptimizedChatService {
 	// 응답 파싱 (기존 코드와 호환)
 	parseResponse(data) {
 		let botResponse = "Sorry, I could not generate a response.";
-		
+
 		if (data.outputs) {
 			// outputs 배열 순회
 			if (Array.isArray(data.outputs)) {
@@ -209,26 +208,27 @@ export class OptimizedChatService {
 		const messages = {
 			simple: "빠르게 답변 드리겠습니다! ⚡",
 			moderate: "답변을 준비하고 있습니다... 🤔",
-			complex: "복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠"
+			complex:
+				"복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠",
 		};
 		return messages[complexity] || messages.moderate;
 	}
 
 	// 진행 상태 메시지 생성
 	generateProgressMessage(progress, status) {
-		if (status === 'pending') {
+		if (status === "pending") {
 			return "작업이 대기열에 있습니다... ⏳";
 		}
-		if (status === 'processing') {
+		if (status === "processing") {
 			if (progress < 30) return "답변을 생성하기 시작했습니다... 🚀";
 			if (progress < 60) return "정보를 분석하고 있습니다... 📊";
 			if (progress < 90) return "거의 완료되었습니다... 🎯";
 			return "마무리 중입니다... ✨";
 		}
-		if (status === 'completed') {
+		if (status === "completed") {
 			return "답변이 준비되었습니다! ✅";
 		}
-		if (status === 'failed') {
+		if (status === "failed") {
 			return "오류가 발생했습니다. 다시 시도해주세요. ❌";
 		}
 		return "처리 중입니다...";

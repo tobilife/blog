@@ -1,66 +1,66 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  
-  export let className = '';
-  
-  let mounted = false;
-  let giscusFrame: HTMLIFrameElement | null = null;
-  
-  // 초기 테마 설정
-  function getCurrentTheme() {
-    const isDark = document.documentElement.classList.contains('dark');
-    return isDark ? 'dark' : 'light';
-  }
-  
-  // Giscus 테마 업데이트 함수
-  function updateGiscusTheme(theme: string) {
-    const iframe = document.querySelector<HTMLIFrameElement>('.giscus-frame');
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage(
-        { giscus: { setConfig: { theme } } },
-        'https://giscus.app'
-      );
-    }
-  }
-  
-  onMount(() => {
-    mounted = true;
-    
-    // Giscus가 로드된 후 초기 테마 설정
-    const checkGiscusLoaded = setInterval(() => {
-      giscusFrame = document.querySelector<HTMLIFrameElement>('.giscus-frame');
-      if (giscusFrame) {
-        clearInterval(checkGiscusLoaded);
-        // 초기 테마 적용
-        setTimeout(() => {
-          updateGiscusTheme(getCurrentTheme());
-        }, 100);
-      }
-    }, 100);
-    
-    // 테마 변경 감지
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.attributeName === 'class') {
-          const newTheme = getCurrentTheme();
-          updateGiscusTheme(newTheme);
-        }
-      }
-    });
-    
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-    
-    // 클린업
-    return () => {
-      observer.disconnect();
-      if (checkGiscusLoaded) {
-        clearInterval(checkGiscusLoaded);
-      }
-    };
-  });
+import { onMount } from "svelte";
+
+export let className = "";
+
+let mounted = false;
+let giscusFrame: HTMLIFrameElement | null = null;
+
+// 초기 테마 설정
+function getCurrentTheme() {
+	const isDark = document.documentElement.classList.contains("dark");
+	return isDark ? "dark" : "light";
+}
+
+// Giscus 테마 업데이트 함수
+function updateGiscusTheme(theme: string) {
+	const iframe = document.querySelector<HTMLIFrameElement>(".giscus-frame");
+	if (iframe && iframe.contentWindow) {
+		iframe.contentWindow.postMessage(
+			{ giscus: { setConfig: { theme } } },
+			"https://giscus.app",
+		);
+	}
+}
+
+onMount(() => {
+	mounted = true;
+
+	// Giscus가 로드된 후 초기 테마 설정
+	const checkGiscusLoaded = setInterval(() => {
+		giscusFrame = document.querySelector<HTMLIFrameElement>(".giscus-frame");
+		if (giscusFrame) {
+			clearInterval(checkGiscusLoaded);
+			// 초기 테마 적용
+			setTimeout(() => {
+				updateGiscusTheme(getCurrentTheme());
+			}, 100);
+		}
+	}, 100);
+
+	// 테마 변경 감지
+	const observer = new MutationObserver((mutations) => {
+		for (const mutation of mutations) {
+			if (mutation.attributeName === "class") {
+				const newTheme = getCurrentTheme();
+				updateGiscusTheme(newTheme);
+			}
+		}
+	});
+
+	observer.observe(document.documentElement, {
+		attributes: true,
+		attributeFilter: ["class"],
+	});
+
+	// 클린업
+	return () => {
+		observer.disconnect();
+		if (checkGiscusLoaded) {
+			clearInterval(checkGiscusLoaded);
+		}
+	};
+});
 </script>
 
 {#if mounted}
