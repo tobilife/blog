@@ -754,7 +754,8 @@ exports.handler = async function(event, context) {
     const hasExplicitSearchRequest = /검색해|알려줘|찾아/.test(userQuery);
     const effectiveSearchLimit = hasExplicitSearchRequest ? Math.max(3, complexity.recommendations.searchLimit) : complexity.recommendations.searchLimit;
     
-    if ((BRAVE_API_KEY || TAVILY_API_KEY) && intent.needsSearch && !weatherData && !intent.isDateTime && 
+    // 날씨 정보를 이미 가져왔거나, 날씨 질문이 아닌 경우에만 웹 검색
+    if ((BRAVE_API_KEY || TAVILY_API_KEY) && intent.needsSearch && !intent.isWeather && !intent.isDateTime && 
         (hasExplicitSearchRequest || effectiveSearchLimit > 0)) {
       console.log('Searching web for additional context...');
       searchResults = await performDualSearch(userQuery, BRAVE_API_KEY, TAVILY_API_KEY);
