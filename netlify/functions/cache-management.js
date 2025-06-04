@@ -1,7 +1,24 @@
 // 캐시 관리 API
-const AstraDBClient = require('./utils/astra-db-client.js');
 
 exports.handler = async (event, context) => {
+  // 동적 require를 사용하여 런타임에 로드
+  let AstraDBClient;
+  try {
+    AstraDBClient = require('./utils/astra-db-client.js');
+  } catch (error) {
+    console.error('Failed to load AstraDBClient:', error);
+    return {
+      statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: 'Module load error',
+        message: error.message
+      }),
+    };
+  }
   // CORS 헤더
   const headers = {
     'Access-Control-Allow-Origin': '*',
