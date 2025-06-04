@@ -96,7 +96,19 @@ let cacheInstance;
 
 export function getCacheService() {
   if (!cacheInstance) {
-    cacheInstance = new CacheService();
+    try {
+      // 환경 변수 체크
+      if (!process.env.ASTRA_DB_REST_URL || 
+          !process.env.ASTRA_DB_APPLICATION_TOKEN || 
+          !process.env.ASTRA_DB_KEYSPACE) {
+        console.warn('Astra DB environment variables not configured, cache disabled');
+        return null;
+      }
+      cacheInstance = new CacheService();
+    } catch (error) {
+      console.error('Failed to initialize cache service:', error);
+      return null;
+    }
   }
   return cacheInstance;
 }

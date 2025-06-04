@@ -506,6 +506,10 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
 // 비동기 작업을 처리하는 함수
 async function processAsyncTask(taskId, requestBody, apiToken) {
   const taskService = getAsyncTaskService();
+  if (!taskService) {
+    console.error('Async task service not available');
+    return;
+  }
   
   try {
     // 작업 처리 시작 상태로 업데이트
@@ -535,12 +539,16 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
     
     // 캐시에도 저장
     const cacheService = getCacheService();
-    const parsedResponse = JSON.parse(responseText);
-    await cacheService.set(requestBody.input_value, JSON.stringify(parsedResponse));
+    if (cacheService) {
+      const parsedResponse = JSON.parse(responseText);
+      await cacheService.set(requestBody.input_value, JSON.stringify(parsedResponse));
+    }
     
   } catch (error) {
     console.error('Async task processing error:', error);
-    await taskService.failTask(taskId, error);
+    if (taskService) {
+      await taskService.failTask(taskId, error);
+    }
   }
 }
 
@@ -614,9 +622,11 @@ export async function handler(event, context) {
     
     try {
       cacheService = getCacheService();
-      cachedResult = await cacheService.get(userQuery, { 
-        conversationLength: conversationHistory.length 
-      });
+      if (cacheService) {
+        cachedResult = await cacheService.get(userQuery, { 
+          conversationLength: conversationHistory.length 
+        });
+      }
     } catch (cacheError) {
       console.error('Cache service error:', cacheError);
       // 캐시 오류는 무시하고 계속 진행
@@ -642,28 +652,33 @@ export async function handler(event, context) {
       
       try {
         const taskService = getAsyncTaskService();
-        const task = await taskService.createTask(userQuery, { complexity });
-        
-        // 백그라운드에서 작업 처리 시작
-        // Netlify Functions는 context.waitUntil을 지원하지 않으므로 즉시 작업 시작
-        processAsyncTask(task.taskId, requestBody, API_TOKEN)
-          .catch(error => console.error('Async task error:', error));
-        
-        return {
-          statusCode: 202, // Accepted
-          headers: {
-            ...headers,
-            'Content-Type': 'application/json',
-            'X-Task-ID': task.taskId
-          },
-          body: JSON.stringify({
-            status: 'processing',
-            taskId: task.taskId,
-            message: '복잡한 질문입니다. 잠시만 기다려주세요.',
-            estimatedTime: '5-10초',
-            checkStatusUrl: `/.netlify/functions/check-task-status?taskId=${task.taskId}`
-          }),
-        };
+        if (!taskService) {
+          console.log('Async task service not available, falling back to sync processing');
+          // 비동기 처리 불가능, 일반 처리로 계속 진행
+        } else {
+          const task = await taskService.createTask(userQuery, { complexity });
+          
+          // 백그라운드에서 작업 처리 시작
+          // Netlify Functions는 context.waitUntil을 지원하지 않으므로 즉시 작업 시작
+          processAsyncTask(task.taskId, requestBody, API_TOKEN)
+            .catch(error => console.error('Async task error:', error));
+          
+          return {
+            statusCode: 202, // Accepted
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json',
+              'X-Task-ID': task.taskId
+            },
+            body: JSON.stringify({
+              status: 'processing',
+              taskId: task.taskId,
+              message: '복잡한 질문입니다. 잠시만 기다려주세요.',
+              estimatedTime: '5-10초',
+              checkStatusUrl: `/.netlify/functions/check-task-status?taskId=${task.taskId}`
+            }),
+          };
+        }
       } catch (taskError) {
         console.error('Async task service error:', taskError);
         // 비동기 처리 실패 시 일반 처리로 계속 진행

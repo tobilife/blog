@@ -8,7 +8,12 @@ export class AstraDBClient {
     this.keyspace = process.env.ASTRA_DB_KEYSPACE;
     
     if (!this.baseUrl || !this.token || !this.keyspace) {
-      throw new Error('Astra DB 환경 변수가 설정되지 않았습니다.');
+      console.warn('Astra DB 환경 변수가 설정되지 않았습니다:', {
+        hasUrl: !!this.baseUrl,
+        hasToken: !!this.token,
+        hasKeyspace: !!this.keyspace
+      });
+      throw new Error('Astra DB configuration missing');
     }
   }
 
