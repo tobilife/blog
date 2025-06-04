@@ -30,7 +30,7 @@ function analyzeQueryComplexity(query: string) {
     level: level,
     features: features,
     recommendations: {
-      timeout: level === "simple" ? 8000 : level === "moderate" ? 12000 : 20000,
+      timeout: 55000, // Edge Functions는 60초 타임아웃 지원, 55초 사용
       useCache: level === "simple",
       searchLimit: level === "simple" ? 2 : level === "moderate" ? 3 : 5,
       enhancePrompt: level !== "simple",
@@ -201,6 +201,15 @@ export default async (request: Request, context: Context) => {
     // 환경 변수 가져오기
     const LANGFLOW_API_TOKEN = Deno.env.get("LANGFLOW_API_TOKEN");
     const BRAVE_API_KEY = Deno.env.get("BRAVE_SEARCH_API_KEY");
+    const ASTRA_DB_REST_URL = Deno.env.get("ASTRA_DB_REST_URL");
+    const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get("ASTRA_DB_APPLICATION_TOKEN");
+    const ASTRA_DB_KEYSPACE = Deno.env.get("ASTRA_DB_KEYSPACE");
+    
+    console.log("Environment check:", {
+      hasLangflow: !!LANGFLOW_API_TOKEN,
+      hasBrave: !!BRAVE_API_KEY,
+      hasAstra: !!ASTRA_DB_REST_URL && !!ASTRA_DB_APPLICATION_TOKEN && !!ASTRA_DB_KEYSPACE
+    });
 
     if (!LANGFLOW_API_TOKEN) {
       throw new Error("LANGFLOW_API_TOKEN is not configured");

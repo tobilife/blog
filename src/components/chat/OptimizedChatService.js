@@ -1,7 +1,7 @@
 // Optimized Chat Service with Astra DB integration
 export class OptimizedChatService {
 	constructor() {
-		this.LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy-astra";
+		this.LANGFLOW_API_URL = "/api/chat"; // Edge Function 사용 (60초 타임아웃)
 		this.CHECK_STATUS_URL = "/.netlify/functions/check-task-status";
 		this.pollingIntervals = new Map(); // 진행 중인 폴링 관리
 	}
