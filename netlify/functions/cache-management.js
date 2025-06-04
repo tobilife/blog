@@ -1,24 +1,6 @@
 // 캐시 관리 API
 
 exports.handler = async (event, context) => {
-  // 동적 require를 사용하여 런타임에 로드
-  let AstraDBClient;
-  try {
-    AstraDBClient = require('./utils/astra-db-client.js');
-  } catch (error) {
-    console.error('Failed to load AstraDBClient:', error);
-    return {
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        error: 'Module load error',
-        message: error.message
-      }),
-    };
-  }
   // CORS 헤더
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -46,8 +28,23 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // AstraDBClient 로드
+  let client;
   try {
-    const client = new AstraDBClient();
+    const AstraDBClient = require('./utils/astra-db-client.js');
+    client = new AstraDBClient();
+  } catch (error) {
+    console.error('Failed to initialize AstraDBClient:', error);
+    return {
+      statusCode: 503,
+      headers,
+      body: JSON.stringify({
+        error: 'Service unavailable',
+        message: 'Astra DB client initialization failed',
+        details: error.message
+      }),
+    };
+  }
     
     // DELETE 요청: 특정 캐시 삭제
     if (event.httpMethod === 'DELETE') {
