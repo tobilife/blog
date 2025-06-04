@@ -81,11 +81,17 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
 >
   <head>
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-TW3XCSQP');</script>
+    <script is:inline>
+      (function(w,d,s,l,i){
+        w[l]=w[l]||[];
+        w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;
+        j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+        f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-TW3XCSQP');
+    </script>
     <!-- End Google Tag Manager -->
     
     <title>{pageTitle}</title>
@@ -165,16 +171,16 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || 'cente
     <link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`} />
     
     <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-96HLCPW09T"></script>
-    <script>
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-96HLCPW09T"></script>
+    <script is:inline>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-96HLCPW09T');
-      </script>
+    </script>
       
       <!-- Cloudflare Web Analytics -->
-      <script defer src='https://static.cloudflareinsights.com/beacon.min.js' 
+      <script is:inline defer src='https://static.cloudflareinsights.com/beacon.min.js' 
               data-cf-beacon='{"token": "4328394e17b64e2186aad2aa3aa3eb1a"}'></script>
       <!-- End Cloudflare Web Analytics -->
       
