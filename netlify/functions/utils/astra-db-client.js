@@ -91,13 +91,13 @@ export class AstraDBClient {
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
     const cacheKey = this.generateCacheKey(question);
     
+    // PRIMARY KEY는 데이터에 포함시키지 않음
     const data = {
-      cache_key: cacheKey,
       query: question,
       response: answer,
       created_at: new Date().toISOString(),
       expires_at: expiresAt,
-      complexity: context.complexity || 0,
+      complexity: String(context.complexity || 0), // TEXT 타입이므로 문자열로 변환
       has_search: context.hasSearchResults || false,
       popularity: 1,
       response_time: context.responseTime || 0
@@ -118,12 +118,13 @@ export class AstraDBClient {
   async createTask(question, status = 'pending') {
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // PRIMARY KEY는 데이터에 포함시키지 않음
     const data = {
-      task_id: taskId,
-      question,
+      query: question,
       status,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      progress: 0
     };
 
     // Primary key를 URL에 포함
@@ -164,11 +165,16 @@ export class AstraDBClient {
       throw new Error(`Task not found: ${taskId}`);
     }
     
+    // PRIMARY KEY는 제외하고 데이터 병합
+    const { task_id, ...existingWithoutPK } = existing;
     const data = {
-      ...existing,
+      ...existingWithoutPK,
       ...updates,
       updated_at: new Date().toISOString(),
     };
+    
+    // task_id가 updates에 있다면 제거
+    delete data.task_id;
     
     return await this.request('PUT', path, data);
   }
@@ -177,9 +183,13 @@ export class AstraDBClient {
   async completeTask(taskId, answer, error = null) {
     const updates = {
       status: error ? 'failed' : 'completed',
-      answer: error ? null : answer,
-      error: error ? error.message : null,
+      final_response: error ? null : answer,
+      progress: 100
     };
+    
+    if (error) {
+      updates.error_message = error.message;
+    }
     
     return await this.updateTask(taskId, updates);
   }
