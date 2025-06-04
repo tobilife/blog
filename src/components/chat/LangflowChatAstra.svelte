@@ -392,7 +392,7 @@ async function sendMessage() {
 				tweaks: {},
 			};
 
-			const response = await fetch("/.netlify/functions/langflow-proxy", {
+			const response = await fetch("/.netlify/functions/langflow-proxy-astra", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
