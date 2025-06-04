@@ -180,13 +180,13 @@ async function typeMessage(text, messageIndex) {
 	messages = [...messages];
 }
 
-// Astra DB 최적화 토글
-function toggleAstraOptimization() {
-	useAstraOptimization = !useAstraOptimization;
-	console.log(
-		`🚀 Astra DB 최적화: ${useAstraOptimization ? "활성화" : "비활성화"}`,
-	);
-}
+// Astra DB 최적화 토글 (항상 활성화)
+// function toggleAstraOptimization() {
+// 	useAstraOptimization = !useAstraOptimization;
+// 	console.log(
+// 		`🚀 Astra DB 최적화: ${useAstraOptimization ? "활성화" : "비활성화"}`,
+// 	);
+// }
 
 // 비동기 작업 폴링
 async function pollTaskStatus(taskId, messageIndex) {
@@ -338,8 +338,8 @@ async function sendMessage() {
 						: m.content,
 			}));
 
-		// Astra DB 최적화 사용 여부에 따라 다른 처리
-		if (useAstraOptimization && optimizedChatService) {
+		// Astra DB 최적화 항상 사용
+		if (optimizedChatService) {
 			console.log("🚀 Astra DB 최적화 모드로 메시지 전송");
 
 			const response = await optimizedChatService.sendMessage({
@@ -561,19 +561,13 @@ onMount(async () => {
       <div class="chat-header">
         <span>토비라이프 블로그 챗봇</span>
         <div class="header-controls">
-          <!-- Astra DB 최적화 토글 버튼 -->
-          <button 
-            class="astra-toggle"
-            class:active={useAstraOptimization}
-            on:click={toggleAstraOptimization}
-            title={useAstraOptimization ? 'Astra DB 최적화 사용 중' : 'Astra DB 최적화 비활성'}
+          <!-- Astra DB 최적화 상태 표시 (항상 활성화) -->
+          <div 
+            class="astra-status active"
+            title="Astra DB 최적화 사용 중"
           >
-            {#if useAstraOptimization}
-              <span class="astra-icon">⚡</span>
-            {:else}
-              <span class="astra-icon">🐌</span>
-            {/if}
-          </button>
+            <span class="astra-icon">⚡</span>
+          </div>
           <button on:click={() => chatVisible = false} class="close-button">×</button>
         </div>
       </div>
@@ -796,28 +790,20 @@ onMount(async () => {
     gap: 8px;
   }
   
-  /* Astra DB 토글 버튼 스타일 */
-  .astra-toggle {
+  /* Astra DB 상태 표시 스타일 */
+  .astra-status {
     position: relative;
     width: 40px;
     height: 40px;
-    border: none;
     border-radius: 50%;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     overflow: hidden;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
-  }
-  
-  .astra-toggle.active {
     background: linear-gradient(135deg, #f7b733 0%, #fc4a1a 100%);
-    animation: astraPulse 2s infinite;
+    color: white;
     box-shadow: 0 4px 15px rgba(252, 74, 26, 0.6);
+    animation: astraPulse 2s infinite;
   }
   
   @keyframes astraPulse {
@@ -832,39 +818,10 @@ onMount(async () => {
     }
   }
   
-  .astra-toggle::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    transform: scale(0);
-    transition: transform 0.4s ease;
-  }
-  
-  .astra-toggle:hover {
-    transform: translateY(-2px) scale(1.05);
-  }
-  
-  .astra-toggle:hover::before {
-    transform: scale(1);
-  }
-  
   .astra-icon {
     font-size: 20px;
     z-index: 1;
     display: inline-block;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  }
-  
-  .astra-toggle:hover .astra-icon {
-    transform: rotate(360deg) scale(1.2);
-  }
-  
-  .astra-toggle.active .astra-icon {
     animation: lightning 1.5s ease-in-out infinite;
   }
   
