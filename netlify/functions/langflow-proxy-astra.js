@@ -585,7 +585,9 @@ export async function handler(event, context) {
       hasBrave: !!BRAVE_API_KEY,
       hasOpenWeather: !!OPENWEATHER_API_KEY,
       hasTavily: !!TAVILY_API_KEY,
-      hasAstraDB: !!process.env.ASTRA_DB_APPLICATION_TOKEN
+      hasAstraDB: !!process.env.ASTRA_DB_APPLICATION_TOKEN,
+      astraDBUrl: process.env.ASTRA_DB_REST_URL ? 'configured' : 'missing',
+      astraDBKeyspace: process.env.ASTRA_DB_KEYSPACE || 'missing'
     });
     
     if (!API_TOKEN) {
@@ -607,10 +609,18 @@ export async function handler(event, context) {
     console.log('Query complexity:', complexity);
     
     // Astra DB 캐시 확인
-    const cacheService = getCacheService();
-    const cachedResult = await cacheService.get(userQuery, { 
-      conversationLength: conversationHistory.length 
-    });
+    let cacheService;
+    let cachedResult = { hit: false };
+    
+    try {
+      cacheService = getCacheService();
+      cachedResult = await cacheService.get(userQuery, { 
+        conversationLength: conversationHistory.length 
+      });
+    } catch (cacheError) {
+      console.error('Cache service error:', cacheError);
+      // 캐시 오류는 무시하고 계속 진행
+    }
     
     if (cachedResult.hit) {
       console.log('Cache hit! Returning cached response');
@@ -630,29 +640,34 @@ export async function handler(event, context) {
     if (complexity.recommendations.useAsync) {
       console.log('Complex query detected, using async processing');
       
-      const taskService = getAsyncTaskService();
-      const task = await taskService.createTask(userQuery, { complexity });
-      
-      // 백그라운드에서 작업 처리 시작
-      context.waitUntil(
+      try {
+        const taskService = getAsyncTaskService();
+        const task = await taskService.createTask(userQuery, { complexity });
+        
+        // 백그라운드에서 작업 처리 시작
+        // Netlify Functions는 context.waitUntil을 지원하지 않으므로 즉시 작업 시작
         processAsyncTask(task.taskId, requestBody, API_TOKEN)
-      );
-      
-      return {
-        statusCode: 202, // Accepted
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-          'X-Task-ID': task.taskId
-        },
-        body: JSON.stringify({
-          status: 'processing',
-          taskId: task.taskId,
-          message: '복잡한 질문입니다. 잠시만 기다려주세요.',
-          estimatedTime: '5-10초',
-          checkStatusUrl: `/.netlify/functions/check-task-status?taskId=${task.taskId}`
-        }),
-      };
+          .catch(error => console.error('Async task error:', error));
+        
+        return {
+          statusCode: 202, // Accepted
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            'X-Task-ID': task.taskId
+          },
+          body: JSON.stringify({
+            status: 'processing',
+            taskId: task.taskId,
+            message: '복잡한 질문입니다. 잠시만 기다려주세요.',
+            estimatedTime: '5-10초',
+            checkStatusUrl: `/.netlify/functions/check-task-status?taskId=${task.taskId}`
+          }),
+        };
+      } catch (taskError) {
+        console.error('Async task service error:', taskError);
+        // 비동기 처리 실패 시 일반 처리로 계속 진행
+      }
     }
     
     // 일반적인 동기 처리
@@ -728,9 +743,8 @@ export async function handler(event, context) {
           const task = await taskService.createTask(userQuery, { complexity, error: 'gateway_timeout' });
           
           // 백그라운드에서 재시도
-          context.waitUntil(
-            processAsyncTask(task.taskId, requestBody, API_TOKEN)
-          );
+          processAsyncTask(task.taskId, requestBody, API_TOKEN)
+            .catch(error => console.error('Async task error:', error));
           
           return {
             statusCode: 202,
@@ -764,10 +778,17 @@ export async function handler(event, context) {
       }
 
       // 응답 캐싱
-      await cacheService.set(userQuery, responseText, {
-        conversationLength: conversationHistory.length,
-        hasSearchResults: requestBody.hasSearchResults
-      });
+      if (cacheService) {
+        try {
+          await cacheService.set(userQuery, responseText, {
+            conversationLength: conversationHistory.length,
+            hasSearchResults: requestBody.hasSearchResults
+          });
+        } catch (cacheError) {
+          console.error('Cache set error:', cacheError);
+          // 캐시 저장 실패는 무시
+        }
+      }
 
       return {
         statusCode: 200,
@@ -793,9 +814,8 @@ export async function handler(event, context) {
         const task = await taskService.createTask(userQuery, { complexity, error: 'timeout' });
         
         // 백그라운드에서 처리
-        context.waitUntil(
-          processAsyncTask(task.taskId, requestBody, API_TOKEN)
-        );
+        processAsyncTask(task.taskId, requestBody, API_TOKEN)
+          .catch(error => console.error('Async task error:', error));
         
         return {
           statusCode: 202,
