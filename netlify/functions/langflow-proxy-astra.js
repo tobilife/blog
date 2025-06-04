@@ -142,11 +142,17 @@ function analyzeQueryIntent(query) {
 // 도시명을 추출하는 함수 (기존 코드 재사용)
 function extractCity(query) {
   const cities = [
-    '고양시', '고양', '서울', '부산', '대구', '인천', '광주', '대전', 
+    '고양시', '고양', '덕양구', '일산동구', '일산서구', // 고양시 관련
+    '서울', '부산', '대구', '인천', '광주', '대전', 
     '울산', '세종', '제주', '수원', '성남', '의정부', '안양', '부천',
     '광명', '평택', '동두천', '안산', '과천', '구리', '남양주', '오산',
     '시흥', '군포', '의왕', '하남', '용인', '파주', '이천', '안성', '김포'
   ];
+  
+  // 고양시의 구를 포함한 경우 고양시로 통일
+  if (query.includes('덕양구') || query.includes('일산동구') || query.includes('일산서구')) {
+    return '고양시';
+  }
   
   for (const city of cities) {
     if (query.includes(city)) {
@@ -493,8 +499,13 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   
   // 날씨 정보가 있는 경우 (간결하게)
   if (weatherData) {
-    enhancedPrompt += `[날씨] ${weatherData.city}: `;
-    enhancedPrompt += `${weatherData.temp}°C, ${weatherData.description}\n\n`;
+    enhancedPrompt += `[실시간 날씨 정보]\n`;
+    enhancedPrompt += `도시: ${weatherData.city}\n`;
+    enhancedPrompt += `현재 기온: ${weatherData.temp}°C (체감: ${weatherData.feels_like}°C)\n`;
+    enhancedPrompt += `날씨: ${weatherData.description}\n`;
+    enhancedPrompt += `최저/최고: ${weatherData.temp_min}°C / ${weatherData.temp_max}°C\n`;
+    enhancedPrompt += `습도: ${weatherData.humidity}%\n`;
+    enhancedPrompt += `풍속: ${weatherData.wind_speed}m/s\n\n`;
   }
   
   // 검색 결과가 있는 경우 (크게 압축)
@@ -508,7 +519,7 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   
   // 답변 지침 (간결하게)
   if (weatherData) {
-    enhancedPrompt += '날씨 정보 기반 답변. ';
+    enhancedPrompt += '위의 실시간 날씨 정보를 기반으로 답변해주세요. 웹 검색 결과는 무시하고 OpenWeatherMap API 데이터만 사용하세요.';
   } else if (searchResults) {
     enhancedPrompt += '검색 결과 요약. ';
   }
