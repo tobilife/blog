@@ -348,7 +348,8 @@ async function sendMessage() {
 			 conversation_history: recentMessages
 			});
 
-			if (response.type === "sync") {
+			// 모든 응답을 동기 처리로 간주
+			if (response.type === "sync" || response.type === "async") {
 			 // 캐시 히트 또는 즉시 완료
 			 if (response.cacheHit) {
 			  console.log("🎯 Cache hit!");
@@ -356,7 +357,9 @@ async function sendMessage() {
 			 await new Promise((resolve) => setTimeout(resolve, 300));
 			 const parsedResponse = optimizedChatService.parseResponse(response.data);
 			 await typeMessage(parsedResponse, messageIndex);
-			} else if (response.type === "async") {
+			}
+			/* 비동기 처리 비활성화
+			else if (response.type === "async") {
 			 // 비동기 처리 시작
 			 activeTaskId = response.taskId;
 			 console.log(`📋 비동기 작업 시작: ${activeTaskId}`);
@@ -374,6 +377,7 @@ async function sendMessage() {
 			 // 폴링 시작
 			 pollTaskStatus(activeTaskId, messageIndex);
 			}
+			*/
 		} else {
 			// 기존 방식으로 처리
 			console.log("📡 일반 모드로 메시지 전송");

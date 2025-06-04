@@ -49,7 +49,7 @@ function analyzeQueryComplexity(query) {
     features: features,
     // 처리 권장사항
     recommendations: {
-      timeout: level === 'simple' ? 5000 : level === 'moderate' ? 7000 : 9500,
+      timeout: 9500, // Netlify 10초 제한에 맞춰 모든 요청에 9.5초 사용
       useCache: true, // 모든 레벨에서 캐시 사용
       useAsync: level === 'complex', // 복잡한 질문은 비동기 처리
       searchLimit: level === 'simple' ? 0 : level === 'moderate' ? 3 : 5,
@@ -693,7 +693,9 @@ export async function handler(event, context) {
       };
     }
     
-    // 복잡한 질문이고 비동기 처리가 권장되는 경우
+    // 비동기 처리 비활성화 - 모든 요청을 동기적으로 처리
+    // Netlify Functions는 응답 후 즉시 종료되므로 백그라운드 작업이 불가능
+    /*
     if (complexity.recommendations.useAsync) {
       console.log('Complex query detected, using async processing');
       
@@ -731,7 +733,7 @@ export async function handler(event, context) {
         // 비동기 처리 실패 시 일반 처리로 계속 진행
       }
     }
-    
+    */
     // 일반적인 동기 처리
     let searchResults = null;
     let weatherData = null;
@@ -797,7 +799,8 @@ export async function handler(event, context) {
       if (!response.ok) {
         console.error('Langflow API error:', responseText);
         
-        // 타임아웃이나 오류 시 비동기 작업으로 전환
+        // Gateway 오류 시 직접 오류 반환
+        /*
         if (response.status === 502 || response.status === 503 || response.status === 504) {
           console.log('Gateway error, switching to async processing');
           
@@ -818,13 +821,13 @@ export async function handler(event, context) {
             body: JSON.stringify({
               status: 'processing',
               taskId: task.taskId,
-              message: '서버가 바쁩니다. 백그라운드에서 처리 중입니다.',
+              message: '서버가 바셩니다. 백그라운드에서 처리 중입니다.',
               estimatedTime: '10-20초',
               checkStatusUrl: `/.netlify/functions/check-task-status?taskId=${task.taskId}`
             }),
           };
         }
-        
+        */
         return {
           statusCode: response.status,
           headers: {
@@ -871,9 +874,10 @@ export async function handler(event, context) {
       clearTimeout(timeoutId);
       
       if (fetchError.name === 'AbortError') {
-        console.error('Request timeout, switching to async processing');
+        console.error('Request timeout after', dynamicTimeout, 'ms');
         
-        // 타임아웃 시 비동기 처리로 전환
+        // 타임아웃 시 직접 오류 반환
+        /*
         const taskService = getAsyncTaskService();
         const task = await taskService.createTask(userQuery, { complexity, error: 'timeout' });
         
@@ -894,6 +898,22 @@ export async function handler(event, context) {
             message: '처리 시간이 길어지고 있습니다. 백그라운드에서 처리 중입니다.',
             estimatedTime: '10-15초',
             checkStatusUrl: `/.netlify/functions/check-task-status?taskId=${task.taskId}`
+          }),
+        };
+        */
+        
+        return {
+          statusCode: 504,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            error: 'Gateway timeout',
+            message: '요청 처리 시간이 초과되었습니다. 더 간단한 질문을 해보세요.',
+            timeout: true,
+            timeoutDuration: dynamicTimeout,
+            complexityLevel: complexity.level
           }),
         };
       }
