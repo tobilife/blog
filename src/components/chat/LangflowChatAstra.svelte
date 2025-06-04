@@ -9,13 +9,19 @@ let inputMessage = "";
 let isLoading = false;
 let chatVisible = false;
 let sessionId = null;
-let LANGFLOW_API_URL = "";
 let marked = null;
 let katex = null;
 let chatMessagesEl = null;
 
-// Edge Function 사용 여부를 결정하는 플래그
-let useEdgeFunction = false;
+// Astra DB 최적화 서비스
+let optimizedChatService = null;
+let useAstraOptimization = true; // 기본값: Astra DB 최적화 사용
+
+// 비동기 작업 상태
+let activeTaskId = null;
+let taskProgress = 0;
+let taskStatusMessage = "";
+let isPolling = false;
 
 // 블로그 RAG 서비스 인스턴스
 let contextDetector = null;
@@ -174,16 +180,79 @@ async function typeMessage(text, messageIndex) {
 	messages = [...messages];
 }
 
-// Edge Function 사용 여부 토글
-function toggleEdgeFunction() {
-	useEdgeFunction = !useEdgeFunction;
-	if (useEdgeFunction) {
-		LANGFLOW_API_URL = "/api/chat";
-		console.log("🚀 Switched to Edge Function");
-	} else {
-		LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy";
-		console.log("🔄 Switched to regular Function");
+// Astra DB 최적화 토글
+function toggleAstraOptimization() {
+	useAstraOptimization = !useAstraOptimization;
+	console.log(`🚀 Astra DB 최적화: ${useAstraOptimization ? "활성화" : "비활성화"}`);
+}
+
+// 비동기 작업 폴링
+async function pollTaskStatus(taskId, messageIndex) {
+	if (!taskId || isPolling) return;
+	
+	isPolling = true;
+	const maxPollingTime = 30000; // 최대 30초
+	const pollingInterval = 1000; // 1초마다 확인
+	const startTime = Date.now();
+	
+	while (Date.now() - startTime < maxPollingTime) {
+		try {
+			const status = await optimizedChatService.checkTaskStatus(taskId);
+			
+			// 진행률 업데이트
+			taskProgress = status.progress || 0;
+			taskStatusMessage = status.message || "처리 중...";
+			
+			// 메시지 업데이트
+			messages[messageIndex] = {
+				...messages[messageIndex],
+				isAsync: true,
+				taskProgress,
+				taskStatusMessage,
+			};
+			messages = [...messages];
+			
+			if (status.status === 'completed' && status.result) {
+				// 작업 완료 - 결과를 타이핑 효과로 표시
+				activeTaskId = null;
+				taskProgress = 0;
+				taskStatusMessage = "";
+				
+				messages[messageIndex] = {
+					...messages[messageIndex],
+					isAsync: false,
+					content: "",
+				};
+				messages = [...messages];
+				
+				// 타이핑 효과 적용
+				await typeMessage(status.result, messageIndex);
+				break;
+			} else if (status.status === 'failed') {
+				// 작업 실패
+				activeTaskId = null;
+				taskProgress = 0;
+				taskStatusMessage = "";
+				
+				messages[messageIndex] = {
+					...messages[messageIndex],
+					isAsync: false,
+					content: status.error || "처리 중 오류가 발생했습니다.",
+					isTyping: false,
+				};
+				messages = [...messages];
+				break;
+			}
+			
+			// 다음 폴링까지 대기
+			await new Promise(resolve => setTimeout(resolve, pollingInterval));
+		} catch (error) {
+			console.error("Task polling error:", error);
+			break;
+		}
 	}
+	
+	isPolling = false;
 }
 
 async function sendMessage() {
@@ -196,6 +265,7 @@ async function sendMessage() {
 	messages = [...messages, { role: "user", content: userMessage }];
 
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
+	const messageIndex = messages.length;
 	messages = [
 		...messages,
 		{ role: "assistant", content: "", isTyping: true, isSearching: false },
@@ -245,36 +315,19 @@ async function sendMessage() {
 		} catch (error) {
 			console.error("Blog search error:", error);
 		}
-	} else {
-		// 우선순위 2: 일반 검색 요청은 langflow-proxy에서 처리
-		const searchPatterns =
-			/(검색해|알려줘|최신|현재|지금|이번달|올해|오늘|방금|아까|좀전|나중에|아직|벌써|곧|이제|이전에|이후에|다음|항상|늘|내일|어제|모레|글피|그제|지난달|다음달|작년|내년|몇년전|며칠전|요즘|최근|동시에|즉시|당장|시절|한때|날씨|뉴스)/i;
-		if (searchPatterns.test(userMessage)) {
-			console.log("🔍 웹 검색이 필요한 질문으로 판단됨");
-			// langflow-proxy에서 자동으로 처리됨
-		} else {
-			console.log("ℹ️ 일반 질문으로 판단됨");
-		}
 	}
 
 	isLoading = true;
 
-	// Edge Function은 더 긴 타임아웃 설정 가능
-	const timeoutDuration = useEdgeFunction ? 20000 : 9000;
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
-
 	try {
-		// Langflow API 호출
-		// 대화 히스토리 최적화 - 성능 향상을 위해 메시지 수와 크기 제한
-		const MAX_HISTORY_MESSAGES = 4; // 8개에서 4개로 감소
-		const MAX_MESSAGE_LENGTH = 3000; // 각 메시지 최대 길이
+		// 대화 히스토리 최적화
+		const MAX_HISTORY_MESSAGES = 4;
+		const MAX_MESSAGE_LENGTH = 3000;
 
-		// 메시지 필터링 및 압축
 		const recentMessages = messages
-			.slice(0, -2) // 현재 입력 중인 메시지와 빈 메시지 제외
+			.slice(0, -2)
 			.filter((m) => m.content && !m.isTyping)
-			.slice(-MAX_HISTORY_MESSAGES) // 최근 4개만
+			.slice(-MAX_HISTORY_MESSAGES)
 			.map((m) => ({
 				role: m.role,
 				content:
@@ -283,67 +336,70 @@ async function sendMessage() {
 						: m.content,
 			}));
 
-		console.log(
-			`Sending ${recentMessages.length} conversation history messages (optimized from ${messages.length - 2} total)`,
-		);
-
-		const payload = {
-			input_value: contextualMessage, // 컨텍스트가 추가된 메시지 사용
-			output_type: "chat",
-			input_type: "chat",
-			stream: false,
-			session_id: sessionId,
-			conversation_history: recentMessages.map((m) => ({
-				role: m.role,
-				content: m.content,
-			})),
-			tweaks: {},
-		};
-
-		console.log(
-			`Using ${useEdgeFunction ? "Edge Function" : "Regular Function"}: ${LANGFLOW_API_URL}`,
-		);
-
-		const response = await fetch(LANGFLOW_API_URL, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify(payload),
-			signal: controller.signal,
-		});
-
-		const responseText = await response.text();
-
-		// 복잡도 정보 확인
-		const complexity = response.headers.get("X-Query-Complexity");
-		const responseTime = response.headers.get("X-Response-Time");
-
-		if (complexity) {
-			console.log(
-				`Query complexity: ${complexity}, Response time: ${responseTime}ms`,
+		// Astra DB 최적화 사용 여부에 따라 다른 처리
+		if (useAstraOptimization && optimizedChatService) {
+			console.log("🚀 Astra DB 최적화 모드로 메시지 전송");
+			
+			const response = await optimizedChatService.sendMessage(
+				contextualMessage,
+				sessionId,
+				recentMessages
 			);
-		}
+			
+			if (response.status === 'cached' || response.status === 'completed') {
+				// 캐시 히트 또는 즉시 완료
+				await new Promise((resolve) => setTimeout(resolve, 300));
+				await typeMessage(response.result, messageIndex);
+			} else if (response.status === 'accepted' && response.taskId) {
+				// 비동기 처리 시작
+				activeTaskId = response.taskId;
+				console.log(`📋 비동기 작업 시작: ${activeTaskId}`);
+				
+				// 폴링 시작
+				pollTaskStatus(activeTaskId, messageIndex);
+			} else {
+				// 오류 처리
+				messages[messageIndex] = {
+					role: "assistant",
+					content: response.error || "처리 중 오류가 발생했습니다.",
+					isTyping: false,
+				};
+				messages = [...messages];
+			}
+		} else {
+			// 기존 방식으로 처리
+			console.log("📡 일반 모드로 메시지 전송");
+			
+			const payload = {
+				input_value: contextualMessage,
+				output_type: "chat",
+				input_type: "chat",
+				stream: false,
+				session_id: sessionId,
+				conversation_history: recentMessages,
+				tweaks: {},
+			};
 
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
+			const response = await fetch("/.netlify/functions/langflow-proxy", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(payload),
+			});
 
-		const data = JSON.parse(responseText);
+			const responseText = await response.text();
 
-		// 검색 수행 여부 확인
-		const hasSearchResults = data.hasSearchResults || false;
-		if (hasSearchResults) {
-			console.log("최신 웹 검색 결과가 답변에 포함되었습니다.");
-		}
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
 
-		// 응답 파싱 - 다양한 구조 시도
-		let botResponse = "Sorry, I could not generate a response.";
-		if (data.outputs) {
-			// outputs 배열 순회
-			if (Array.isArray(data.outputs)) {
+			const data = JSON.parse(responseText);
+
+			// 응답 파싱
+			let botResponse = "Sorry, I could not generate a response.";
+			if (data.outputs && Array.isArray(data.outputs)) {
 				for (const output of data.outputs) {
-					// 다양한 경로 시도
 					if (output.outputs?.[0]?.results?.message?.text) {
 						botResponse = output.outputs[0].results.message.text;
 						break;
@@ -356,107 +412,40 @@ async function sendMessage() {
 						botResponse = output.outputs[0].results.text;
 						break;
 					}
-					if (output.outputs?.[0]?.message) {
-						botResponse = output.outputs[0].message;
-						break;
-					}
-					if (output.message) {
-						botResponse = output.message;
-						break;
-					}
-					if (output.text) {
-						botResponse = output.text;
-						break;
-					}
 				}
 			}
+
+			// <think> 태그 제거
+			if (botResponse.includes("<think>")) {
+				botResponse = botResponse.replace(/<think>.*?<\/think>/gs, "").trim();
+			}
+
+			// 블로그 참조 링크 추가
+			if (isAboutBlog && searchResults.length > 0) {
+				const references = blogRAGService.formatReferences(searchResults);
+				botResponse += references;
+			}
+
+			// 타이핑 효과 적용
+			await new Promise((resolve) => setTimeout(resolve, 300));
+			await typeMessage(botResponse, messageIndex);
 		}
-
-		// 직접 필드 확인
-		if (data.result) {
-			botResponse = data.result;
-		} else if (data.message) {
-			botResponse = data.message;
-		} else if (data.text) {
-			botResponse = data.text;
-		}
-
-		// <think> 태그 제거
-		if (botResponse.includes("<think>")) {
-			// <think>...</think> 패턴을 찾아서 제거
-			botResponse = botResponse.replace(/<think>.*?<\/think>/gs, "").trim();
-		}
-
-		// 블로그 참조 링크 추가
-		if (isAboutBlog && searchResults.length > 0) {
-			const references = blogRAGService.formatReferences(searchResults);
-			botResponse += references;
-		}
-
-		// 이미 추가된 assistant 메시지에 타이핑 효과 적용
-		// 짧은 딜레이 후 타이핑 시작 (로딩 인디케이터가 보이도록)
-		await new Promise((resolve) => setTimeout(resolve, 300));
-
-		// 타이핑 효과 구현 (마지막 메시지 업데이트)
-		await typeMessage(botResponse, messages.length - 1);
 	} catch (error) {
-		clearTimeout(timeoutId);
-		console.error("Error calling Langflow API:", error);
+		console.error("Error calling chat API:", error);
 
 		let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
 
 		if (error.name === "AbortError") {
-			errorMessage = useEdgeFunction
-				? "Edge Function에서도 타임아웃이 발생했습니다. 질문을 더 간단하게 해주세요."
-				: "netlify 무료 플랜을 사용중이라<br>API의 응답시간이 10초 지연시 타임아웃이 발생합니다😭<br>조금만 더 간단한 질문을 해주세요.<br><br>💡 Edge Function 모드로 전환하면 더 긴 시간 처리가 가능합니다!";
-		} else if (error.message.includes("401")) {
-			errorMessage = "인증 오류가 발생했습니다. API 토큰을 확인해주세요.";
-		} else if (error.message.includes("404")) {
-			errorMessage = "Flow를 찾을 수 없습니다. Flow ID를 확인해주세요.";
-		} else if (error.message.includes("500")) {
-			errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-		} else if (
-			error.message.includes("502") ||
-			error.message.includes("Bad Gateway")
-		) {
-			errorMessage =
-				"Langflow API 서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.";
-		} else if (
-			error.message.includes("504") ||
-			error.message.includes("timeout")
-		) {
-			// 504 타임아웃 발생 시 모든 메시지 히스토리 삭제
-			console.log("504 Timeout detected - clearing all message history");
-
-			// 초기 환영 메시지만 남기고 모든 메시지 삭제
-			messages = [
-				{
-					role: "assistant",
-					content:
-						"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>🚀 <strong>Edge Function 모드</strong><br>타임아웃이 자주 발생한다면 Edge Function 모드를 사용해보세요!<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
-				},
-			];
-
-			errorMessage =
-				"⚠️ 타임아웃이 발생하여 대화 기록을 초기화했습니다.<br><br>더 간단한 질문으로 다시 시작해주세요! 😊";
-
-			// 타임아웃 메시지 추가
-			messages = [
-				...messages,
-				{ role: "assistant", content: errorMessage, isTyping: false },
-			];
-			return; // 추가 처리 중단
+			errorMessage = "응답 시간이 초과되었습니다. 더 간단한 질문을 해주세요.";
 		}
 
-		// 이미 추가된 assistant 메시지를 업데이트
-		messages[messages.length - 1] = {
+		messages[messageIndex] = {
 			role: "assistant",
 			content: errorMessage,
 			isTyping: false,
 		};
-		messages = [...messages]; // 리액티비티 트리거
+		messages = [...messages];
 	} finally {
-		clearTimeout(timeoutId);
 		isLoading = false;
 	}
 }
@@ -469,6 +458,9 @@ function handleKeyPress(event) {
 }
 
 onMount(async () => {
+	// Astra DB 최적화 서비스 초기화
+	optimizedChatService = new OptimizedChatService();
+	
 	// 블로그 RAG 서비스 초기화
 	contextDetector = new ContextDetector();
 	blogRAGService = new BlogRAGService();
@@ -504,15 +496,12 @@ onMount(async () => {
 	// 클라이언트 사이드에서만 실행
 	sessionId = `user_${Date.now()}`;
 
-	// 기본값은 일반 Function 사용
-	LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy";
-
 	// 초기 환영 메시지
 	messages = [
 		{
 			role: "assistant",
 			content:
-				"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br>2024년 초반까지의 데이터만 학습된 모델을 사용중입니다.<br>모델명 : qwen-qwq-32b<br><br>🆕 <strong>최신 정보 검색 기능!</strong><br>'최신', '현재', '검색','알려줘' 등의 키워드가 포함된 질문의 경우<br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.🔍<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br>'이 블로그에서', '토비라이프가 작성한' 등의 표현을 사용해보세요.<br><br>⚡ <strong>RAG 적응형 처리 시스템!</strong><br>질문의 복잡도에 따라 응답 속도를 최적화합니다.<br>단순한 질문은 빠르게, 복잡한 질문은 정확하게 답변드립니다.<br><br>🚀 <strong>Edge Function 모드</strong><br>타임아웃이 자주 발생한다면 Edge Function 모드를 사용해보세요!<br><br>궁금한 점이 있으시면 물어봐주세요.🤖",
+				"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🚀 <strong>Astra DB 최적화 기능!</strong><br>- 응답 캐싱으로 빠른 답변 제공<br>- 복잡한 질문은 비동기 처리로 타임아웃 방지<br>- 실시간 진행 상태 표시<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 관련 질문 시 자동으로 모든 포스트를 참조하여 답변합니다.<br><br>🔍 <strong>최신 정보 검색 기능!</strong><br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.<br><br>궁금한 점이 있으시면 물어봐주세요!🤖",
 		},
 	];
 
@@ -529,6 +518,7 @@ onMount(async () => {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </svelte:head>
+
 <div class="chat-container">
   <!-- 챗봇 버튼 -->
   <button 
@@ -536,9 +526,8 @@ onMount(async () => {
     class:active={chatVisible}
     on:click={() => chatVisible = !chatVisible}
   >
-    <!-- 알림 배지 -->
     {#if !chatVisible}
-      <span class="notification-badge">3</span>
+      <span class="notification-badge">AI</span>
     {/if}
     
     {#if chatVisible}
@@ -546,7 +535,6 @@ onMount(async () => {
     {:else}
       <i class="fas fa-robot"></i>
     {/if}
-  
   </button>
   
   <!-- 챗봇 창 -->
@@ -556,17 +544,17 @@ onMount(async () => {
       <div class="chat-header">
         <span>토비라이프 블로그 챗봇</span>
         <div class="header-controls">
-          <!-- Edge Function 토글 버튼 -->
+          <!-- Astra DB 최적화 토글 버튼 -->
           <button 
-            class="edge-toggle"
-            class:active={useEdgeFunction}
-            on:click={toggleEdgeFunction}
-            title={useEdgeFunction ? 'Edge Function 사용 중' : '일반 Function 사용 중'}
+            class="astra-toggle"
+            class:active={useAstraOptimization}
+            on:click={toggleAstraOptimization}
+            title={useAstraOptimization ? 'Astra DB 최적화 사용 중' : 'Astra DB 최적화 비활성'}
           >
-            {#if useEdgeFunction}
-              <span class="edge-icon">🚀</span>
+            {#if useAstraOptimization}
+              <span class="astra-icon">⚡</span>
             {:else}
-              <span class="edge-icon">🖥️</span>
+              <span class="astra-icon">🐌</span>
             {/if}
           </button>
           <button on:click={() => chatVisible = false} class="close-button">×</button>
@@ -577,7 +565,21 @@ onMount(async () => {
       <div class="chat-messages" bind:this={chatMessagesEl}>
         {#each messages as message}
           <div class="message {message.role}">
-            {#if message.role === 'assistant' && marked && !message.isTyping}
+            {#if message.isAsync}
+              <!-- 비동기 처리 중 표시 -->
+              <div class="async-message">
+                <div class="async-content">
+                  <i class="fas fa-hourglass-half"></i> 복잡한 질문을 처리하는 중입니다...
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: {taskProgress}%"></div>
+                </div>
+                <div class="async-status">
+                  <span class="status-icon">⏳</span>
+                  <span class="status-text">{taskStatusMessage}</span>
+                </div>
+              </div>
+            {:else if message.role === 'assistant' && marked && !message.isTyping}
               {@html renderMarkdown(message.content)}
             {:else}
               {message.content}
@@ -602,20 +604,22 @@ onMount(async () => {
           placeholder="메시지를 입력하세요..."
           bind:value={inputMessage}
           on:keypress={handleKeyPress}
-          disabled={isLoading}
+          disabled={isLoading || isPolling}
         />
         <button 
           class="send-button" 
           on:click={sendMessage}
-          disabled={!inputMessage.trim() || isLoading}
-          aria-label="메시지 보내기"  >
+          disabled={!inputMessage.trim() || isLoading || isPolling}
+          aria-label="메시지 보내기"
+        >
           <svg 
             width="20" 
             height="20" 
             viewBox="0 0 20 20" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"  >
+            aria-hidden="true"
+          >
             <path d="M2 10L17 2L13 18L11 11L2 10Z" fill="currentColor"/>
           </svg>
         </button>
@@ -634,24 +638,22 @@ onMount(async () => {
   }
   
   .chat-button {
-    /* 버튼 기본 스타일 */
     display: flex;
     justify-content: center;
     align-items: center;
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 그라디언트 배경 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); /* 색상에 맞는 그림자 */
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* 부드러운 애니메이션 */
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     overflow: hidden;
   }
   
-  /* 호버 효과를 위한 가상 요소 */
   .chat-button::before {
     content: '';
     position: absolute;
@@ -684,7 +686,6 @@ onMount(async () => {
     animation: pulse 2s infinite;
   }
   
-  /* 맥박 애니메이션 */
   @keyframes pulse {
     0% {
       box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
@@ -697,7 +698,6 @@ onMount(async () => {
     }
   }
   
-  /* 아이콘 회전 애니메이션 */
   .chat-button i {
     font-size: 26px;
     transition: all 0.3s ease;
@@ -711,26 +711,24 @@ onMount(async () => {
     animation: wiggle 0.5s ease;
   }
   
-  /* 알림 배지 */
   .notification-badge {
     position: absolute;
     top: -5px;
     right: -5px;
     background: #ff4757;
     color: white;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: bold;
     animation: bounce 2s infinite;
     box-shadow: 0 2px 5px rgba(255, 71, 87, 0.5);
   }
   
-  /* 바운스 애니메이션 */
   @keyframes bounce {
     0%, 20%, 50%, 80%, 100% {
       transform: translateY(0);
@@ -743,60 +741,18 @@ onMount(async () => {
     }
   }
   
-  /* 추가 애니메이션 - 레인보우 효과 */
-  @keyframes rainbow {
-    0% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    20% { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    40% { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    60% { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-    80% { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-    100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-  }
-  
-  /* 호버 시 레인보우 효과 */
-  .chat-button:hover {
-    animation: rainbow 3s ease infinite;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-  }
-  
-  /* 리플 효과를 위한 가상 요소 */
-  .chat-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    animation: ripple 4s infinite;
-  }
-  @keyframes ripple {
-    0% {
-      transform: translate(-50%, -50%) scale(0);
-      opacity: 1;
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(15);
-      opacity: 0;
-    }
-  }
-  
   @keyframes wiggle {
     0%, 100% { transform: rotate(0deg); }
     25% { transform: rotate(-10deg); }
     75% { transform: rotate(10deg); }
   }
   
-  
   .chat-window {
     position: absolute;
     bottom: 70px;
     right: 0;
-    width: calc(100vw - 40px); /* 화면 너비에서 여백을 뺀 값 */
-    max-width: 800px; /* 최대 너비 제한 */
+    width: calc(100vw - 40px);
+    max-width: 800px;
     height: 750px;
     background-color: white;
     border-radius: 12px;
@@ -823,7 +779,8 @@ onMount(async () => {
     gap: 8px;
   }
   
-  .edge-toggle {
+  /* Astra DB 토글 버튼 스타일 */
+  .astra-toggle {
     position: relative;
     width: 40px;
     height: 40px;
@@ -835,51 +792,30 @@ onMount(async () => {
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     overflow: hidden;
-    
-    /* 기본 상태 (Regular Function) */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
   }
   
-  /* Edge Function 활성화 상태 */
-  .edge-toggle.active {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 50%, #f5576c 100%);
-    animation: edgePulse 2s infinite, colorShift 4s ease-in-out infinite;
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.6);
+  .astra-toggle.active {
+    background: linear-gradient(135deg, #f7b733 0%, #fc4a1a 100%);
+    animation: astraPulse 2s infinite;
+    box-shadow: 0 4px 15px rgba(252, 74, 26, 0.6);
   }
   
-  /* 맥박 애니메이션 */
-  @keyframes edgePulse {
+  @keyframes astraPulse {
     0% {
-      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.6);
+      box-shadow: 0 4px 15px rgba(252, 74, 26, 0.6);
     }
     50% {
-      box-shadow: 0 6px 25px rgba(245, 87, 108, 0.8);
+      box-shadow: 0 6px 25px rgba(252, 74, 26, 0.8);
     }
     100% {
-      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.6);
+      box-shadow: 0 4px 15px rgba(252, 74, 26, 0.6);
     }
   }
   
-  /* 색상 변화 애니메이션 */
-  @keyframes colorShift {
-    0%, 100% {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 50%, #f5576c 100%);
-    }
-    25% {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff6b6b 100%);
-    }
-    50% {
-      background: linear-gradient(135deg, #feca57 0%, #ff9ff3 50%, #ff6b6b 100%);
-    }
-    75% {
-      background: linear-gradient(135deg, #ff9ff3 0%, #feca57 50%, #f093fb 100%);
-    }
-  }
-  
-  /* 호버 효과를 위한 가상 요소 */
-  .edge-toggle::before {
+  .astra-toggle::before {
     content: '';
     position: absolute;
     top: 0;
@@ -892,137 +828,41 @@ onMount(async () => {
     transition: transform 0.4s ease;
   }
   
-  .edge-toggle:hover {
+  .astra-toggle:hover {
     transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
   }
   
-  .edge-toggle.active:hover {
-    box-shadow: 0 4px 20px rgba(240, 147, 251, 0.6);
-  }
-  
-  .edge-toggle:hover::before {
+  .astra-toggle:hover::before {
     transform: scale(1);
   }
   
-  .edge-toggle:active {
-    transform: translateY(0) scale(0.98);
-  }
-  
-  /* 아이콘 스타일 */
-  .edge-icon {
+  .astra-icon {
     font-size: 20px;
     z-index: 1;
     display: inline-block;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   }
   
-  .edge-toggle:hover .edge-icon {
+  .astra-toggle:hover .astra-icon {
     transform: rotate(360deg) scale(1.2);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   }
   
-  /* Edge Function 활성화 시 특별 효과 */
-  .edge-toggle.active .edge-icon {
-    animation: rocketBoost 2s ease-in-out infinite;
+  .astra-toggle.active .astra-icon {
+    animation: lightning 1.5s ease-in-out infinite;
   }
   
-  @keyframes rocketBoost {
+  @keyframes lightning {
     0%, 100% {
       transform: translateY(0) scale(1);
     }
     25% {
-      transform: translateY(-3px) scale(1.1) rotate(5deg);
+      transform: translateY(-2px) scale(1.1);
     }
     50% {
-      transform: translateY(-5px) scale(1.15) rotate(-5deg);
+      transform: translateY(0) scale(1.2);
     }
     75% {
-      transform: translateY(-3px) scale(1.1) rotate(3deg);
-    }
-  }
-  
-  /* 리플 효과 */
-  .edge-toggle::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 3px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    animation: edgeRipple 3s infinite;
-  }
-  
-  @keyframes edgeRipple {
-    0% {
-      transform: translate(-50%, -50%) scale(0);
-      opacity: 1;
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(12);
-      opacity: 0;
-    }
-  }
-  
-  /* 상태 전환 애니메이션 */
-  
-  @keyframes toggleSwitch {
-    0%, 100% {
-      transform: rotate(0deg) scale(1);
-    }
-    50% {
-      transform: rotate(180deg) scale(0.8);
-    }
-  }
-  
-  /* 툴팁 스타일 (선택사항) */
-  .edge-toggle[title] {
-    position: relative;
-  }
-  
-  .edge-toggle[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: -35px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    animation: tooltipFade 0.3s ease forwards;
-  }
-  
-  @keyframes tooltipFade {
-    to {
-      opacity: 1;
-    }
-  }
-  
-  .edge-toggle:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-  }
-  
-  .edge-toggle.active {
-    background: rgba(255, 255, 255, 0.4);
-    animation: glow 2s ease-in-out infinite;
-  }
-  
-  @keyframes glow {
-    0%, 100% {
-      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
-    }
-    50% {
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+      transform: translateY(-1px) scale(1.1);
     }
   }
   
@@ -1071,6 +911,85 @@ onMount(async () => {
     border: 1px solid #e0e0e0;
     border-bottom-left-radius: 4px;
     line-height: 1.6;
+  }
+  
+  /* 비동기 메시지 스타일 */
+  .async-message {
+    position: relative;
+  }
+  
+  .async-content {
+    margin-bottom: 8px;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4A90E2 0%, #667eea 100%);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  .async-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+  }
+  
+  .status-icon {
+    font-size: 14px;
+    animation: spin 2s linear infinite;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .status-text {
+    font-style: italic;
   }
   
   /* 마크다운 스타일링 */

@@ -1,0 +1,203 @@
+// Astra DB를 활용한 최적화된 Langflow 프록시
+import { astraCacheService } from './astra-cache-service.js';
+import { asyncTaskQueue } from './async-task-queue.js';
+
+// 기존 함수들 import (analyzeQueryComplexity, analyzeQueryIntent 등)
+// ... 기존 코드 ...
+
+export async function handler(event, context) {
+  console.log('Optimized Langflow proxy with Astra DB');
+  const startTime = Date.now();
+  
+  // CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  };
+
+  // Handle preflight request
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: '',
+    };
+  }
+
+  // POST 요청만 허용
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  try {
+    const requestBody = JSON.parse(event.body);
+    const userQuery = requestBody.input_value;
+    const userId = requestBody.userId || 'anonymous';
+    const mode = requestBody.mode || 'sync'; // sync 또는 async
+    
+    console.log('User query:', userQuery);
+    console.log('Mode:', mode);
+    
+    // 1. 복잡도 분석
+    const complexity = analyzeQueryComplexity(userQuery);
+    const intent = analyzeQueryIntent(userQuery);
+    console.log('Query complexity:', complexity.level);
+    
+    // 2. Astra DB 캐시 확인 (10-50ms)
+    const cachedResponse = await astraCacheService.get(userQuery, {
+      isWeather: intent.isWeather,
+      needsSearch: intent.needsSearch
+    });
+    
+    if (cachedResponse) {
+      console.log('Cache hit! Response time:', Date.now() - startTime, 'ms');
+      return {
+        statusCode: 200,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+          'X-Cache': 'HIT',
+          'X-Response-Time': String(Date.now() - startTime)
+        },
+        body: JSON.stringify(cachedResponse),
+      };
+    }
+    
+    // 3. 복잡한 쿼리는 비동기 모드로 처리
+    if (mode === 'async' || (complexity.level === 'complex' && Date.now() - startTime > 5000)) {
+      console.log('Switching to async mode');
+      
+      const taskResult = await asyncTaskQueue.createTask(userQuery, userId, {
+        complexity: complexity,
+        intent: intent
+      });
+      
+      return {
+        statusCode: 202, // Accepted
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+          'X-Task-ID': taskResult.taskId
+        },
+        body: JSON.stringify({
+          taskId: taskResult.taskId,
+          status: 'processing',
+          initialResponse: taskResult.initialResponse,
+          message: '더 정확한 답변을 준비하고 있습니다.'
+        }),
+      };
+    }
+    
+    // 4. 간단한 질문은 동기적으로 빠르게 처리
+    let response;
+    
+    // 날짜/시간 질문은 매우 빠르게 처리
+    if (intent.isDateTime) {
+      const now = new Date();
+      const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+      response = {
+        output: [{
+          outputs: [{
+            outputs: [{
+              results: {
+                message: {
+                  text: `현재 한국 시간은 ${koreaTime.toLocaleString('ko-KR')}입니다.`
+                }
+              }
+            }]
+          }]
+        }]
+      };
+    } else {
+      // 5. 일반 처리 (기존 로직 활용하되 타임아웃 단축)
+      const timeout = Math.min(complexity.recommendations.timeout, 7000); // 최대 7초
+      
+      // 검색이나 날씨 정보가 필요한 경우 병렬 처리
+      const [searchResults, weatherData] = await Promise.all([
+        intent.needsSearch ? performQuickSearch(userQuery) : null,
+        intent.isWeather ? getQuickWeather(extractCity(userQuery)) : null
+      ]);
+      
+      // Langflow 호출 (타임아웃 적용)
+      response = await callLangflowWithTimeout(
+        requestBody,
+        searchResults,
+        weatherData,
+        timeout
+      );
+    }
+    
+    // 6. 응답 캐싱
+    const responseTime = Date.now() - startTime;
+    await astraCacheService.set(userQuery, response, {
+      complexity: complexity.level,
+      hasSearchResults: !!(searchResults || weatherData),
+      responseTime: responseTime
+    });
+    
+    return {
+      statusCode: 200,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+        'X-Cache': 'MISS',
+        'X-Response-Time': String(responseTime),
+        'X-Complexity': complexity.level
+      },
+      body: JSON.stringify(response),
+    };
+    
+  } catch (error) {
+    console.error('Error:', error);
+    
+    // 타임아웃 에러인 경우 비동기 처리 제안
+    if (error.name === 'AbortError') {
+      return {
+        statusCode: 504,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          error: 'Request timeout',
+          message: '응답 시간이 초과되었습니다. 비동기 모드로 다시 시도해주세요.',
+          suggestedMode: 'async'
+        }),
+      };
+    }
+    
+    return {
+      statusCode: 500,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: 'Internal server error',
+        message: error.message
+      }),
+    };
+  }
+}
+
+// 빠른 검색 함수 (최대 2초)
+async function performQuickSearch(query) {
+  // 간소화된 검색 로직
+  // 타임아웃 2초
+}
+
+// 빠른 날씨 조회 함수 (최대 1초)
+async function getQuickWeather(city) {
+  // 간소화된 날씨 API 호출
+  // 타임아웃 1초
+}
+
+// Langflow 호출 with 타임아웃
+async function callLangflowWithTimeout(requestBody, searchResults, weatherData, timeout) {
+  // 타임아웃 적용된 Langflow 호출
+}
