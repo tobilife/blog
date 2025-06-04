@@ -40,9 +40,10 @@ export class AsyncTaskService {
         found: true,
         taskId: task.task_id,
         status: task.status,
-        question: task.question,
-        answer: task.answer,
-        error: task.error,
+        question: task.query,  // 'question'이 아닌 'query'
+        answer: task.final_response,  // 'answer'가 아닌 'final_response'
+        error: task.error_message,  // 에러 메시지 필드
+        progress: task.progress || 0,
         createdAt: task.created_at,
         updatedAt: task.updated_at,
       };

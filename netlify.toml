@@ -25,5 +25,5 @@
 
 [[redirects]]
   from = "/api/langflow/*"
-  to = "/.netlify/functions/langflow-proxy"
+  to = "/.netlify/functions/langflow-proxy-astra"
   status = 200
