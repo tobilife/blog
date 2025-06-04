@@ -34,20 +34,24 @@ export class CacheService {
   // 캐시에서 응답 조회
   async get(question, context = {}) {
     try {
-      const cacheKey = this.generateCacheKey(question, context);
-      const cached = await this.client.getCacheEntry(cacheKey);
+      const normalizedQuestion = this.normalizeQuestion(question);
+      const cached = await this.client.getCacheEntry(normalizedQuestion);
       
       if (cached) {
-        console.log('캐시 히트:', cacheKey);
+        console.log('캐시 히트:', normalizedQuestion);
         return {
           hit: true,
-          answer: cached.answer,
-          context: cached.context,
+          answer: cached.response, // 'answer'가 아닌 'response'
+          context: {
+            complexity: cached.complexity,
+            hasSearchResults: cached.has_search,
+            responseTime: cached.response_time
+          },
           createdAt: cached.created_at,
         };
       }
       
-      console.log('캐시 미스:', cacheKey);
+      console.log('캐시 미스:', normalizedQuestion);
       return { hit: false };
     } catch (error) {
       console.error('캐시 조회 실패:', error);
@@ -58,9 +62,9 @@ export class CacheService {
   // 캐시에 응답 저장
   async set(question, answer, context = {}) {
     try {
-      const cacheKey = this.generateCacheKey(question, context);
-      await this.client.setCacheEntry(cacheKey, answer, context);
-      console.log('캐시 저장 완료:', cacheKey);
+      const normalizedQuestion = this.normalizeQuestion(question);
+      await this.client.setCacheEntry(normalizedQuestion, answer, context);
+      console.log('캐시 저장 완료:', normalizedQuestion);
       return true;
     } catch (error) {
       console.error('캐시 저장 실패:', error);

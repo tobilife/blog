@@ -59,9 +59,9 @@ export class AstraDBClient {
 
   // chat_cache 테이블 조회
   async getCacheEntry(question) {
-    // Astra DB REST API v2에서는 테이블별로 primary key를 사용해야 함
-    const encodedQuestion = encodeURIComponent(question);
-    const path = `/chat_cache/${encodedQuestion}`;
+    // cache_key를 생성 (질문을 정규화하여 키로 사용)
+    const cacheKey = this.generateCacheKey(question);
+    const path = `/chat_cache/${encodeURIComponent(cacheKey)}`;
     
     try {
       const result = await this.request('GET', path);
@@ -89,19 +89,29 @@ export class AstraDBClient {
   async setCacheEntry(question, answer, context = {}) {
     const ttlSeconds = parseInt(process.env.CACHE_TTL_SECONDS || '3600');
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+    const cacheKey = this.generateCacheKey(question);
     
     const data = {
-      question,
-      answer,
-      context,
+      cache_key: cacheKey,
+      query: question,
+      response: answer,
       created_at: new Date().toISOString(),
       expires_at: expiresAt,
+      complexity: context.complexity || 0,
+      has_search: context.hasSearchResults || false,
+      popularity: 1,
+      response_time: context.responseTime || 0
     };
 
-    // CQL 테이블에 대한 INSERT는 primary key를 URL에 포함
-    const encodedQuestion = encodeURIComponent(question);
-    const path = `/chat_cache/${encodedQuestion}`;
+    // Primary key를 URL에 포함
+    const path = `/chat_cache/${encodeURIComponent(cacheKey)}`;
     return await this.request('PUT', path, data);
+  }
+
+  // 캐시 키 생성 함수
+  generateCacheKey(question) {
+    // 질문을 소문자로 변환하고 공백을 정규화
+    return question.toLowerCase().trim().replace(/\s+/g, ' ');
   }
 
   // async_tasks 테이블 생성

@@ -556,7 +556,14 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
     const cacheService = getCacheService();
     if (cacheService) {
       const parsedResponse = JSON.parse(responseText);
-      await cacheService.set(requestBody.input_value, JSON.stringify(parsedResponse));
+      // requestBody에서 필요한 컨텍스트 정보 추출
+      const complexity = requestBody.complexity || { score: 0 };
+      await cacheService.set(requestBody.input_value, JSON.stringify(parsedResponse), {
+        conversationLength: requestBody.conversation_history ? requestBody.conversation_history.length : 0,
+        hasSearchResults: requestBody.hasSearchResults || false,
+        complexity: complexity.score || 0,
+        responseTime: 0 // 비동기 처리이므로 정확한 시간 계산 어려움
+      });
     }
     
   } catch (error) {
@@ -837,7 +844,9 @@ export async function handler(event, context) {
         try {
           await cacheService.set(userQuery, responseText, {
             conversationLength: conversationHistory.length,
-            hasSearchResults: requestBody.hasSearchResults
+            hasSearchResults: requestBody.hasSearchResults,
+            complexity: complexity.score,
+            responseTime: Date.now() - startTime
           });
         } catch (cacheError) {
           console.error('Cache set error:', cacheError);
