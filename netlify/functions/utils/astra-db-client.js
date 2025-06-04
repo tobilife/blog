@@ -1,5 +1,5 @@
 // Astra DB REST API 클라이언트
-import fetch from 'node-fetch';
+
 
 export class AstraDBClient {
   constructor() {

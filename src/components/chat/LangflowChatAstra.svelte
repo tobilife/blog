@@ -433,18 +433,23 @@ async function sendMessage() {
 			await typeMessage(botResponse, messageIndex);
 		}
 	} catch (error) {
-		console.error("Error calling chat API:", error);
-
-		let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
-
-		if (error.name === "AbortError") {
-			errorMessage = "응답 시간이 초과되었습니다. 더 간단한 질문을 해주세요.";
-		}
-
-		messages[messageIndex] = {
-			role: "assistant",
-			content: errorMessage,
-			isTyping: false,
+	 console.error("Error calling chat API:", error);
+	 console.error("Error details:", {
+	  message: error.message,
+	  name: error.name,
+	  response: error.response,
+	  status: error.status
+	 });
+	
+	 let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
+	 
+	 if (error.name === "AbortError") {
+	  errorMessage = "응답 시간이 초과되었습니다. 더 간단한 질문을 해주세요.";
+	 }
+	 messages[messageIndex] = {
+	  role: "assistant",
+	  content: errorMessage,
+	  isTyping: false
 		};
 		messages = [...messages];
 	} finally {

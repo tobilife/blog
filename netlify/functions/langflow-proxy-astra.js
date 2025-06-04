@@ -588,20 +588,29 @@ export async function handler(event, context) {
     const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
     const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
     
+    
+    // Astra DB 환경 변수 자세히 체크
+    const astraConfig = {
+      hasToken: !!process.env.ASTRA_DB_APPLICATION_TOKEN,
+      hasUrl: !!process.env.ASTRA_DB_REST_URL,
+      hasKeyspace: !!process.env.ASTRA_DB_KEYSPACE,
+      tokenLength: process.env.ASTRA_DB_APPLICATION_TOKEN ? process.env.ASTRA_DB_APPLICATION_TOKEN.length : 0,
+      url: process.env.ASTRA_DB_REST_URL ? 'configured' : 'missing',
+      keyspace: process.env.ASTRA_DB_KEYSPACE || 'missing'
+    };
+    
     console.log('Environment check:', {
       hasLangflow: !!API_TOKEN,
       hasBrave: !!BRAVE_API_KEY,
       hasOpenWeather: !!OPENWEATHER_API_KEY,
       hasTavily: !!TAVILY_API_KEY,
-      hasAstraDB: !!process.env.ASTRA_DB_APPLICATION_TOKEN,
-      astraDBUrl: process.env.ASTRA_DB_REST_URL ? 'configured' : 'missing',
-      astraDBKeyspace: process.env.ASTRA_DB_KEYSPACE || 'missing'
-    });
-    
-    if (!API_TOKEN) {
-      throw new Error('LANGFLOW_API_TOKEN is not configured');
-    }
-    
+      astraDB: astraConfig
+      });
+      if (!API_TOKEN) {
+        throw new Error('LANGFLOW_API_TOKEN is not configured');
+      }
+      
+      
     const LANGFLOW_API_URL = 'https://api.langflow.astra.datastax.com/lf/88f74398-7c51-4066-a0e2-c6a1992f0889/api/v1/run/790574cb-2624-492b-a3a5-e0e118c1416f';
 
     // 요청 본문 파싱
@@ -621,11 +630,15 @@ export async function handler(event, context) {
     let cachedResult = { hit: false };
     
     try {
+      console.log('Initializing cache service...');
       cacheService = getCacheService();
       if (cacheService) {
+        console.log('Cache service initialized successfully');
         cachedResult = await cacheService.get(userQuery, { 
           conversationLength: conversationHistory.length 
         });
+      } else {
+        console.log('Cache service not available');
       }
     } catch (cacheError) {
       console.error('Cache service error:', cacheError);
@@ -867,6 +880,12 @@ export async function handler(event, context) {
     
   } catch (error) {
     console.error('Langflow proxy error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code
+    });
     return {
       statusCode: 500,
       headers: {
@@ -875,7 +894,8 @@ export async function handler(event, context) {
       },
       body: JSON.stringify({ 
         error: 'Internal server error',
-        message: error.message 
+        message: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       }),
     };
   }
