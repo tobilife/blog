@@ -1,7 +1,7 @@
 // Astra DB 캐시 서비스 API
-import { getCacheService } from './utils/cache-service.js';
+const { getCacheService } = require('./utils/cache-service.js');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // CORS 헤더
   const headers = {
     'Access-Control-Allow-Origin': '*',

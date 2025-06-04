@@ -1,6 +1,6 @@
 // Astra DB REST API 클라이언트
 
-export class AstraDBClient {
+class AstraDBClient {
   constructor() {
     this.baseUrl = process.env.ASTRA_DB_REST_URL;
     this.token = process.env.ASTRA_DB_APPLICATION_TOKEN;
@@ -195,4 +195,4 @@ export class AstraDBClient {
   }
 }
 
-export default AstraDBClient;
+module.exports = AstraDBClient;

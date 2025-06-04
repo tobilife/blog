@@ -1,7 +1,7 @@
 // Astra DB 캐시 서비스
-import AstraDBClient from './astra-db-client.js';
+const AstraDBClient = require('./astra-db-client.js');
 
-export class CacheService {
+class CacheService {
   constructor() {
     this.client = new AstraDBClient();
   }
@@ -98,7 +98,7 @@ export class CacheService {
 // 싱글톤 인스턴스
 let cacheInstance;
 
-export function getCacheService() {
+function getCacheService() {
   if (!cacheInstance) {
     try {
       // 환경 변수 체크
@@ -117,4 +117,7 @@ export function getCacheService() {
   return cacheInstance;
 }
 
-export default CacheService;
+module.exports = {
+  CacheService,
+  getCacheService
+};

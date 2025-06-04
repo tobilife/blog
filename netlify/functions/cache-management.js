@@ -1,7 +1,7 @@
 // 캐시 관리 API
-import { AstraDBClient } from './utils/astra-db-client.js';
+const AstraDBClient = require('./utils/astra-db-client.js');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // CORS 헤더
   const headers = {
     'Access-Control-Allow-Origin': '*',
