@@ -45,7 +45,8 @@ exports.handler = async (event, context) => {
       }),
     };
   }
-    
+
+  try {
     // DELETE 요청: 특정 캐시 삭제
     if (event.httpMethod === 'DELETE') {
       const { query, pattern } = JSON.parse(event.body || '{}');
