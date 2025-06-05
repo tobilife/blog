@@ -214,7 +214,8 @@ export class BlogRAGService {
 
 		searchResults.forEach((result) => {
 			// .md 확장자를 제거하고 마지막에 슬래시 추가
-			const slug = result.post.path.replace(".md", "");
+			// slug가 있으면 slug 사용, 없으면 path에서 .md 제거
+			const slug = result.post.slug || result.post.path.replace(".md", "");
 			const postUrl = `/posts/${slug}/`;
 			references += `- [${result.post.title}](${postUrl})\n`;
 		});

@@ -69,6 +69,7 @@ async function indexPosts() {
       tags: data.tags || [],
       category: data.category || 'Uncategorized',
       path: file,
+      slug: data.slug || file.replace('.md', ''), // slug가 있으면 사용, 없으면 파일명 사용
       chunks: chunks,
       summary: plainText.substring(0, 200) + '...'
     };

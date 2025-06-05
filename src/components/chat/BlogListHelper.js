@@ -12,10 +12,10 @@ export class BlogListHelper {
 		}
 
 		let response = "## 토비라이프 블로그 글 목록\n\n";
-		
+
 		// 카테고리별로 그룹화
 		const postsByCategory = {};
-		posts.forEach(post => {
+		posts.forEach((post) => {
 			const category = post.category || "미분류";
 			if (!postsByCategory[category]) {
 				postsByCategory[category] = [];
@@ -24,28 +24,31 @@ export class BlogListHelper {
 		});
 
 		// 카테고리별로 출력
-		Object.keys(postsByCategory).sort().forEach(category => {
-			response += `### ${category}\n\n`;
-			
-			postsByCategory[category]
-				.sort((a, b) => new Date(b.published) - new Date(a.published))
-				.forEach((post, index) => {
-					const slug = post.path.replace(".md", "");
-					const postUrl = `/posts/${slug}/`;
-					const date = new Date(post.published).toLocaleDateString('ko-KR');
-					
-					response += `${index + 1}. [${post.title}](${postUrl})\n`;
-					response += `   - 작성일: ${date}\n`;
-					response += `   - ${post.description}\n`;
-					if (post.tags && post.tags.length > 0) {
-						response += `   - 태그: ${post.tags.slice(0, 5).join(", ")}\n`;
-					}
-					response += `\n`;
-				});
-		});
+		Object.keys(postsByCategory)
+			.sort()
+			.forEach((category) => {
+				response += `### ${category}\n\n`;
+
+				postsByCategory[category]
+					.sort((a, b) => new Date(b.published) - new Date(a.published))
+					.forEach((post, index) => {
+						// slug가 있으면 slug 사용, 없으면 path에서 .md 제거
+						const slug = post.slug || post.path.replace(".md", "");
+						const postUrl = `/posts/${slug}/`;
+						const date = new Date(post.published).toLocaleDateString("ko-KR");
+
+						response += `${index + 1}. [${post.title}](${postUrl})\n`;
+						response += `   - 작성일: ${date}\n`;
+						response += `   - ${post.description}\n`;
+						if (post.tags && post.tags.length > 0) {
+							response += `   - 태그: ${post.tags.slice(0, 5).join(", ")}\n`;
+						}
+						response += `\n`;
+					});
+			});
 
 		response += "\n더 자세한 내용을 보시려면 각 링크를 클릭해주세요! 😊";
-		
+
 		return response;
 	}
 
@@ -61,10 +64,10 @@ export class BlogListHelper {
 			"포스트 목록",
 			"모든 글",
 			"전체 글",
-			"어떤 글"
+			"어떤 글",
 		];
 
 		const normalizedQuery = query.toLowerCase();
-		return listKeywords.some(keyword => normalizedQuery.includes(keyword));
+		return listKeywords.some((keyword) => normalizedQuery.includes(keyword));
 	}
 }
