@@ -11,6 +11,15 @@ declare global {
 				}>;
 			}>;
 		};
+		netlifyIdentity?: {
+			on: (event: 'init' | 'login' | 'logout' | 'error' | 'open' | 'close', callback: (user?: any) => void) => void;
+			open: () => void;
+			close: () => void;
+			currentUser: () => any;
+			logout: () => void;
+			refresh: (force?: boolean) => Promise<any>;
+			init: () => void;
+		};
 	}
 }
 
