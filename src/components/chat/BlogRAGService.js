@@ -207,6 +207,9 @@ export class BlogRAGService {
 	 contextPrompt += "- 중요: 외부 링크나 가상의 링크를 만들지 마세요\n";
 	 contextPrompt += "- 반드시 위에 제공된 실제 블로그 포스트만 참조하세요\n";
 	 contextPrompt += "- 블로그 URL: https://tobilife.netlify.app\n";
+	 contextPrompt += "- 경고: tobilife.com, 기술 블로그, 고객센터 등 존재하지 않는 링크를 만들지 마세요\n";
+	 contextPrompt += "- 오직 https://tobilife.netlify.app 도메인의 실제 포스트 링크만 사용하세요\n";
+	 contextPrompt += "- 추가 정보가 필요하면 위에 제공된 포스트를 참고하도록 안내하세요\n";
 	 
 	 // 카테고리 정보를 동적으로 추가
 	 if (this.knowledgeBase && this.knowledgeBase.categories && this.knowledgeBase.categories.length > 0) {
