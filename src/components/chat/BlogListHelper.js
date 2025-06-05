@@ -37,7 +37,7 @@ export function formatBlogList(posts) {
 			const postUrl = `/posts/${slug}/`;
 			const date = new Date(post.published).toLocaleDateString("ko-KR");
 
-			response += `${index + 1}. [${post.title}](${postUrl})\n`;
+			response += `${index + 1}. <a href="${postUrl}" target="_blank" rel="noopener noreferrer">${post.title}</a>\n`;
 			response += `   - 작성일: ${date}\n`;
 			response += `   - ${post.description}\n`;
 			if (post.tags && post.tags.length > 0) {

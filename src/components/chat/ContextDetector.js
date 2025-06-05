@@ -157,7 +157,7 @@ export class ContextDetector {
 			lowerMessage.includes("이 블로그") ||
 			lowerMessage.includes("여기") ||
 			lowerMessage.includes("토비라이프") ||
-			lowerMessage.includes("뾰가") ||
+			lowerMessage.includes("머가") ||
 			lowerMessage.includes("뭐가")
 		) {
 			console.log("Blog-wide search triggered");
@@ -211,7 +211,7 @@ export class ContextDetector {
 						"있나",
 						"알려",
 						"설명",
-						"뾰야",
+						"뭐야",
 						"어떤",
 						"알려줘",
 						"해줘",

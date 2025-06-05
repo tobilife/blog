@@ -174,37 +174,51 @@ export class BlogRAGService {
 	 * LLM 프롬프트에 컨텍스트 추가
 	 */
 	buildContextualPrompt(userMessage, searchResults) {
-		if (searchResults.length === 0) {
-			return userMessage;
-		}
-
-		// 간결한 컨텍스트 프롬프트
-		// 간결한 컨텍스트 프롬프트
-		let contextPrompt = "토비라이프 블로그에 있는 포스트:\n\n";
-
-		for (const [index, result] of searchResults.entries()) {
-			contextPrompt += `${index + 1}. ${result.post.title}\n`;
-			// description에 HTML 엔티티가 있을 수 있으므로 제거
-			const cleanDescription = result.post.description
-				.replace(/&#x20;/g, " ")
-				.replace(/&amp;/g, "&")
-				.replace(/&lt;/g, "<")
-				.replace(/&gt;/g, ">")
-				.replace(/&quot;/g, '"')
-				.replace(/&#39;/g, "'");
-			contextPrompt += `   - ${cleanDescription}\n`;
-			if (result.post.tags && result.post.tags.length > 0) {
-				contextPrompt += `   - 태그: ${result.post.tags.slice(0, 5).join(", ")}\n`;
-			}
-			contextPrompt += "\n";
-		}
-
-		contextPrompt += `\n질문: ${userMessage}\n`;
-		contextPrompt += "위 블로그 포스트를 참고하여 답변해주세요.";
-
-		return contextPrompt;
+	 if (searchResults.length === 0) {
+	  return userMessage;
+	 }
+	
+	 // 간결한 컨텍스트 프롬프트
+	 let contextPrompt = "토비라이프 블로그에 있는 포스트:\n\n";
+	
+	 for (const [index, result] of searchResults.entries()) {
+	  contextPrompt += `${index + 1}. ${result.post.title}\n`;
+	  // description에 HTML 엔티티가 있을 수 있으므로 제거
+	  const cleanDescription = result.post.description
+	   .replace(/&#x20;/g, " ")
+	   .replace(/&amp;/g, "&")
+	   .replace(/&lt;/g, "<")
+	   .replace(/&gt;/g, ">")
+	   .replace(/&quot;/g, '"')
+	   .replace(/&#39;/g, "'");
+	  contextPrompt += `   - ${cleanDescription}\n`;
+	  if (result.post.tags && result.post.tags.length > 0) {
+	   contextPrompt += `   - 태그: ${result.post.tags.slice(0, 5).join(", ")}\n`;
+	  }
+	  contextPrompt += "\n";
+	 }
+	
+	 contextPrompt += `\n질문: ${userMessage}\n`;
+	 contextPrompt += "위 블로그 포스트를 참고하여 답변해주세요.\n\n";
+	 contextPrompt += "답변 지침:\n";
+	 contextPrompt += "- 답변 끝에 '📚 참조한 포스트:' 섹션을 추가하세요\n";
+	 contextPrompt += "- 각 포스트는 HTML 링크 형식 <a href=\"URL\" target=\"_blank\" rel=\"noopener noreferrer\">제목</a>으로 작성하세요\n";
+	 contextPrompt += "- 예시: <a href=\"/posts/nextjs-getting-started/\" target=\"_blank\" rel=\"noopener noreferrer\">Next.js 시작하기</a>\n";
+	 contextPrompt += "- 중요: 외부 링크나 가상의 링크를 만들지 마세요\n";
+	 contextPrompt += "- 반드시 위에 제공된 실제 블로그 포스트만 참조하세요\n";
+	 contextPrompt += "- 블로그 URL: https://tobilife.netlify.app\n";
+	 
+	 // 카테고리 정보를 동적으로 추가
+	 if (this.knowledgeBase && this.knowledgeBase.categories && this.knowledgeBase.categories.length > 0) {
+	  contextPrompt += "\n블로그 카테고리 정보:\n";
+	  for (const category of this.knowledgeBase.categories) {
+	   contextPrompt += `- ${category}\n`;
+	  }
+	 }
+	
+	 return contextPrompt;
 	}
-
+	
 	/**
 	 * 참조 링크 포맷
 	 */
@@ -218,7 +232,7 @@ export class BlogRAGService {
 			// slug가 있으면 slug 사용, 없으면 path에서 .md 제거
 			const slug = result.post.slug || result.post.path.replace(".md", "");
 			const postUrl = `/posts/${slug}/`;
-			references += `- [${result.post.title}](${postUrl})\n`;
+			references += `- <a href="${postUrl}" target="_blank" rel="noopener noreferrer">${result.post.title}</a>\n`;
 		}
 
 		return references;
