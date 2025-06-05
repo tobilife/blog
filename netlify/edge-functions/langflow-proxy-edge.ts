@@ -1,4 +1,4 @@
-import { Context } from "https://edge.netlify.com";
+import type { Config, Context } from "https://edge.netlify.com";
 
 // Astra DB 캐시 클래스
 class AstraDBCache {
