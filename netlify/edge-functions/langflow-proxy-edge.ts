@@ -1,5 +1,71 @@
 import type { Config, Context } from "https://edge.netlify.com";
 
+// 응답 품질 평가 클래스
+class ResponseQualityEvaluator {
+  private weights = {
+    completeness: 0.3,
+    relevance: 0.25,
+    structure: 0.2,
+    references: 0.15,
+    length: 0.1,
+  };
+  private minQualityScore = 0.7;
+
+  evaluateResponse(response: string, query: string, hasSearchResults: boolean = false): any {
+    const scores = {
+      completeness: this.evaluateCompleteness(response, query),
+      relevance: this.evaluateRelevance(response, query),
+      structure: this.evaluateStructure(response),
+      references: hasSearchResults ? 0.8 : 0.5,
+      length: this.evaluateLength(response),
+    };
+
+    const totalScore = Object.entries(scores).reduce((total, [key, score]) => {
+      return total + score * (this.weights as any)[key];
+    }, 0);
+
+    return {
+      totalScore: Math.round(totalScore * 100) / 100,
+      scores,
+      shouldCache: totalScore >= this.minQualityScore,
+      confidence: totalScore >= 0.8 ? "high" : totalScore >= 0.6 ? "medium" : "low",
+    };
+  }
+
+  private evaluateCompleteness(response: string, query: string): number {
+    let score = 0.5;
+    if (!response.trim().endsWith("?")) score += 0.1;
+    if (response.length > 100) score += 0.2;
+    if (response.includes(query.split(" ")[0])) score += 0.2;
+    return Math.min(score, 1);
+  }
+
+  private evaluateRelevance(response: string, query: string): number {
+    let score = 0.5;
+    const queryWords = query.toLowerCase().split(/\s+/);
+    const responseWords = response.toLowerCase().split(/\s+/);
+    const matchCount = queryWords.filter(word => responseWords.includes(word)).length;
+    score += (matchCount / queryWords.length) * 0.5;
+    return Math.min(score, 1);
+  }
+
+  private evaluateStructure(response: string): number {
+    let score = 0.5;
+    if (response.includes("\n\n")) score += 0.2;
+    if (/<[^>]+>/.test(response)) score += 0.15;
+    if (/[-*•]\s+/.test(response)) score += 0.15;
+    return Math.min(score, 1);
+  }
+
+  private evaluateLength(response: string): number {
+    const length = response.length;
+    if (length < 50) return 0.2;
+    if (length > 3000) return 0.6;
+    if (length >= 200 && length <= 1000) return 1;
+    return 0.8;
+  }
+}
+
 // Astra DB 캐시 클래스
 class AstraDBCache {
   private baseUrl: string;
@@ -458,17 +524,60 @@ export default async (request: Request, context: Context) => {
     
     console.log("Response time:", Date.now() - startTime, "ms");
     
-    // 응답 캐싱
+    // 응답 품질 평가 및 캐싱
     if (cacheService) {
       try {
-        await cacheService.setCacheEntry(userQuery, JSON.stringify(parsedResponse), {
-          complexity: complexity.score,
-          hasSearchResults: requestBody.hasSearchResults,
-          responseTime: Date.now() - startTime
+        // 품질 평가기 생성
+        const evaluator = new ResponseQualityEvaluator();
+        
+        // 응답 텍스트 추출 (JSON에서 실제 응답 텍스트 찾기)
+        let responseText = JSON.stringify(parsedResponse);
+        if (parsedResponse.outputs?.[0]?.outputs?.[0]?.results?.message?.text) {
+          responseText = parsedResponse.outputs[0].outputs[0].results.message.text;
+        } else if (parsedResponse.result) {
+          responseText = parsedResponse.result;
+        } else if (parsedResponse.message) {
+          responseText = parsedResponse.message;
+        }
+        
+        // 품질 평가 수행
+        const evaluation = evaluator.evaluateResponse(
+          responseText, 
+          userQuery, 
+          requestBody.hasSearchResults
+        );
+        
+        console.log('Response quality evaluation:', {
+          query: userQuery,
+          totalScore: evaluation.totalScore,
+          shouldCache: evaluation.shouldCache,
+          confidence: evaluation.confidence
         });
+        
+        // 품질 기준을 통과한 경우에만 캐싱
+        if (evaluation.shouldCache) {
+          await cacheService.setCacheEntry(userQuery, JSON.stringify(parsedResponse), {
+            complexity: complexity.score,
+            hasSearchResults: requestBody.hasSearchResults,
+            responseTime: Date.now() - startTime,
+            qualityScore: evaluation.totalScore,
+            confidence: evaluation.confidence
+          });
+          console.log('Response cached with quality score:', evaluation.totalScore);
+        } else {
+          console.log('Response not cached due to low quality score:', evaluation.totalScore);
+        }
+        
+        // 응답에 품질 정보 추가
+        parsedResponse.qualityMetrics = {
+          score: evaluation.totalScore,
+          confidence: evaluation.confidence,
+          cached: evaluation.shouldCache
+        };
+        
       } catch (cacheError) {
-        console.error('Cache save error:', cacheError);
-        // 캐시 저장 실패는 무시
+        console.error('Cache evaluation/save error:', cacheError);
+        // 품질 평가 또는 캐시 저장 실패는 무시
       }
     }
 
