@@ -27,3 +27,14 @@
   from = "/api/langflow/*"
   to = "/.netlify/functions/langflow-proxy-astra"
   status = 200
+
+# OG 이미지 리다이렉트 - 이전 경로 호환성 유지
+[[redirects]]
+  from = "/assets/images/banner.png"
+  to = "/images/banner.png"
+  status = 301
+
+[[redirects]]
+  from = "/assets/images/*"
+  to = "/images/:splat"
+  status = 301
