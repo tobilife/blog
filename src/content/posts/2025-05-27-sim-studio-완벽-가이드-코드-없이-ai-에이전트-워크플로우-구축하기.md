@@ -12,7 +12,7 @@ tags:
   - LLM
   - Docker
   - Ollama
-image: ""
+image: /images/uploads/simstudio.png
 draft: false
 ---
 ## 들어가며: 또 다른 AI 도구? 아니, 이번엔 다르다
