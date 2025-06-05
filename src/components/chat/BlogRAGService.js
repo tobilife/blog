@@ -183,7 +183,15 @@ export class BlogRAGService {
 
 		searchResults.forEach((result, index) => {
 			contextPrompt += `${index + 1}. ${result.post.title}\n`;
-			contextPrompt += `   - ${result.post.description}\n`;
+			// description에 HTML 엔티티가 있을 수 있으므로 제거
+			const cleanDescription = result.post.description
+				.replace(/&#x20;/g, " ")
+				.replace(/&amp;/g, "&")
+				.replace(/&lt;/g, "<")
+				.replace(/&gt;/g, ">")
+				.replace(/&quot;/g, '"')
+				.replace(/&#39;/g, "'");
+			contextPrompt += `   - ${cleanDescription}\n`;
 			if (result.post.tags && result.post.tags.length > 0) {
 				contextPrompt += `   - 태그: ${result.post.tags.slice(0, 5).join(", ")}\n`;
 			}

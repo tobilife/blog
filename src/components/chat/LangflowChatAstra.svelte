@@ -1,6 +1,7 @@
 <script>
 import { afterUpdate, onMount } from "svelte";
 import { BlogRAGService } from "./BlogRAGService";
+import { BlogListHelper } from "./BlogListHelper";
 import { ContextDetector } from "./ContextDetector";
 import { OptimizedChatService } from "./OptimizedChatService";
 
@@ -285,13 +286,30 @@ async function sendMessage() {
 	const isBlogSearchRequest = blogSearchPattern.test(userMessage);
 
 	if (isBlogSearchRequest && contextDetector && blogRAGService) {
-		// 블로그 검색 요청이면 RAG 시스템 사용
-		try {
-			console.log("☝️ 블로그 검색 요청 감지!");
-
-			// 키워드 추출
-			const keywords = await contextDetector.extractSearchKeywords(userMessage);
-			console.log("Extracted keywords:", keywords);
+	 // 블로그 검색 요청이면 RAG 시스템 사용
+	 try {
+	  console.log("☝️ 블로그 검색 요청 감지!");
+	
+	  // 블로그 목록 요청인지 확인
+	  if (BlogListHelper.isBlogListRequest(userMessage)) {
+	   console.log("📝 블로그 목록 요청으로 확인됨");
+	   
+	   // 모든 포스트 가져오기
+	   if (blogRAGService.knowledgeBase && blogRAGService.knowledgeBase.posts) {
+	    const blogListResponse = BlogListHelper.formatBlogList(
+	     blogRAGService.knowledgeBase.posts
+	    );
+	    
+	    // 직접 응답 표시
+	    await typeMessage(blogListResponse, messageIndex);
+	    isLoading = false;
+	    return; // 일반 LLM 호출을 건너뛰기
+	   }
+	  }
+	
+	  // 키워드 추출
+	  const keywords = await contextDetector.extractSearchKeywords(userMessage);
+	  console.log("Extracted keywords:", keywords);
 
 			// 블로그 포스트 검색
 			const searchQuery = keywords.join(" ");
