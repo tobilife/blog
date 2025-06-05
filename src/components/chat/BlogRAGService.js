@@ -204,11 +204,6 @@ export class BlogRAGService {
 		contextPrompt +=
 			"- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n";
 		contextPrompt += "- 이 챗봇은 토비라이프 블로그 전용 챗봇입니다\n";
-		contextPrompt += "- 답변 끝에 '📚 참조한 포스트:' 섹션을 추가하세요\n";
-		contextPrompt +=
-			'- 각 포스트는 HTML 링크 형식 <a href="URL" target="_blank" rel="noopener noreferrer">제목</a>으로 작성하세요\n';
-		contextPrompt +=
-			'- 예시: <a href="/posts/nextjs-getting-started/" target="_blank" rel="noopener noreferrer">Next.js 시작하기</a>\n';
 		contextPrompt += "- 중요: 외부 링크나 가상의 링크를 만들지 마세요\n";
 		contextPrompt += "- 반드시 위에 제공된 실제 블로그 포스트만 참조하세요\n";
 		contextPrompt += "- 블로그 주소는 https://tobilife.netlify.app 입니다\n";
