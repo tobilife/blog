@@ -201,6 +201,8 @@ export class BlogRAGService {
 	 contextPrompt += `\n질문: ${userMessage}\n`;
 	 contextPrompt += "위 블로그 포스트를 참고하여 답변해주세요.\n\n";
 	 contextPrompt += "답변 지침:\n";
+	 contextPrompt += "- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n";
+	 contextPrompt += "- 이 챗봇은 토비라이프 블로그 전용 챗봇입니다\n";
 	 contextPrompt += "- 답변 끝에 '📚 참조한 포스트:' 섹션을 추가하세요\n";
 	 contextPrompt += "- 각 포스트는 HTML 링크 형식 <a href=\"URL\" target=\"_blank\" rel=\"noopener noreferrer\">제목</a>으로 작성하세요\n";
 	 contextPrompt += "- 예시: <a href=\"/posts/nextjs-getting-started/\" target=\"_blank\" rel=\"noopener noreferrer\">Next.js 시작하기</a>\n";
@@ -210,6 +212,8 @@ export class BlogRAGService {
 	 contextPrompt += "- 경고: tobilife.com, 기술 블로그, 고객센터 등 존재하지 않는 링크를 만들지 마세요\n";
 	 contextPrompt += "- 오직 https://tobilife.netlify.app 도메인의 실제 포스트 링크만 사용하세요\n";
 	 contextPrompt += "- 추가 정보가 필요하면 위에 제공된 포스트를 참고하도록 안내하세요\n";
+	 contextPrompt += "- 중요: 당신은 토비라이프가 개발한 LLM이 아닙니다. 일반 LLM 기반 챗봇입니다\n";
+	 contextPrompt += "- LLM 모델 질문 시 '토비라이프 블로그를 돕는 AI 챗봇'으로만 소개하세요\n";
 	 
 	 // 카테고리 정보를 동적으로 추가
 	 if (this.knowledgeBase && this.knowledgeBase.categories && this.knowledgeBase.categories.length > 0) {
