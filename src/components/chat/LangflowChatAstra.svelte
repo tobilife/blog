@@ -1,7 +1,7 @@
 <script>
 import { afterUpdate, onMount } from "svelte";
-import { BlogRAGService } from "./BlogRAGService";
 import { BlogListHelper } from "./BlogListHelper";
+import { BlogRAGService } from "./BlogRAGService";
 import { ContextDetector } from "./ContextDetector";
 import { OptimizedChatService } from "./OptimizedChatService";
 
