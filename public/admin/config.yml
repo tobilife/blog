@@ -1,6 +1,6 @@
 backend:
   name: git-gateway
-    branch: main # 메인 브랜치 이름
+  branch: main # 메인 브랜치 이름
 
 # 미디어 파일 저장 위치
 media_folder: "public/images/uploads"
