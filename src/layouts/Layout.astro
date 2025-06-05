@@ -221,10 +221,11 @@ const bannerOffset =
         const script = document.createElement('script');
         script.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
         script.onload = () => {
-          if (window.netlifyIdentity) {
-            window.netlifyIdentity.on('init', (user) => {
+          const identity = window.netlifyIdentity;
+          if (identity) {
+            identity.on('init', (user) => {
               if (!user) {
-                window.netlifyIdentity.on('login', () => {
+                identity.on('login', () => {
                   document.location.href = '/admin/';
                 });
               }
@@ -320,86 +321,6 @@ function loadHue(): void {
   setHue(getHue());
 }
 
-function initCustomScrollbar(): void {
-  const bodyElement = document.querySelector('body');
-  if (!bodyElement) return;
-  
-  // Initialize body scrollbar
-  OverlayScrollbars(
-    {
-      target: bodyElement,
-      cancel: {
-        nativeScrollbarsOverlaid: true,
-      }
-    }, 
-    {
-      scrollbars: {
-        theme: 'scrollbar-base scrollbar-auto py-1',
-        autoHide: 'move',
-        autoHideDelay: 500,
-        autoHideSuspend: false,
-      },
-    }
-  );
-  
-  // Initialize pre element scrollbars
-  const preElements = document.querySelectorAll('pre');
-  preElements.forEach((element) => {
-    OverlayScrollbars(element, {
-      scrollbars: {
-        theme: 'scrollbar-base scrollbar-dark px-2',
-        autoHide: 'leave',
-        autoHideDelay: 500,
-        autoHideSuspend: false
-      }
-    });
-  });
-
-  // Initialize KaTeX display scrollbars
-  const katexElements = document.querySelectorAll('.katex-display') as NodeListOf<HTMLElement>;
-  const katexObserverOptions = {
-    root: null,
-    rootMargin: '100px',
-    threshold: 0.1
-  };
-
-  const processKatexElement = (element: HTMLElement): void => {
-    if (!element.parentNode || element.hasAttribute('data-scrollbar-initialized')) {
-      return;
-    }
-    
-    const container = document.createElement('div');
-    container.className = 'katex-display-container';
-    container.setAttribute('aria-label', 'scrollable container for formulas');
-    
-    element.parentNode.insertBefore(container, element);
-    container.appendChild(element);
-    
-    OverlayScrollbars(container, {
-      scrollbars: {
-        theme: 'scrollbar-base scrollbar-auto',
-        autoHide: 'leave',
-        autoHideDelay: 500,
-        autoHideSuspend: false
-      }
-    });
-    
-    element.setAttribute('data-scrollbar-initialized', 'true');
-  };
-
-  const katexObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        processKatexElement(entry.target as HTMLElement);
-        observer.unobserve(entry.target);
-      }
-    });
-  }, katexObserverOptions);
-
-  katexElements.forEach((element) => {
-    katexObserver.observe(element);
-  });
-}
 
 function showBanner(): void {
   if (!siteConfig.banner.enable) return;
@@ -613,11 +534,10 @@ window.addEventListener('resize', throttle(updateCachedValues, 250));
 updateCachedValues(); // Initial calculation
 
 function handleScroll(): void {
-  const bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100);
   const scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 
   if (backToTopBtn) {
-    if (scrollTop > bannerHeight) {
+    if (scrollTop > cachedBannerHeight) {
       backToTopBtn.classList.remove('hide');
     } else {
       backToTopBtn.classList.add('hide');
@@ -625,7 +545,7 @@ function handleScroll(): void {
   }
 
   if (bannerEnabled && toc) {
-    if (scrollTop > bannerHeight) {
+    if (scrollTop > cachedBannerHeight) {
       toc.classList.remove('toc-hide');
     } else {
       toc.classList.add('toc-hide');
@@ -634,17 +554,7 @@ function handleScroll(): void {
 
   if (!bannerEnabled || !navbar) return;
 
-  const NAVBAR_HEIGHT = 72;
-  const MAIN_PANEL_EXCESS_HEIGHT = MAIN_PANEL_OVERLAPS_BANNER_HEIGHT * 16;
-
-  let currentBannerHeight = BANNER_HEIGHT;
-  if (document.body.classList.contains('lg:is-home') && window.innerWidth >= 1024) {
-    currentBannerHeight = BANNER_HEIGHT_HOME;
-  }
-
-  const threshold = window.innerHeight * (currentBannerHeight / 100) - NAVBAR_HEIGHT - MAIN_PANEL_EXCESS_HEIGHT - 16;
-  
-  if (scrollTop >= threshold) {
+  if (scrollTop >= cachedThreshold) {
     navbar.classList.add('navbar-hidden');
   } else {
     navbar.classList.remove('navbar-hidden');
