@@ -179,9 +179,10 @@ export class BlogRAGService {
 		}
 
 		// 간결한 컨텍스트 프롬프트
-		let contextPrompt = `토비라이프 블로그에 있는 포스트:\n\n`;
+		// 간결한 컨텍스트 프롬프트
+		let contextPrompt = "토비라이프 블로그에 있는 포스트:\n\n";
 
-		searchResults.forEach((result, index) => {
+		for (const [index, result] of searchResults.entries()) {
 			contextPrompt += `${index + 1}. ${result.post.title}\n`;
 			// description에 HTML 엔티티가 있을 수 있으므로 제거
 			const cleanDescription = result.post.description
@@ -195,11 +196,11 @@ export class BlogRAGService {
 			if (result.post.tags && result.post.tags.length > 0) {
 				contextPrompt += `   - 태그: ${result.post.tags.slice(0, 5).join(", ")}\n`;
 			}
-			contextPrompt += `\n`;
-		});
+			contextPrompt += "\n";
+		}
 
 		contextPrompt += `\n질문: ${userMessage}\n`;
-		contextPrompt += `위 블로그 포스트를 참고하여 답변해주세요.`;
+		contextPrompt += "위 블로그 포스트를 참고하여 답변해주세요.";
 
 		return contextPrompt;
 	}
@@ -212,13 +213,13 @@ export class BlogRAGService {
 
 		let references = "\n\n📚 참조한 포스트:\n";
 
-		searchResults.forEach((result) => {
+		for (const result of searchResults) {
 			// .md 확장자를 제거하고 마지막에 슬래시 추가
 			// slug가 있으면 slug 사용, 없으면 path에서 .md 제거
 			const slug = result.post.slug || result.post.path.replace(".md", "");
 			const postUrl = `/posts/${slug}/`;
 			references += `- [${result.post.title}](${postUrl})\n`;
-		});
+		}
 
 		return references;
 	}

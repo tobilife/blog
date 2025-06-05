@@ -15,40 +15,40 @@ export class BlogListHelper {
 
 		// 카테고리별로 그룹화
 		const postsByCategory = {};
-		posts.forEach((post) => {
+		for (const post of posts) {
 			const category = post.category || "미분류";
 			if (!postsByCategory[category]) {
 				postsByCategory[category] = [];
 			}
 			postsByCategory[category].push(post);
-		});
+		}
 
 		// 카테고리별로 출력
-		Object.keys(postsByCategory)
-			.sort()
-			.forEach((category) => {
-				response += `### ${category}\n\n`;
+		const sortedCategories = Object.keys(postsByCategory).sort();
+		for (const category of sortedCategories) {
+			response += `### ${category}\n\n`;
 
-				postsByCategory[category]
-					.sort((a, b) => new Date(b.published) - new Date(a.published))
-					.forEach((post, index) => {
-						// slug가 있으면 slug 사용, 없으면 path에서 .md 제거
-						const slug = post.slug || post.path.replace(".md", "");
-						const postUrl = `/posts/${slug}/`;
-						const date = new Date(post.published).toLocaleDateString("ko-KR");
+			const sortedPosts = postsByCategory[category].sort(
+				(a, b) => new Date(b.published) - new Date(a.published),
+			);
 
-						response += `${index + 1}. [${post.title}](${postUrl})\n`;
-						response += `   - 작성일: ${date}\n`;
-						response += `   - ${post.description}\n`;
-						if (post.tags && post.tags.length > 0) {
-							response += `   - 태그: ${post.tags.slice(0, 5).join(", ")}\n`;
-						}
-						response += `\n`;
-					});
-			});
+			for (const [index, post] of sortedPosts.entries()) {
+				// slug가 있으면 slug 사용, 없으면 path에서 .md 제거
+				const slug = post.slug || post.path.replace(".md", "");
+				const postUrl = `/posts/${slug}/`;
+				const date = new Date(post.published).toLocaleDateString("ko-KR");
+
+				response += `${index + 1}. [${post.title}](${postUrl})\n`;
+				response += `   - 작성일: ${date}\n`;
+				response += `   - ${post.description}\n`;
+				if (post.tags && post.tags.length > 0) {
+					response += `   - 태그: ${post.tags.slice(0, 5).join(", ")}\n`;
+				}
+				response += "\n";
+			}
+		}
 
 		response += "\n더 자세한 내용을 보시려면 각 링크를 클릭해주세요! 😊";
-
 		return response;
 	}
 

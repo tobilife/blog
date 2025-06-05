@@ -106,7 +106,7 @@ export function ultraOptimizeSwup() {
 			const preElements = document.querySelectorAll(
 				"pre:not([data-scrollbar])",
 			);
-			preElements.forEach((el) => {
+			for (const el of preElements) {
 				el.setAttribute("data-scrollbar", "true");
 				if (window.OverlayScrollbars) {
 					window.OverlayScrollbars(el, {
@@ -118,7 +118,7 @@ export function ultraOptimizeSwup() {
 						},
 					});
 				}
-			});
+			}
 		});
 	});
 

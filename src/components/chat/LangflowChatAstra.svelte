@@ -231,7 +231,8 @@ async function pollTaskStatus(taskId, messageIndex) {
 				// 타이핑 효과 적용
 				await typeMessage(status.result, messageIndex);
 				break;
-			} else if (status.status === "failed") {
+				}
+				if (status.status === "failed") {
 				// 작업 실패
 				activeTaskId = null;
 				taskProgress = 0;
