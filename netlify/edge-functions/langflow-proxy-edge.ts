@@ -584,6 +584,10 @@ export default async (request: Request, context: Context) => {
           cached: evaluation.shouldCache
         };
         
+        // cacheKey 추가 (피드백용) - generateCacheKey를 public으로 만들어야 함
+        const cacheKey = userQuery.toLowerCase().trim().replace(/\s+/g, ' ');
+        parsedResponse.cacheKey = cacheKey;
+        
       } catch (cacheError) {
         console.error('Cache evaluation/save error:', cacheError);
         // 품질 평가 또는 캐시 저장 실패는 무시
