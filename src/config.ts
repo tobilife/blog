@@ -54,7 +54,7 @@ export const navBarConfig: NavBarConfig = {
 export const profileConfig: ProfileConfig = {
 	avatar: "/images/tobilife.webp", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "토비라이프",
-	bio: "인생은 아름다워",
+	bio: "La vita E Bella",
 	links: [
 		// {
 		// 	name: "x-twitter",

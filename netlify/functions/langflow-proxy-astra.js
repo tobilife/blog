@@ -229,13 +229,35 @@ async function getWeather(city, apiKey) {
   }
 }
 
+// 현재 날짜 정보를 동적으로 가져오는 헬퍼 함수
+function getCurrentDateInfo() {
+  const now = new Date();
+  const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 한국 시간
+  const year = koreaTime.getUTCFullYear();
+  const month = koreaTime.getUTCMonth() + 1;
+  const day = koreaTime.getUTCDate();
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][koreaTime.getUTCDay()];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthName = monthNames[koreaTime.getUTCMonth()];
+  
+  return {
+    year,
+    month,
+    day,
+    dayOfWeek,
+    monthName,
+    dateString: `${year}/${month}/${day}`,
+    englishDateString: `${monthName} ${year}`
+  };
+}
 // 검색 쿼리를 최적화하는 함수 (기존 코드 재사용)
 function optimizeSearchQuery(query) {
   const intent = analyzeQueryIntent(query);
   
   // 날짜/시간 전용 질문
   if (intent.isDateTime) {
-    return 'current date time Korea June 2025';
+    const dateInfo = getCurrentDateInfo();
+    return `current date time Korea ${dateInfo.englishDateString}`;
   }
   
   // 일반 검색 쿼리 최적화
@@ -255,7 +277,8 @@ function optimizeSearchQuery(query) {
       
     // 필요한 경우 날짜 추가
     if (query.includes('오늘')) {
-      optimizedQuery += ' June 2025';
+      const dateInfo = getCurrentDateInfo();
+      optimizedQuery += ` ${dateInfo.englishDateString}`;
     }
   }
   
@@ -461,13 +484,8 @@ async function performDualSearch(query, braveApiKey, tavilyApiKey) {
 
 // 검색 결과를 프롬프트에 포함시키는 함수 (기존 코드 재사용)
 function enhancePromptWithSearchResults(originalQuery, searchResults, weatherData, conversationHistory = []) {
-  // 현재 날짜를 서버에서 직접 제공
-  const now = new Date();
-  const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 한국 시간
-  const year = koreaTime.getUTCFullYear();
-  const month = koreaTime.getUTCMonth() + 1;
-  const day = koreaTime.getUTCDate();
-  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][koreaTime.getUTCDay()];
+  // 현재 날짜 정보 가져오기
+  const dateInfo = getCurrentDateInfo();
   
   let enhancedPrompt = '';
   
@@ -492,7 +510,7 @@ function enhancePromptWithSearchResults(originalQuery, searchResults, weatherDat
   
   // 날짜/시간 전용 질문인 경우 (간결하게)
   if (intent.isDateTime) {
-    enhancedPrompt += `현재: ${year}/${month}/${day} ${dayOfWeek}\n`;
+        enhancedPrompt += `현재: ${dateInfo.dateString} ${dateInfo.dayOfWeek}\n`;
     enhancedPrompt += '위 시간 기준 답변.';
     return enhancedPrompt;
   }
