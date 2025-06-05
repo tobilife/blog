@@ -49,7 +49,14 @@ export default defineConfig({
 		  "material-symbols": ["*"],
 		 },
 		}),
-		svelte(),
+		svelte({
+		 compilerOptions: {
+		  // Svelte 5 compatibility mode for mixed Svelte 4/5 components
+		  compatibility: {
+		   componentApi: 4,
+		  },
+		 },
+		}),
 		sitemap(),
 	],
 	markdown: {
