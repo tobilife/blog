@@ -57,6 +57,38 @@ class AstraDBClient {
     }
   }
 
+  // CQL 실행 메서드
+  async execute(query, params = [], options = {}) {
+    const url = `${this.baseUrl}/api/rest/v2/cql`;
+    
+    try {
+      const body = {
+        query,
+        params,
+        options: {
+          keyspace: this.keyspace,
+          ...options
+        }
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(body)
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Astra DB CQL 오류: ${response.status} - ${error}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Astra DB CQL 실행 실패:', error);
+      throw error;
+    }
+  }
+
   // chat_cache 테이블 조회
   async getCacheEntry(question) {
     // cache_key를 생성 (질문을 정규화하여 키로 사용)
@@ -195,4 +227,16 @@ class AstraDBClient {
   }
 }
 
+// CommonJS export
 module.exports = AstraDBClient;
+
+// getAstraClient 함수
+let clientInstance = null;
+async function getAstraClient() {
+  if (!clientInstance) {
+    clientInstance = new AstraDBClient();
+  }
+  return clientInstance;
+}
+
+module.exports.getAstraClient = getAstraClient;
