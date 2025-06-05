@@ -15,7 +15,7 @@ function getCurrentTheme() {
 // Giscus 테마 업데이트 함수
 function updateGiscusTheme(theme: string) {
 	const iframe = document.querySelector<HTMLIFrameElement>(".giscus-frame");
-	if (iframe && iframe.contentWindow) {
+	if (iframe?.contentWindow) {
 		iframe.contentWindow.postMessage(
 			{ giscus: { setConfig: { theme } } },
 			"https://giscus.app",

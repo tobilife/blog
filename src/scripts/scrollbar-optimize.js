@@ -35,7 +35,7 @@ function initContentScrollbars() {
 	);
 	const observer = new IntersectionObserver(
 		(entries) => {
-			entries.forEach((entry) => {
+			for (const entry of entries) {
 				if (entry.isIntersecting && window.OverlayScrollbars) {
 					const element = entry.target;
 					element.setAttribute("data-scrollbar-init", "true");
@@ -51,18 +51,22 @@ function initContentScrollbars() {
 
 					observer.unobserve(element);
 				}
-			});
+			}
 		},
 		{ rootMargin: "200px" },
 	);
 
-	preElements.forEach((el) => observer.observe(el));
+	for (const el of preElements) {
+		observer.observe(el);
+	}
 
 	// Handle KaTeX elements similarly
 	const katexElements = document.querySelectorAll(
 		".katex-display:not([data-scrollbar-init])",
 	);
-	katexElements.forEach((el) => observer.observe(el));
+	for (const el of katexElements) {
+		observer.observe(el);
+	}
 }
 
 export { initLightweightScrollbar, initContentScrollbars };

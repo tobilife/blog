@@ -49,7 +49,7 @@ const configHue = siteConfig.themeColor.hue;
 // Banner configuration for og:image meta tag
 let banner = propsBanner;
 if (!banner || typeof banner !== "string" || banner.trim() === "") {
- banner = siteConfig.banner.src;
+	banner = siteConfig.banner.src;
 }
 
 const enableBanner = siteConfig.banner.enable;

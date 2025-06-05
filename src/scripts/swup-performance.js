@@ -6,9 +6,12 @@ export function optimizeSwupTransitions() {
 	// Disable unnecessary plugins during transition
 	window.swup.hooks.on("visit:start", () => {
 		// Pause any running animations
-		document.querySelectorAll(".transition, .transition-all").forEach((el) => {
+		const transitionElements = document.querySelectorAll(
+			".transition, .transition-all",
+		);
+		for (const el of transitionElements) {
 			el.style.transition = "none";
-		});
+		}
 
 		// Hide non-critical elements during transition
 		const toc = document.getElementById("toc-wrapper");
@@ -27,9 +30,12 @@ export function optimizeSwupTransitions() {
 		// Restore elements after a short delay
 		requestAnimationFrame(() => {
 			// Re-enable transitions
-			document.querySelectorAll('[style*="transition: none"]').forEach((el) => {
+			const disabledTransitions = document.querySelectorAll(
+				'[style*="transition: none"]',
+			);
+			for (const el of disabledTransitions) {
 				el.style.transition = "";
-			});
+			}
 
 			// Show TOC
 			const toc = document.getElementById("toc-wrapper");

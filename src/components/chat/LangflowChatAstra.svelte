@@ -231,8 +231,8 @@ async function pollTaskStatus(taskId, messageIndex) {
 				// 타이핑 효과 적용
 				await typeMessage(status.result, messageIndex);
 				break;
-				}
-				if (status.status === "failed") {
+			}
+			if (status.status === "failed") {
 				// 작업 실패
 				activeTaskId = null;
 				taskProgress = 0;
@@ -287,30 +287,30 @@ async function sendMessage() {
 	const isBlogSearchRequest = blogSearchPattern.test(userMessage);
 
 	if (isBlogSearchRequest && contextDetector && blogRAGService) {
-	 // 블로그 검색 요청이면 RAG 시스템 사용
-	 try {
-	  console.log("☝️ 블로그 검색 요청 감지!");
-	
-	  // 블로그 목록 요청인지 확인
-	  if (BlogListHelper.isBlogListRequest(userMessage)) {
-	   console.log("📝 블로그 목록 요청으로 확인됨");
-	   
-	   // 모든 포스트 가져오기
-	   if (blogRAGService.knowledgeBase && blogRAGService.knowledgeBase.posts) {
-	    const blogListResponse = BlogListHelper.formatBlogList(
-	     blogRAGService.knowledgeBase.posts
-	    );
-	    
-	    // 직접 응답 표시
-	    await typeMessage(blogListResponse, messageIndex);
-	    isLoading = false;
-	    return; // 일반 LLM 호출을 건너뛰기
-	   }
-	  }
-	
-	  // 키워드 추출
-	  const keywords = await contextDetector.extractSearchKeywords(userMessage);
-	  console.log("Extracted keywords:", keywords);
+		// 블로그 검색 요청이면 RAG 시스템 사용
+		try {
+			console.log("☝️ 블로그 검색 요청 감지!");
+
+			// 블로그 목록 요청인지 확인
+			if (BlogListHelper.isBlogListRequest(userMessage)) {
+				console.log("📝 블로그 목록 요청으로 확인됨");
+
+				// 모든 포스트 가져오기
+				if (blogRAGService.knowledgeBase?.posts) {
+					const blogListResponse = BlogListHelper.formatBlogList(
+						blogRAGService.knowledgeBase.posts,
+					);
+
+					// 직접 응답 표시
+					await typeMessage(blogListResponse, messageIndex);
+					isLoading = false;
+					return; // 일반 LLM 호출을 건너뛰기
+				}
+			}
+
+			// 키워드 추출
+			const keywords = await contextDetector.extractSearchKeywords(userMessage);
+			console.log("Extracted keywords:", keywords);
 
 			// 블로그 포스트 검색
 			const searchQuery = keywords.join(" ");
@@ -362,20 +362,22 @@ async function sendMessage() {
 			console.log("🚀 Astra DB 최적화 모드로 메시지 전송");
 
 			const response = await optimizedChatService.sendMessage({
-			 input_value: contextualMessage,
-			 session_id: sessionId,
-			 conversation_history: recentMessages
+				input_value: contextualMessage,
+				session_id: sessionId,
+				conversation_history: recentMessages,
 			});
 
 			// 모든 응답을 동기 처리로 간주
 			if (response.type === "sync" || response.type === "async") {
-			 // 캐시 히트 또는 즉시 완료
-			 if (response.cacheHit) {
-			  console.log("🎯 Cache hit!");
-			 }
-			 await new Promise((resolve) => setTimeout(resolve, 300));
-			 const parsedResponse = optimizedChatService.parseResponse(response.data);
-			 await typeMessage(parsedResponse, messageIndex);
+				// 캐시 히트 또는 즉시 완료
+				if (response.cacheHit) {
+					console.log("🎯 Cache hit!");
+				}
+				await new Promise((resolve) => setTimeout(resolve, 300));
+				const parsedResponse = optimizedChatService.parseResponse(
+					response.data,
+				);
+				await typeMessage(parsedResponse, messageIndex);
 			}
 			/* 비동기 처리 비활성화
 			else if (response.type === "async") {
@@ -462,23 +464,23 @@ async function sendMessage() {
 			await typeMessage(botResponse, messageIndex);
 		}
 	} catch (error) {
-	 console.error("Error calling chat API:", error);
-	 console.error("Error details:", {
-	  message: error.message,
-	  name: error.name,
-	  response: error.response,
-	  status: error.status
-	 });
-	
-	 let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
-	 
-	 if (error.name === "AbortError") {
-	  errorMessage = "응답 시간이 초과되었습니다. 더 간단한 질문을 해주세요.";
-	 }
-	 messages[messageIndex] = {
-	  role: "assistant",
-	  content: errorMessage,
-	  isTyping: false
+		console.error("Error calling chat API:", error);
+		console.error("Error details:", {
+			message: error.message,
+			name: error.name,
+			response: error.response,
+			status: error.status,
+		});
+
+		let errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다.";
+
+		if (error.name === "AbortError") {
+			errorMessage = "응답 시간이 초과되었습니다. 더 간단한 질문을 해주세요.";
+		}
+		messages[messageIndex] = {
+			role: "assistant",
+			content: errorMessage,
+			isTyping: false,
 		};
 		messages = [...messages];
 	} finally {
