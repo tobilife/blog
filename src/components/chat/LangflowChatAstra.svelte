@@ -285,8 +285,8 @@ async function sendMessage() {
 	 "- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
 	 "- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
 	 "- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프 블로그를 돕는 AI 챗봇입니다\n" +
-	 "- 블로그 URL: https://tobilife.netlify.app\n";
-	
+	 "- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
+	 "- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
 	// 나머지 코드는 그대로...
 
 	// RAG 시스템 - 우선순위에 따른 처리
