@@ -279,14 +279,15 @@ async function sendMessage() {
 	let contextualMessage = userMessage;
 	let searchResults = [];
 	let isAboutBlog = false;
-	
+
 	// 모든 메시지에 기본 지침 추가
-	const baseInstructions = "\n\n[중요 지침]\n" +
-	 "- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
-	 "- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
-	 "- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프 블로그를 돕는 AI 챗봇입니다\n" +
-	 "- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
-	 "- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
+	const baseInstructions =
+		"\n\n[중요 지침]\n" +
+		"- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
+		"- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
+		"- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇입니다.\n" +
+		"- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
+		"- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
 	// 나머지 코드는 그대로...
 
 	// RAG 시스템 - 우선순위에 따른 처리
@@ -337,22 +338,22 @@ async function sendMessage() {
 
 				// LLM 프롬프트에 블로그 컨텍스트 추가
 				contextualMessage = blogRAGService.buildContextualPrompt(
-				 userMessage,
-				 searchResults,
+					userMessage,
+					searchResults,
 				);
 				isAboutBlog = true;
-				} else {
+			} else {
 				// 블로그 검색 결과가 없어도 기본 지침 추가
 				contextualMessage = userMessage + baseInstructions;
-				}
+			}
 		} catch (error) {
-		 console.error("Blog search error:", error);
-		 contextualMessage = userMessage + baseInstructions;
+			console.error("Blog search error:", error);
+			contextualMessage = userMessage + baseInstructions;
 		}
-		} else {
+	} else {
 		// 블로그 검색이 아닌 경우에도 기본 지침 추가
 		contextualMessage = userMessage + baseInstructions;
-		}
+	}
 
 	isLoading = true;
 
@@ -391,16 +392,16 @@ async function sendMessage() {
 				}
 				await new Promise((resolve) => setTimeout(resolve, 300));
 				const parsedResponse = optimizedChatService.parseResponse(
-				 response.data,
+					response.data,
 				);
-				
+
 				// 블로그 참조 링크 추가
 				let finalResponse = parsedResponse;
 				if (isAboutBlog && searchResults.length > 0) {
-				 const references = blogRAGService.formatReferences(searchResults);
-				 finalResponse += references;
+					const references = blogRAGService.formatReferences(searchResults);
+					finalResponse += references;
 				}
-				
+
 				await typeMessage(finalResponse, messageIndex);
 			}
 			/* 비동기 처리 비활성화
