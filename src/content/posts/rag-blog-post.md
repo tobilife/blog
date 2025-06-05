@@ -1,25 +1,32 @@
 ---
 title: 30분 만에 만드는 우리 회사 전용 AI 검색 시스템 - 무료로 구축하는 RAG 지식베이스
 published: 2025-04-13
-description: 'Ollama와 오픈소스 도구를 활용해 완전 무료로 사내 문서 검색 AI 시스템을 구축하는 초보자 가이드'
-image: ''
-tags: [RAG, LangChain, Ollama, ChromaDB, Python, AI, 지식베이스]
-category: 'AI'
+description: Ollama와 오픈소스 도구를 활용해 완전 무료로 사내 문서 검색 AI 시스템을 구축하는 초보자 가이드
+category: AI
+tags:
+  - RAG
+  - LangChain
+  - Ollama
+  - ChromaDB
+  - Python
+  - AI
+  - 지식베이스
+image: /images/uploads/img.png
 draft: false
 ---
-
 ## 🎯 이 글을 읽으면 무엇을 얻을 수 있나요?
 
 여러분의 회사에는 수많은 문서들이 있죠? 매뉴얼, 보고서, 회의록, 규정집...<br>필요한 정보를 찾으려면 일일이 문서를 열어봐야 합니다. 
 
 **이제 ChatGPT처럼 질문하면 AI가 회사 문서에서 답을 찾아주는 시스템을 만들어보세요!**
 
-:::tip[이런 분들께 추천합니다]
-- 사내 문서가 많아 검색이 어려운 분
-- AI 기술을 회사에 도입하고 싶은 분
-- 코딩 경험이 거의 없는 초보자
-- 무료로 AI 시스템을 구축하고 싶은 분
-:::
+:::tip\[이런 분들께 추천합니다]
+
+* 사내 문서가 많아 검색이 어려운 분
+* AI 기술을 회사에 도입하고 싶은 분
+* 코딩 경험이 거의 없는 초보자
+* 무료로 AI 시스템을 구축하고 싶은 분
+  :::
 
 ## 📚 RAG가 뭐예요? (5분이면 이해 가능!)
 
@@ -33,59 +40,69 @@ RAG(Retrieval-Augmented Generation)를 쉽게 설명하면
 
 ### 일반 검색 vs RAG 시스템
 
-| 구분 | 일반 키워드 검색 | RAG 시스템 |
-|------|-----------------|------------|
-| 질문 방식 | "연차 규정" | "신입사원은 연차를 언제부터 쓸 수 있나요?" |
-| 결과 | 문서 목록 제공 | 직접적인 답변 + 출처 |
-| 장점 | 단순하고 빠름 | 자연스러운 대화, 정확한 답변 |
+| 구분    | 일반 키워드 검색 | RAG 시스템                   |
+| ----- | --------- | ------------------------- |
+| 질문 방식 | "연차 규정"   | "신입사원은 연차를 언제부터 쓸 수 있나요?" |
+| 결과    | 문서 목록 제공  | 직접적인 답변 + 출처              |
+| 장점    | 단순하고 빠름   | 자연스러운 대화, 정확한 답변          |
 
 ## 🛠️ 필요한 도구들 (모두 무료!)
 
 우리가 사용할 도구들을 소개합니다:
 
 ### 1. **Ollama** - 무료 AI 모델 실행기
-- ChatGPT 같은 AI 모델을 내 컴퓨터에서 실행
-- 완전 무료, 인터넷 연결 불필요
+
+* ChatGPT 같은 AI 모델을 내 컴퓨터에서 실행
+* 완전 무료, 인터넷 연결 불필요
 
 ### 2. **LangChain** - AI 앱 개발 도구
-- AI와 문서를 연결해주는 다리 역할
-- Python 라이브러리
+
+* AI와 문서를 연결해주는 다리 역할
+* Python 라이브러리
 
 ### 3. **ChromaDB** - 문서 저장소
-- 문서를 AI가 이해할 수 있는 형태로 저장
-- 빠른 검색 지원
+
+* 문서를 AI가 이해할 수 있는 형태로 저장
+* 빠른 검색 지원
 
 ### 4. **Streamlit** - 웹 인터페이스
-- 코딩 없이 웹 UI 제작
-- 실시간 미리보기
+
+* 코딩 없이 웹 UI 제작
+* 실시간 미리보기
 
 ## 🚀 Step 1: 개발 환경 설정하기
 
 ### Windows 환경
 
-:::note[Windows 사용자 주의사항]
+:::note\[Windows 사용자 주의사항]
 Windows에서는 PowerShell을 관리자 권한으로 실행해주세요.
 :::
 
 #### 1-1. Python 설치
+
 1. [Python 공식 사이트](https://www.python.org/downloads/)에서 Python 3.9 이상 다운로드
 2. 설치 시 **"Add Python to PATH"** 체크 필수!
 3. 설치 확인:
+
 ```powershell
 python --version
 ```
 
 #### 1-2. Ollama 설치
+
 1. [Ollama 다운로드 페이지](https://ollama.com/download/windows)에서 설치 파일 다운로드
 2. 설치 후 PowerShell에서 실행:
+
 ```powershell
 ollama run llama2
 ```
+
 첫 실행 시 모델 다운로드(약 4GB)가 진행됩니다.
 
 ### macOS 환경
 
 #### 1-1. Homebrew로 Python 설치
+
 ```bash
 # Homebrew 설치 (이미 있다면 생략)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -95,6 +112,7 @@ brew install python@3.11
 ```
 
 #### 1-2. Ollama 설치
+
 ```bash
 # Ollama 설치
 brew install ollama
@@ -551,6 +569,7 @@ ConnectionError: Failed to connect to Ollama
 ```
 
 **해결방법:**
+
 ```bash
 # Ollama 서비스 재시작
 # Windows
@@ -563,12 +582,14 @@ brew services restart ollama
 ### 문제 2: 메모리 부족
 
 **해결방법:**
-- 더 작은 모델 사용: `ollama pull tinyllama`
-- 청크 크기 줄이기: `chunk_size=500`
+
+* 더 작은 모델 사용: `ollama pull tinyllama`
+* 청크 크기 줄이기: `chunk_size=500`
 
 ### 문제 3: 한글 깨짐
 
 **해결방법:**
+
 ```python
 # TextLoader에 인코딩 명시
 loader = TextLoader(file_path, encoding='utf-8-sig')
@@ -578,12 +599,12 @@ loader = TextLoader(file_path, encoding='utf-8-sig')
 
 ### 1. 모델 선택 가이드
 
-| 모델 | 크기 | 성능 | 한국어 | 추천 상황 |
-|------|------|------|--------|----------|
-| llama2:7b | 4GB | 좋음 | 보통 | 일반적인 사용 |
-| mistral:7b | 4GB | 매우 좋음 | 보통 | 영문 문서 위주 |
-| gemma:2b | 1.5GB | 보통 | 약함 | 저사양 PC |
-| qwen:7b | 4GB | 좋음 | 우수 | 한국어 문서 위주 |
+| 모델         | 크기    | 성능    | 한국어 | 추천 상황     |
+| ---------- | ----- | ----- | --- | --------- |
+| llama2:7b  | 4GB   | 좋음    | 보통  | 일반적인 사용   |
+| mistral:7b | 4GB   | 매우 좋음 | 보통  | 영문 문서 위주  |
+| gemma:2b   | 1.5GB | 보통    | 약함  | 저사양 PC    |
+| qwen:7b    | 4GB   | 좋음    | 우수  | 한국어 문서 위주 |
 
 ### 2. 검색 정확도 향상
 
@@ -600,13 +621,14 @@ retriever = vectorstore.as_retriever(
 
 ### 3. 처리 속도 개선
 
-- 문서 사전 처리: 큰 문서는 미리 분할
-- 캐싱 활용: 자주 묻는 질문 저장
-- 배치 처리: 여러 문서 동시 처리
+* 문서 사전 처리: 큰 문서는 미리 분할
+* 캐싱 활용: 자주 묻는 질문 저장
+* 배치 처리: 여러 문서 동시 처리
 
 ## 🎨 추가 기능 구현 아이디어
 
 ### 1. 다국어 지원
+
 ```python
 # 질문 언어 감지 및 번역
 from langdetect import detect
@@ -616,6 +638,7 @@ if detect(question) != 'ko':
 ```
 
 ### 2. 문서 요약 기능
+
 ```python
 # 업로드한 문서의 요약 생성
 from langchain.chains.summarize import load_summarize_chain
@@ -623,6 +646,7 @@ summary_chain = load_summarize_chain(llm, chain_type="map_reduce")
 ```
 
 ### 3. 질문 추천
+
 ```python
 # 문서 기반 자동 질문 생성
 suggested_questions = [
@@ -636,27 +660,28 @@ suggested_questions = [
 
 ### 시스템 요구사항
 
-| 구성 요소 | 최소 사양 | 권장 사양 |
-|-----------|----------|-----------|
-| CPU | 4코어 | 8코어 이상 |
-| RAM | 8GB | 16GB 이상 |
-| 저장공간 | 10GB | 20GB 이상 |
-| GPU | 불필요 | 선택사항 |
+| 구성 요소 | 최소 사양 | 권장 사양   |
+| ----- | ----- | ------- |
+| CPU   | 4코어   | 8코어 이상  |
+| RAM   | 8GB   | 16GB 이상 |
+| 저장공간  | 10GB  | 20GB 이상 |
+| GPU   | 불필요   | 선택사항    |
 
 ### 처리 속도 비교
 
-| 문서 수 | 인덱싱 시간 | 검색 시간 |
-|---------|------------|-----------|
-| 100개 | 약 5분 | < 2초 |
-| 1,000개 | 약 30분 | < 3초 |
-| 10,000개 | 약 3시간 | < 5초 |
+| 문서 수    | 인덱싱 시간 | 검색 시간 |
+| ------- | ------ | ----- |
+| 100개    | 약 5분   | < 2초  |
+| 1,000개  | 약 30분  | < 3초  |
+| 10,000개 | 약 3시간  | < 5초  |
 
-:::important[핵심 포인트]
-- 완전 무료로 구축 가능
-- 인터넷 연결 없이 작동
-- 회사 데이터가 외부로 유출되지 않음
-- 지속적으로 문서 추가 가능
-:::
+:::important\[핵심 포인트]
+
+* 완전 무료로 구축 가능
+* 인터넷 연결 없이 작동
+* 회사 데이터가 외부로 유출되지 않음
+* 지속적으로 문서 추가 가능
+  :::
 
 ### 다음 확장 단계 추천
 
@@ -666,8 +691,9 @@ suggested_questions = [
 
 ## 📚 참고 자료
 
-- [LangChain 공식 문서](https://python.langchain.com/)
-- [Ollama 모델 목록](https://ollama.com/library)
-- [ChromaDB 가이드](https://docs.trychroma.com/)
-- [Streamlit 튜토리얼](https://docs.streamlit.io/)
----
+* [LangChain 공식 문서](https://python.langchain.com/)
+* [Ollama 모델 목록](https://ollama.com/library)
+* [ChromaDB 가이드](https://docs.trychroma.com/)
+* [Streamlit 튜토리얼](https://docs.streamlit.io/)
+
+- - -
