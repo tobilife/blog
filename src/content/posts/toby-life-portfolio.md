@@ -10,7 +10,7 @@ tags:
   - Java
   - Oracle
   - xPlatform
-image: ""
+image: /images/uploads/tobi-career-mindmap.png
 draft: false
 ---
 ## 📊 🚀 토비라이프의 경력 Overview
@@ -89,7 +89,9 @@ pie title 기술 스택 사용 비율
 **성과**: 안정적인 대외계 인터페이스 운영으로 2012년 운영 최우수상 수상
 :::
 
-:::tip\[계약공통 개발]
+:::tip
+
+\[계약공통 개발]
 **주요 모듈**:
 
 * **고객센터 시스템**: 지점, 창구, 센터 관리 시스템 운영 및 유지보수
@@ -102,7 +104,9 @@ pie title 기술 스택 사용 비율
 **기술**: Java, Oracle, xPlatform, Oz Report
 :::
 
-:::tip\[DBIO 공통모듈]
+:::tip
+
+\[DBIO 공통모듈]
 **개요**: 개발환경 전체 IO관리 (온라인/배치) 모듈 관리 배포
 **기술**: Java, MCC 테이블 설계 운영
 **성과**: 개발 생산성 향상 및 표준화
@@ -118,7 +122,9 @@ pie title 기술 스택 사용 비율
 
 #### 📋 주요 프로젝트
 
-:::important\[제휴 간편설계 시스템]
+:::important
+
+\[제휴 간편설계 시스템]
 **구축 시스템**:
 
 * 이지세이브 간편설계
@@ -129,7 +135,9 @@ pie title 기술 스택 사용 비율
 **기술**: Java, RESTful API, Oracle, Jsp, jquery
 :::
 
-:::important\[장기보험 신상품 개발]
+:::important
+
+\[장기보험 신상품 개발]
 **개발 상품**:
 
 * 주택화재보험
@@ -154,12 +162,16 @@ pie title 기술 스택 사용 비율
 
 #### 📋 주요 프로젝트
 
-:::caution\[자동차보험 리뉴얼]
+:::caution
+
+\[자동차보험 리뉴얼]
 **개요**: 레거시 자동차보험 시스템 전면 리뉴얼\
 **기술**: Java, jsp, jqeury, oracle
 :::
 
-:::caution\[장기보험 고도화]
+:::caution
+
+\[장기보험 고도화]
 **개발 모듈**:
 
 * 가입설계 시스템
@@ -172,7 +184,9 @@ pie title 기술 스택 사용 비율
 **기술**: Java, Spring Boot, EAI
 :::
 
-:::caution\[원데이 자동차보험]
+:::caution
+
+\[원데이 자동차보험]
 **개요**: 단기 자동차보험 신규 서비스\
 **주요 기능**: 가입설계, 취소배서\
 **기술**: Java, jsp, oracle
