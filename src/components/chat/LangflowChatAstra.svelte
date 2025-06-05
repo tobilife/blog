@@ -1,13 +1,13 @@
 <script>
 import { afterUpdate, onMount } from "svelte";
+import FeedbackButtons from "../ui/FeedbackButtons.svelte";
+import FeedbackModal from "../ui/FeedbackModal.svelte";
+import Toast from "../ui/Toast.svelte";
 import { BlogListHelper } from "./BlogListHelper";
 import { BlogRAGService } from "./BlogRAGService";
 import { ContextDetector } from "./ContextDetector";
-import { OptimizedChatService } from "./OptimizedChatService";
 import { FeedbackService } from "./FeedbackService";
-import Toast from "../ui/Toast.svelte";
-import FeedbackModal from "../ui/FeedbackModal.svelte";
-import FeedbackButtons from "../ui/FeedbackButtons.svelte";
+import { OptimizedChatService } from "./OptimizedChatService";
 
 let messages = [];
 let inputMessage = "";
@@ -117,16 +117,16 @@ function renderMarkdown(text) {
 
 				return `
     <div class="code-block-wrapper">
-     <div class="code-block-header">
+      <div class="code-block-header">
       <span class="code-language">${language}</span>
       <button class="copy-button" onclick="copyCode('${codeId}')">
-       <i class="fas fa-copy"></i>
-       <span class="copy-text">복사</span>
+        <i class="fas fa-copy"></i>
+        <span class="copy-text">복사</span>
       </button>
-     </div>
-     <pre><code id="${codeId}" class="language-${language}">${decodedCode}</code></pre>
+      </div>
+      <pre><code id="${codeId}" class="language-${language}">${decodedCode}</code></pre>
     </div>
-   `;
+    `;
 			},
 		);
 
@@ -160,80 +160,80 @@ function copyCode(codeId) {
 				console.error("코드 복사 실패:", err);
 			});
 	}
-	
-	
+} // <-- 여기에 닫는 중괄호 } 가 추가되었습니다.
+
 // 전역 함수로 등록
 if (typeof window !== "undefined") {
- window.copyCode = copyCode;
+	window.copyCode = copyCode;
 }
 
 // 피드백 처리 함수들
 async function handleFeedback(event) {
- const { messageId, value } = event.detail;
- const message = messages.find((m) => m.id === messageId);
- 
- if (!message || !message.cacheKey) {
-  console.warn("No cache key found for message", messageId);
-  return;
- }
+	const { messageId, value } = event.detail;
+	const message = messages.find((m) => m.id === messageId);
 
- // 즉시 UI 업데이트
- messageFeedbacks[messageId] = value;
- messages = [...messages];
+	if (!message || !message.cacheKey) {
+		console.warn("No cache key found for message", messageId);
+		return;
+	}
 
- // 피드백이 있으면 모달 열기
- if (value !== 0) {
-  currentFeedbackMessageId = messageId;
-  showFeedbackModal = true;
- } else {
-  // 피드백 취소
-  const result = await feedbackService.cancelFeedback(message.cacheKey);
-  if (result.success) {
-   showToastMessage("피드백이 취소되었습니다.", "info");
-  }
- }
+	// 즉시 UI 업데이트
+	messageFeedbacks[messageId] = value;
+	messages = [...messages];
+
+	// 피드백이 있으면 모달 열기
+	if (value !== 0) {
+		currentFeedbackMessageId = messageId;
+		showFeedbackModal = true;
+	} else {
+		// 피드백 취소
+		const result = await feedbackService.cancelFeedback(message.cacheKey);
+		if (result.success) {
+			showToastMessage("피드백이 취소되었습니다.", "info");
+		}
+	}
 }
 
 async function handleFeedbackSubmit(event) {
- const { reason, comment } = event.detail;
- const messageId = currentFeedbackMessageId;
- const message = messages.find((m) => m.id === messageId);
- 
- if (!message || !message.cacheKey) {
-  return;
- }
+	const { reason, comment } = event.detail;
+	const messageId = currentFeedbackMessageId;
+	const message = messages.find((m) => m.id === messageId);
 
- const feedback = messageFeedbacks[messageId];
- const fullComment = reason + (comment ? `: ${comment}` : "");
+	if (!message || !message.cacheKey) {
+		return;
+	}
 
- // 서버에 피드백 제출
- const result = await feedbackService.submitFeedback(
-  message.cacheKey,
-  feedback,
-  fullComment
- );
+	const feedback = messageFeedbacks[messageId];
+	const fullComment = reason + (comment ? `: ${comment}` : "");
 
- if (result.success) {
-  showToastMessage("피드백이 제출되었습니다. 감사합니다!", "success");
-  
-  // 품질 점수가 낮아서 삭제된 경우
-  if (result.deleted) {
-   message.deleted = true;
-   message.deletionReason = "품질 점수가 낮아 자동 삭제되었습니다.";
-   messages = [...messages];
-  }
- } else {
-  showToastMessage("피드백 제출에 실패했습니다.", "error");
- }
- 
- showFeedbackModal = false;
- currentFeedbackMessageId = null;
+	// 서버에 피드백 제출
+	const result = await feedbackService.submitFeedback(
+		message.cacheKey,
+		feedback,
+		fullComment,
+	);
+
+	if (result.success) {
+		showToastMessage("피드백이 제출되었습니다. 감사합니다!", "success");
+
+		// 품질 점수가 낮아서 삭제된 경우
+		if (result.deleted) {
+			message.deleted = true;
+			message.deletionReason = "품질 점수가 낮아 자동 삭제되었습니다.";
+			messages = [...messages];
+		}
+	} else {
+		showToastMessage("피드백 제출에 실패했습니다.", "error");
+	}
+
+	showFeedbackModal = false;
+	currentFeedbackMessageId = null;
 }
 
 function showToastMessage(message, type = "success") {
- toastMessage = message;
- toastType = type;
- showToast = true;
+	toastMessage = message;
+	toastType = type;
+	showToast = true;
 }
 
 // 타이핑 효과 함수
@@ -265,10 +265,10 @@ async function typeMessage(text, messageIndex) {
 
 // Astra DB 최적화 토글 (항상 활성화)
 // function toggleAstraOptimization() {
-// 	useAstraOptimization = !useAstraOptimization;
-// 	console.log(
-// 		`🚀 Astra DB 최적화: ${useAstraOptimization ? "활성화" : "비활성화"}`,
-// 	);
+//  useAstraOptimization = !useAstraOptimization;
+//  console.log(
+//    `🚀 Astra DB 최적화: ${useAstraOptimization ? "활성화" : "비활성화"}`,
+//  );
 // }
 
 // 비동기 작업 폴링
@@ -349,24 +349,27 @@ async function sendMessage() {
 
 	// 사용자 메시지 추가 (ID 포함)
 	const userMessageId = `msg_${Date.now()}_user`;
-	messages = [...messages, { 
-	 id: userMessageId,
-	 role: "user", 
-	 content: userMessage 
-	}];
-	
+	messages = [
+		...messages,
+		{
+			id: userMessageId,
+			role: "user",
+			content: userMessage,
+		},
+	];
+
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
 	const messageIndex = messages.length;
 	const assistantMessageId = `msg_${Date.now()}_assistant`;
 	messages = [
-	 ...messages,
-	 { 
-	  id: assistantMessageId,
-	  role: "assistant", 
-	  content: "", 
-	  isTyping: true, 
-	  isSearching: false 
-	 },
+		...messages,
+		{
+			id: assistantMessageId,
+			role: "assistant",
+			content: "",
+			isTyping: true,
+			isSearching: false,
+		},
 	];
 
 	// 블로그 컨텍스트 감지 및 RAG 검색
@@ -476,6 +479,7 @@ async function sendMessage() {
 				input_value: contextualMessage,
 				session_id: sessionId,
 				conversation_history: recentMessages,
+				tweaks: {},
 			});
 
 			// 모든 응답을 동기 처리로 간주
@@ -496,37 +500,37 @@ async function sendMessage() {
 					finalResponse += references;
 				}
 
-    // cacheKey 저장 (피드백을 위해)
-    if (response.data?.cacheKey) {
-     messages[messageIndex] = {
-      ...messages[messageIndex],
-      cacheKey: response.data.cacheKey
-     };
-     messages = [...messages];
-    }
+				// cacheKey 저장 (피드백을 위해)
+				if (response.data?.cacheKey) {
+					messages[messageIndex] = {
+						...messages[messageIndex],
+						cacheKey: response.data.cacheKey,
+					};
+					messages = [...messages];
+				}
 
-    await typeMessage(finalResponse, messageIndex);
-   }
-			/* 비동기 처리 비활성화
-			else if (response.type === "async") {
-			 // 비동기 처리 시작
-			 activeTaskId = response.taskId;
-			 console.log(`📋 비동기 작업 시작: ${activeTaskId}`);
-			 
-			 // 비동기 상태 표시
-			 messages[messageIndex] = {
-			  ...messages[messageIndex],
-			  isAsync: true,
-			  taskStatus: 'pending',
-			  progress: 0,
-			  isTyping: false
-			 };
-			 messages = [...messages];
-			 
-			 // 폴링 시작
-			 pollTaskStatus(activeTaskId, messageIndex);
+				await typeMessage(finalResponse, messageIndex);
 			}
-			*/
+			/* 비동기 처리 비활성화
+        else if (response.type === "async") {
+          // 비동기 처리 시작
+          activeTaskId = response.taskId;
+          console.log(`📋 비동기 작업 시작: ${activeTaskId}`);
+          
+          // 비동기 상태 표시
+          messages[messageIndex] = {
+            ...messages[messageIndex],
+            isAsync: true,
+            taskStatus: 'pending',
+            progress: 0,
+            isTyping: false
+          };
+          messages = [...messages];
+          
+          // 폴링 시작
+          pollTaskStatus(activeTaskId, messageIndex);
+        }
+        */
 		} else {
 			// 기존 방식으로 처리
 			console.log("📡 일반 모드로 메시지 전송");
@@ -624,15 +628,15 @@ function handleKeyPress(event) {
 }
 
 onMount(async () => {
- // Astra DB 최적화 서비스 초기화
- optimizedChatService = new OptimizedChatService();
+	// Astra DB 최적화 서비스 초기화
+	optimizedChatService = new OptimizedChatService();
 
- // 피드백 서비스 초기화
- feedbackService = new FeedbackService();
+	// 피드백 서비스 초기화
+	feedbackService = new FeedbackService();
 
- // 블로그 RAG 서비스 초기화
- contextDetector = new ContextDetector();
- blogRAGService = new BlogRAGService();
+	// 블로그 RAG 서비스 초기화
+	contextDetector = new ContextDetector();
+	blogRAGService = new BlogRAGService();
 
 	// 비동기로 초기화 (블로킹하지 않음)
 	Promise.all([contextDetector.initialize(), blogRAGService.initialize()])
@@ -1421,7 +1425,7 @@ onMount(async () => {
       transform: translateY(0);
     }
   }
-  }
+  
   
   /* 삭제 알림 스타일 */
   .deletion-notice {
