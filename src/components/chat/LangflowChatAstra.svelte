@@ -279,6 +279,15 @@ async function sendMessage() {
 	let contextualMessage = userMessage;
 	let searchResults = [];
 	let isAboutBlog = false;
+	
+	// 모든 메시지에 기본 지침 추가
+	const baseInstructions = "\n\n[중요 지침]\n" +
+	 "- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
+	 "- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
+	 "- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프 블로그를 돕는 AI 챗봇입니다\n" +
+	 "- 블로그 URL: https://tobilife.netlify.app\n";
+	
+	// 나머지 코드는 그대로...
 
 	// RAG 시스템 - 우선순위에 따른 처리
 	// 우선순위 1: "블로그" + "검색" 패턴
@@ -328,15 +337,22 @@ async function sendMessage() {
 
 				// LLM 프롬프트에 블로그 컨텍스트 추가
 				contextualMessage = blogRAGService.buildContextualPrompt(
-					userMessage,
-					searchResults,
+				 userMessage,
+				 searchResults,
 				);
 				isAboutBlog = true;
-			}
+				} else {
+				// 블로그 검색 결과가 없어도 기본 지침 추가
+				contextualMessage = userMessage + baseInstructions;
+				}
 		} catch (error) {
-			console.error("Blog search error:", error);
+		 console.error("Blog search error:", error);
+		 contextualMessage = userMessage + baseInstructions;
 		}
-	}
+		} else {
+		// 블로그 검색이 아닌 경우에도 기본 지침 추가
+		contextualMessage = userMessage + baseInstructions;
+		}
 
 	isLoading = true;
 
