@@ -205,7 +205,9 @@ export class BlogRAGService {
 		let references = "\n\n📚 참조한 포스트:\n";
 
 		searchResults.forEach((result) => {
-			const postUrl = `/posts/${result.post.path.replace(".md", "")}`;
+			// .md 확장자를 제거하고 마지막에 슬래시 추가
+			const slug = result.post.path.replace(".md", "");
+			const postUrl = `/posts/${slug}/`;
 			references += `- [${result.post.title}](${postUrl})\n`;
 		});
 
