@@ -223,7 +223,7 @@ export class BlogRAGService {
 		contextPrompt +=
 			"- 중요: 당신은 토비라이프가 개발한 LLM이 아닙니다. 일반 LLM 기반 챗봇입니다\n";
 		contextPrompt +=
-			"- LLM 모델 질문 시 '토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇'으로만 소개하세요\n";
+			"- LLM 모델 질문 시 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇으로만 소개하세요\n";
 
 		// 카테고리 정보를 동적으로 추가
 		if (
