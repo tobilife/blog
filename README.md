@@ -1,17 +1,3 @@
-# 추가기능 적용
-✅ AI 채팅봇 추가 (Langflow + GroqCloud 기반 채팅 어시스턴트)
- - 응답 메세지 커스터마이징 (사용자)
-✅ 댓글기능 추가
-
-```
-/src/components/chat/
-  └── LangflowChatSimple.svelte (최종버전)
-/netlify/functions/
-  └── langflow-proxy.js (API 프록시)
-```
-
----
-
 # Fuwari
 
 A static blog template built with [Astro](https://astro.build).
@@ -35,7 +21,7 @@ A static blog template built with [Astro](https://astro.build).
 - [x] Light / dark mode
 - [x] Customizable theme colors & banner
 - [x] Responsive design
-- [ ] Comments -> 개인적으로 Giscus을 이용하여 적용했습니다.
+- [ ] Comments
 - [x] Search
 - [x] TOC
 
