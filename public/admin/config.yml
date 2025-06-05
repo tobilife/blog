@@ -22,6 +22,27 @@ collections:
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # 파일명 형식
     fields: # 필드 정의
       - {label: "제목", name: "title", widget: "string", required: true}
+      - {
+          label: "URL Slug (선택사항)", 
+          name: "slug", 
+          widget: "string", 
+          required: false,
+          hint: "URL에 사용될 영문 주소 예: 'sim-studio-guide' (비워두면 제목으로 자동 생성)",
+          pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*
+      - {label: "설명", name: "description", widget: "text", required: false}
+      - {
+          label: "카테고리",
+          name: "category",
+          widget: "string",
+          required: false,
+          hint: "자유롭게 카테고리를 입력하세요 (예: 기술, 일상, 리뷰, 튜토리얼, 학습, 취미 등)"
+        }
+      - {label: "태그", name: "tags", widget: "list", default: [], required: false, hint: "엔터를 눌러 태그를 추가하세요"}
+      - {label: "대표 이미지", name: "image", widget: "image", required: false, hint: "포스트의 대표 이미지를 선택하세요"}
+      - {label: "임시 저장", name: "draft", widget: "boolean", default: false, hint: "체크하면 사이트에 표시되지 않습니다"}
+      - {label: "본문", name: "body", widget: "markdown"}
+, "영문 소문자, 숫자, 하이픈(-)만 사용 가능"]
+        }
       - {label: "발행일", name: "published", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, required: true}
       - {label: "설명", name: "description", widget: "text", required: false}
       - {
