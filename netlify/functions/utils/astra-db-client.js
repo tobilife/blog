@@ -57,38 +57,6 @@ class AstraDBClient {
     }
   }
 
-  // CQL 실행 메서드
-  async execute(query, params = [], options = {}) {
-    const url = `${this.baseUrl}/api/rest/v2/cql`;
-    
-    try {
-      const body = {
-        query,
-        params,
-        options: {
-          keyspace: this.keyspace,
-          ...options
-        }
-      };
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(body)
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Astra DB CQL 오류: ${response.status} - ${error}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Astra DB CQL 실행 실패:', error);
-      throw error;
-    }
-  }
-
   // chat_cache 테이블 조회
   async getCacheEntry(question) {
     // cache_key를 생성 (질문을 정규화하여 키로 사용)
@@ -132,7 +100,15 @@ class AstraDBClient {
       complexity: String(context.complexity || 0), // TEXT 타입이므로 문자열로 변환
       has_search: context.hasSearchResults || false,
       popularity: 1,
-      response_time: context.responseTime || 0
+      response_time: context.responseTime || 0,
+      // 품질 관련 필드 추가
+      quality_score: context.qualityScore || 50,
+      confidence_level: context.confidence || 'low',
+      quality_details: JSON.stringify(context.qualityDetails || {}),
+      user_feedback: 0,
+      feedback_count: 0,
+      last_validated: new Date().toISOString(),
+      version: 1
     };
 
     // Primary key를 URL에 포함

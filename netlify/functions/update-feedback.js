@@ -1,4 +1,4 @@
-const { getAstraClient } = require("./utils/astra-db-client.js");
+const AstraDBClient = require("./utils/astra-db-client.js");
 
 exports.handler = async (event, context) => {
 	// CORS 헤더
@@ -35,20 +35,29 @@ exports.handler = async (event, context) => {
 		}
 
 		// Astra DB 클라이언트 초기화
-		const astraClient = await getAstraClient();
+		const astraClient = new AstraDBClient();
 
-		// 현재 캐시 항목 조회
-		const selectQuery = `
-			SELECT user_feedback, feedback_count, quality_score, quality_details
-			FROM chat_cache
-			WHERE cache_key = ?
-		`;
-
-		const { data: rows } = await astraClient.execute(selectQuery, [cacheKey], {
-			prepare: true,
-		});
-
-		if (!rows || rows.length === 0) {
+		// 현재 캐시 항목 조회 - cacheKey를 직접 사용
+		const path = `/chat_cache/${encodeURIComponent(cacheKey)}`;
+		let currentEntry = null;
+		
+		try {
+			const result = await astraClient.request('GET', path);
+			if (result && result.data && result.data.length > 0) {
+				currentEntry = result.data[0];
+			}
+		} catch (error) {
+			if (error.message.includes('404')) {
+				return {
+					statusCode: 404,
+					headers,
+					body: JSON.stringify({ error: "Cache entry not found" }),
+				};
+			}
+			throw error;
+		}
+		
+		if (!currentEntry) {
 			return {
 				statusCode: 404,
 				headers,
@@ -56,7 +65,6 @@ exports.handler = async (event, context) => {
 			};
 		}
 
-		const currentEntry = rows[0];
 		let userFeedback = currentEntry.user_feedback || 0;
 		let feedbackCount = currentEntry.feedback_count || 0;
 
@@ -79,36 +87,10 @@ exports.handler = async (event, context) => {
 			lastFeedbackAt: timestamp,
 		});
 
-		// Astra DB 업데이트
-		const updateQuery = `
-			UPDATE chat_cache
-			SET user_feedback = ?,
-				feedback_count = ?,
-				quality_score = ?,
-				confidence_level = ?,
-				quality_details = ?,
-				last_validated = toTimestamp(now())
-			WHERE cache_key = ?
-		`;
-
-		await astraClient.execute(
-			updateQuery,
-			[
-				userFeedback,
-				feedbackCount,
-				qualityScore,
-				confidenceLevel,
-				qualityDetails,
-				cacheKey,
-			],
-			{ prepare: true },
-		);
-
 		// 낮은 품질 점수 처리 (자동 삭제)
 		if (qualityScore < 30 && feedbackCount >= 5) {
 			// 품질이 매우 낮은 경우 캐시에서 삭제
-			const deleteQuery = `DELETE FROM chat_cache WHERE cache_key = ?`;
-			await astraClient.execute(deleteQuery, [cacheKey], { prepare: true });
+			await astraClient.request('DELETE', path);
 
 			return {
 				statusCode: 200,
@@ -122,6 +104,22 @@ exports.handler = async (event, context) => {
 				}),
 			};
 		}
+
+		// 기존 엔트리 업데이트 (PUT 요청으로 전체 데이터 전송)
+		const updatedEntry = {
+			...currentEntry,
+			user_feedback: userFeedback,
+			feedback_count: feedbackCount,
+			quality_score: qualityScore,
+			confidence_level: confidenceLevel,
+			quality_details: qualityDetails,
+			last_validated: new Date().toISOString()
+		};
+
+		// cache_key는 URL에 포함되므로 데이터에서 제거
+		delete updatedEntry.cache_key;
+
+		await astraClient.request('PUT', path, updatedEntry);
 
 		return {
 			statusCode: 200,
