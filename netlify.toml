@@ -16,10 +16,6 @@
   path = "/api/chat"
   function = "langflow-proxy-edge"
 
-[[edge_functions]]
-  path = "/api/test"
-  function = "test-edge"
-
 [[headers]]
   for = "/*"
   [headers.values]
