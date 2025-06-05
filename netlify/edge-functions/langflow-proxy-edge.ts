@@ -137,7 +137,15 @@ class AstraDBCache {
       complexity: String(context.complexity || 0),
       has_search: context.hasSearchResults || false,
       popularity: 1,
-      response_time: context.responseTime || 0
+      response_time: context.responseTime || 0,
+      // 품질 관련 필드 추가
+      quality_score: context.qualityScore || 0,
+      confidence_level: context.confidence || 'low',
+      quality_details: JSON.stringify(context.qualityDetails || {}),
+      user_feedback: 0,
+      feedback_count: 0,
+      last_validated: new Date().toISOString(),
+      version: 1
     };
 
     const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/chat_cache/${encodeURIComponent(cacheKey)}`;
@@ -561,7 +569,8 @@ export default async (request: Request, context: Context) => {
             hasSearchResults: requestBody.hasSearchResults,
             responseTime: Date.now() - startTime,
             qualityScore: evaluation.totalScore,
-            confidence: evaluation.confidence
+            confidence: evaluation.confidence,
+            qualityDetails: evaluation.scores  // 품질 평가 세부 점수 추가
           });
           console.log('Response cached with quality score:', evaluation.totalScore);
         } else {
