@@ -10,7 +10,7 @@ tags:
   - Java
   - Oracle
   - xPlatform
-image: ""
+image: /images/uploads/tobi-career-mindmap.png
 draft: false
 ---
 ## 📊 🚀 토비라이프의 경력 Overview
