@@ -231,9 +231,46 @@ async function handleFeedbackSubmit(event) {
 }
 
 function showToastMessage(message, type = "success") {
-	toastMessage = message;
-	toastType = type;
-	showToast = true;
+ toastMessage = message;
+ toastType = type;
+ showToast = true;
+}
+
+// 기본 지침 생성 함수
+function generateBaseInstructions() {
+ let instructions =
+  "\n\n[중요 지침]\n" +
+  "- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
+  "- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
+  "- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇입니다\n" +
+  "- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
+  "- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
+
+ // BlogRAGService가 초기화되고 데이터가 있으면 동적으로 게시물 목록 추가
+ if (blogRAGService?.knowledgeBase?.posts && blogRAGService.knowledgeBase.posts.length > 0) {
+  instructions += "- 블로그의 실제 게시물:\n";
+  
+  // 최신순으로 정렬
+  const sortedPosts = [...blogRAGService.knowledgeBase.posts].sort(
+   (a, b) => new Date(b.published) - new Date(a.published)
+  );
+  
+  for (const [index, post] of sortedPosts.entries()) {
+   const date = new Date(post.published).toLocaleDateString('ko-KR');
+   instructions += `  ${index + 1}. '${post.title}' (${date}, ${post.category} 카테고리)\n`;
+  }
+  
+  instructions += "- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
+ } else {
+  // 기본 게시물 정보 (폴백)
+  instructions += "- 블로그의 실제 게시물:\n" +
+   "  1. 'Sim Studio: 코딩 없이 만드는 AI 에이전트 워크플로우' (2025-05-27, AI 카테고리)\n" +
+   "  2. '30분 만에 만드는 우리 회사 전용 AI 검색 시스템 - 무료로 구축하는 RAG 지식베이스' (2025-04-13, AI 카테고리)\n" +
+   "  3. 'Git/GitHub 명령어 가이드' (2024-02-18, Git&GitHub 카테고리)\n" +
+   "- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
+ }
+ 
+ return instructions;
 }
 
 // 타이핑 효과 함수
@@ -339,23 +376,22 @@ async function pollTaskStatus(taskId, messageIndex) {
 	}
 
 	isPolling = false;
-}
-
-async function sendMessage() {
+	}
+	
+	async function sendMessage() {
 	if (!inputMessage.trim() || isLoading) return;
-
+	
 	const userMessage = inputMessage;
 	inputMessage = "";
-
+	
 	// 사용자 메시지 추가 (ID 포함)
 	const userMessageId = `msg_${Date.now()}_user`;
 	messages = [
-		...messages,
-		{
-			id: userMessageId,
-			role: "user",
-			content: userMessage,
-		},
+	 ...messages,
+	 {
+	  id: userMessageId,
+	  role: "user",
+	  content: userMessage,
 	];
 
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
@@ -377,15 +413,8 @@ async function sendMessage() {
 	let searchResults = [];
 	let isAboutBlog = false;
 
-	// 모든 메시지에 기본 지침 추가
-	const baseInstructions =
-		"\n\n[중요 지침]\n" +
-		"- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
-		"- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
-		"- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇입니다\n" +
-		"- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
-		"- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
-	// 나머지 코드는 그대로...
+	// 모든 메시지에 기본 지침 추가 (동적으로 생성)
+	const baseInstructions = generateBaseInstructions();
 
 	// RAG 시스템 - 우선순위에 따른 처리
 	// 우선순위 1: "블로그" + "검색" 패턴
