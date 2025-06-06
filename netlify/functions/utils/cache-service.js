@@ -93,7 +93,27 @@ class CacheService {
       return null;
     }
   }
-}
+  
+  // API 사용량 조회
+  async getApiUsage(dateKey) {
+    try {
+      return await this.client.getApiUsage(dateKey);
+    } catch (error) {
+      console.error('API 사용량 조회 실패:', error);
+      return null;
+    }
+  }
+  
+  // API 사용량 증가
+  async incrementApiUsage(dateKey, apiType) {
+    try {
+      return await this.client.incrementApiUsage(dateKey, apiType);
+    } catch (error) {
+      console.error('API 사용량 증가 실패:', error);
+      return false;
+    }
+  }
+  }
 
 // 싱글톤 인스턴스
 let cacheInstance;

@@ -201,7 +201,66 @@ class AstraDBClient {
     
     return await this.updateTask(taskId, updates);
   }
-}
+  
+  // API 사용량 조회
+  async getApiUsage(dateKey) {
+    const path = `/api_usage_stats/${encodeURIComponent(dateKey)}`;
+    
+    try {
+      const result = await this.request('GET', path);
+      
+      if (result && result.data && result.data.length > 0) {
+        return result.data[0];
+      }
+    } catch (error) {
+      // 404는 정상적인 경우 (오늘 처음 사용)
+      if (error.message.includes('404')) {
+        return null;
+      }
+      throw error;
+    }
+    
+    return null;
+  }
+  
+  // API 사용량 증가
+  async incrementApiUsage(dateKey, apiType) {
+    const path = `/api_usage_stats/${encodeURIComponent(dateKey)}`;
+    
+    // 기존 데이터 가져오기
+    const existing = await this.getApiUsage(dateKey);
+    
+    let data;
+    if (existing) {
+      // 기존 데이터 업데이트
+      const { date_key, ...existingWithoutPK } = existing;
+      data = {
+        ...existingWithoutPK,
+        updated_at: new Date().toISOString(),
+      };
+      
+      // API 타입별 카운트 증가
+      if (apiType === 'google') {
+        data.google_search_count = (existing.google_search_count || 0) + 1;
+      } else if (apiType === 'brave') {
+        data.brave_search_count = (existing.brave_search_count || 0) + 1;
+      } else if (apiType === 'tavily') {
+        data.tavily_search_count = (existing.tavily_search_count || 0) + 1;
+      }
+    } else {
+      // 새 데이터 생성
+      data = {
+        google_search_count: apiType === 'google' ? 1 : 0,
+        brave_search_count: apiType === 'brave' ? 1 : 0,
+        tavily_search_count: apiType === 'tavily' ? 1 : 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    }
+    
+    return await this.request('PUT', path, data);
+  }
+  }
 
 // CommonJS export
 module.exports = AstraDBClient;

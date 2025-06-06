@@ -392,6 +392,101 @@ async function searchBrave(query, apiKey) {
   }
 }
 
+// Google Custom Search API 호출 함수
+async function searchGoogle(query, apiKey, searchEngineId) {
+ const GOOGLE_API_URL = 'https://www.googleapis.com/customsearch/v1';
+ 
+ // 검색 쿼리 최적화
+ const searchQuery = optimizeSearchQuery(query);
+ 
+ try {
+  const params = new URLSearchParams({
+   key: apiKey,
+   cx: searchEngineId,
+   q: searchQuery,
+   num: 5, // 더 많은 결과 가져오기 (Google은 더 정확하므로)
+   lr: 'lang_ko', // 한국어 결과 우선
+   safe: 'active'
+  });
+  
+  const response = await fetch(`${GOOGLE_API_URL}?${params}`);
+  
+  if (!response.ok) {
+   const errorData = await response.json();
+   console.error('Google Search API error:', response.status, errorData);
+   
+   // 할당량 초과 에러 체크
+   if (response.status === 429 || 
+    (errorData.error && errorData.error.message && errorData.error.message.includes('quota'))) {
+    return { quotaExceeded: true };
+   }
+   return null;
+  }
+  
+  const data = await response.json();
+  
+  // Google 검색 결과를 표준 포맷으로 변환
+  if (data.items && data.items.length > 0) {
+   return data.items.map(item => ({
+    title: item.title.substring(0, 80), // 제목 길이 제한
+    description: (item.snippet || '').substring(0, 150), // 설명 길이 제한
+    url: item.link,
+    score: 1.0, // Google 결과는 최고 점수
+    source: 'Google'
+   }));
+  }
+  
+  return null;
+ } catch (error) {
+  console.error('Google Search error:', error);
+  return null;
+ }
+}
+
+// API 사용량 관리 함수들
+async function getGoogleSearchCount() {
+ const cacheService = getCacheService();
+ if (!cacheService) return { count: 0, canUse: true };
+ 
+ try {
+  // 오늘 날짜 키 생성 (한국 시간 기준)
+  const now = new Date();
+  const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+  const dateKey = `${koreaTime.getUTCFullYear()}-${String(koreaTime.getUTCMonth() + 1).padStart(2, '0')}-${String(koreaTime.getUTCDate()).padStart(2, '0')}`;
+  
+  // Astra DB에서 사용량 조회
+  const usageData = await cacheService.getApiUsage(dateKey);
+  
+  if (!usageData) {
+   // 오늘 처음 사용
+   return { count: 0, canUse: true, dateKey };
+  }
+  
+  const count = usageData.google_search_count || 0;
+  return {
+   count: count,
+   canUse: count < 100, // 일일 무료 할당량
+   dateKey: dateKey
+  };
+ } catch (error) {
+  console.error('Error getting Google search count:', error);
+  // 에러 시에도 서비스는 계속 되도록
+  return { count: 0, canUse: true };
+ }
+}
+
+async function incrementGoogleSearchCount(dateKey) {
+ const cacheService = getCacheService();
+ if (!cacheService) return;
+ 
+ try {
+  await cacheService.incrementApiUsage(dateKey, 'google');
+ } catch (error) {
+  console.error('Error incrementing Google search count:', error);
+  // 카운트 증가 실패해도 서비스는 계속
+ }
+}
+
 // Tavily Search API 호출 함수 (기존 코드 재사용)
 async function searchTavily(query, apiKey) {
   const TAVILY_API_URL = 'https://api.tavily.com/search';
@@ -440,81 +535,120 @@ async function searchTavily(query, apiKey) {
   }
 }
 
-// 두 검색 결과를 병합하는 함수 (기존 코드 재사용)
-function mergeSearchResults(braveResults, tavilyResults) {
-  const allResults = [];
-  const urlSet = new Set();
-  
-  // 결과가 없는 경우 처리
-  if (!braveResults && !tavilyResults) {
-    return null;
-  }
-  
-  // Tavily 결과 먼저 추가 (AI 최적화)
-  if (tavilyResults) {
-    tavilyResults.forEach(result => {
-      const normalizedUrl = result.url.toLowerCase().replace(/\/$/, '');
-      if (!urlSet.has(normalizedUrl)) {
-        urlSet.add(normalizedUrl);
-        allResults.push(result);
-      }
+// 세 검색 결과를 병합하는 함수 (수정됨)
+function mergeSearchResults(googleResults, braveResults, tavilyResults) {
+ const allResults = [];
+ const urlSet = new Set();
+ 
+ // 결과가 없는 경우 처리
+ if (!googleResults && !braveResults && !tavilyResults) {
+  return null;
+ }
+ 
+ // Google 결과 먼저 추가 (가장 정확하므로)
+ if (googleResults && !googleResults.quotaExceeded) {
+  googleResults.forEach(result => {
+   const normalizedUrl = result.url.toLowerCase().replace(/\/$/, '');
+   if (!urlSet.has(normalizedUrl)) {
+    urlSet.add(normalizedUrl);
+    allResults.push(result);
+   }
+  });
+ }
+ 
+ // Tavily 결과 추가 (AI 최적화)
+ if (tavilyResults) {
+  tavilyResults.forEach(result => {
+   const normalizedUrl = result.url.toLowerCase().replace(/\/$/, '');
+   if (!urlSet.has(normalizedUrl)) {
+    urlSet.add(normalizedUrl);
+    allResults.push(result);
+   }
+  });
+ }
+ 
+ // Brave 결과 추가 (중복 제거)
+ if (braveResults) {
+  braveResults.forEach(result => {
+   const normalizedUrl = result.url.toLowerCase().replace(/\/$/, '');
+   if (!urlSet.has(normalizedUrl)) {
+    urlSet.add(normalizedUrl);
+    allResults.push({
+     ...result,
+     score: result.score || 0.8
     });
+   }
+  });
+ }
+ 
+ // 스코어 기반 정렬
+ allResults.sort((a, b) => (b.score || 0) - (a.score || 0));
+ 
+ // 최대 5개 결과 반환 (Google이 있으면 더 많이 가능)
+ return allResults.slice(0, 5);
+ }
+ 
+ // Google 우선 + 선택적 보완 검색 함수
+ async function performEnhancedSearch(query, googleApiKey, googleSearchEngineId, braveApiKey, tavilyApiKey) {
+ console.log('Performing enhanced search for:', query);
+ 
+ // Google 검색 사용량 확인
+ const googleUsage = await getGoogleSearchCount();
+ console.log(`Google search usage: ${googleUsage.count}/100, can use: ${googleUsage.canUse}`);
+ 
+ // 타임아웃 설정
+ const searchWithTimeout = async (searchFn, ...args) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  
+  try {
+   const result = await searchFn(...args);
+   clearTimeout(timeoutId);
+   return result;
+  } catch (error) {
+   clearTimeout(timeoutId);
+   if (error.name === 'AbortError') {
+    console.error(`Search timeout after 2000ms`);
+   }
+   return null;
   }
+ };
+ 
+ let googleResults = null;
+ let braveResults = null;
+ let tavilyResults = null;
+ 
+ // Google 검색 (사용 가능한 경우)
+ if (googleApiKey && googleSearchEngineId && googleUsage.canUse) {
+  googleResults = await searchWithTimeout(searchGoogle, query, googleApiKey, googleSearchEngineId);
   
-  // Brave 결과 추가 (중복 제거)
-  if (braveResults) {
-    braveResults.forEach(result => {
-      const normalizedUrl = result.url.toLowerCase().replace(/\/$/, '');
-      if (!urlSet.has(normalizedUrl)) {
-        urlSet.add(normalizedUrl);
-        allResults.push({
-          ...result,
-          score: 0.8
-        });
-      }
-    });
+  // Google 검색 성공 시 카운트 증가
+  if (googleResults && !googleResults.quotaExceeded && googleResults.length > 0) {
+   await incrementGoogleSearchCount(googleUsage.dateKey);
+   
+   // Google 결과가 충분한 경우 (3개 이상) 다른 API 호출 생략
+   if (googleResults.length >= 3) {
+    console.log('Sufficient Google results, skipping other APIs');
+    return googleResults;
+   }
   }
-  
-  // 스코어 기반 정렬
-  allResults.sort((a, b) => (b.score || 0) - (a.score || 0));
-  
-  // 최대 3개 결과 반환 (토큰 최적화)
-  return allResults.slice(0, 3);
+ }
+ 
+ // Google 결과가 부족하거나 사용 불가시 Brave/Tavily 병렬 호출
+ const [braveRes, tavilyRes] = await Promise.all([
+  braveApiKey ? searchWithTimeout(searchBrave, query, braveApiKey) : Promise.resolve(null),
+  tavilyApiKey ? searchWithTimeout(searchTavily, query, tavilyApiKey) : Promise.resolve(null)
+ ]);
+ 
+ braveResults = braveRes;
+ tavilyResults = tavilyRes;
+ 
+ console.log(`Search results - Google: ${googleResults ? googleResults.length : 0}, Brave: ${braveResults ? braveResults.length : 0}, Tavily: ${tavilyResults ? tavilyResults.length : 0}`);
+ 
+ // 결과 병합
+ return mergeSearchResults(googleResults, braveResults, tavilyResults);
 }
 
-// 병렬로 두 API를 호출하는 함수 (기존 코드 재사용)
-async function performDualSearch(query, braveApiKey, tavilyApiKey) {
-  console.log('Performing dual search for:', query);
-  
-  // 타임아웃 설정 (각 API별 2초로 축소)
-  const searchWithTimeout = async (searchFn, apiKey, timeout = 2000) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    try {
-      const result = await searchFn(query, apiKey);
-      clearTimeout(timeoutId);
-      return result;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        console.error(`Search timeout after ${timeout}ms`);
-      }
-      return null;
-    }
-  };
-  
-  // 병렬 실행
-  const [braveResults, tavilyResults] = await Promise.all([
-    braveApiKey ? searchWithTimeout(searchBrave, braveApiKey) : Promise.resolve(null),
-    tavilyApiKey ? searchWithTimeout(searchTavily, tavilyApiKey) : Promise.resolve(null)
-  ]);
-  
-  console.log(`Search results - Brave: ${braveResults ? braveResults.length : 0}, Tavily: ${tavilyResults ? tavilyResults.length : 0}`);
-  
-  // 결과 병합
-  return mergeSearchResults(braveResults, tavilyResults);
-}
 
 // 검색 결과를 프롬프트에 포함시키는 함수 (기존 코드 재사용)
 function enhancePromptWithSearchResults(originalQuery, searchResults, weatherData, conversationHistory = []) {
@@ -635,9 +769,9 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
       await taskService.failTask(taskId, error);
     }
   }
-}
-
-exports.handler = async function(event, context) {
+  }
+  
+  exports.handler = async function(event, context) {
   console.log('Langflow proxy with Astra DB called');
   const startTime = Date.now();
   
@@ -672,7 +806,8 @@ exports.handler = async function(event, context) {
     const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
     const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
     const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
-    
+    const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
+    const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID;
     
     // Astra DB 환경 변수 자세히 체크
     const astraConfig = {
@@ -689,6 +824,8 @@ exports.handler = async function(event, context) {
       hasBrave: !!BRAVE_API_KEY,
       hasOpenWeather: !!OPENWEATHER_API_KEY,
       hasTavily: !!TAVILY_API_KEY,
+      hasGoogle: !!GOOGLE_API_KEY,
+      hasGoogleEngine: !!GOOGLE_SEARCH_ENGINE_ID,
       astraDB: astraConfig
       });
       if (!API_TOKEN) {
@@ -818,10 +955,10 @@ exports.handler = async function(event, context) {
     const effectiveSearchLimit = hasExplicitSearchRequest ? Math.max(3, complexity.recommendations.searchLimit) : complexity.recommendations.searchLimit;
     
     // 날씨 정보를 이미 가져왔거나, 날씨 질문이 아닌 경우에만 웹 검색
-    if ((BRAVE_API_KEY || TAVILY_API_KEY) && intent.needsSearch && !intent.isWeather && !intent.isDateTime && 
+    if ((GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY) && intent.needsSearch && !intent.isWeather && !intent.isDateTime && 
         (hasExplicitSearchRequest || effectiveSearchLimit > 0)) {
       console.log('Searching web for additional context...');
-      searchResults = await performDualSearch(userQuery, BRAVE_API_KEY, TAVILY_API_KEY);
+      searchResults = await performEnhancedSearch(userQuery, GOOGLE_API_KEY, GOOGLE_SEARCH_ENGINE_ID, BRAVE_API_KEY, TAVILY_API_KEY);
     }
     
     // 프롬프트 향상
