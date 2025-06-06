@@ -446,6 +446,10 @@ export default async (request: Request, context: Context) => {
       try {
         cacheService = new AstraDBCache(ASTRA_DB_REST_URL, ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_KEYSPACE);
         cachedResult = await cacheService.getCacheEntry(userQuery);
+        console.log('Cache lookup result:', {
+         query: userQuery,
+         cachedResult: cachedResult
+        });
         
         if (cachedResult?.hit) {
           console.log('Returning cached response');
@@ -630,6 +634,7 @@ export default async (request: Request, context: Context) => {
           "Content-Type": "application/json",
           "X-Query-Complexity": complexity.level,
           "X-Response-Time": String(Date.now() - startTime),
+          "X-Cache": "MISS"
         },
       }
     );
