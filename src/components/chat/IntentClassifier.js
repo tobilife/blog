@@ -398,10 +398,25 @@ export class IntentClassifier {
 	optimizeSearchQuery(query, classification) {
 		let optimizedQuery = query;
 
-		// 불필요한 조사 제거
-		const particles =
-			/\s*(은|는|이|가|을|를|에|에서|에게|와|과|의|로|으로|도|만|까지|부터|라고|하고)\s*/g;
-		optimizedQuery = optimizedQuery.replace(particles, " ").trim();
+		// 불필요한 조사 제거 - 공백으로 구분된 조사만 제거
+		const particles = [
+		 " 은 ", " 는 ", " 이 ", " 가 ", " 을 ", " 를 ", " 에 ", " 에서 ", " 에게 ",
+		 " 와 ", " 과 ", " 의 ", " 로 ", " 으로 ", " 도 ", " 만 ", " 까지 ", " 부터 ",
+		 " 라고 ", " 하고 ", " 야", " 냐", " 이야", " 이냐", " 니", " 나"
+		];
+		
+		// 공백을 추가하여 조사만 제거
+		optimizedQuery = " " + optimizedQuery + " ";
+		for (const particle of particles) {
+		 optimizedQuery = optimizedQuery.replace(new RegExp(particle, "g"), " ");
+		}
+		
+		// 문자열 끝에 있는 조사 제거
+		const endingParticles = /(은|는|이|가|을|를|에|에서|에게|와|과|의|로|으로|도|만|까지|부터|라고|하고|야|냐|이야|이냐|니|나)$/;
+		optimizedQuery = optimizedQuery.replace(endingParticles, "");
+		
+		// 연속된 공백 제거 및 트림
+		optimizedQuery = optimizedQuery.replace(/\s+/g, " ").trim();
 
 		// 도메인별 키워드 강화
 		if (classification.domains.length > 0) {
