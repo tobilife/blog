@@ -5,11 +5,13 @@ import FeedbackModal from "../ui/FeedbackModal.svelte";
 import Toast from "../ui/Toast.svelte";
 import { BlogListHelper } from "./BlogListHelper";
 import { BlogRAGService } from "./BlogRAGService";
+import { ChainOfThoughtService } from "./ChainOfThoughtService";
 import { ContextDetector } from "./ContextDetector";
 import { FeedbackService } from "./FeedbackService";
 import { IntentClassifier } from "./IntentClassifier";
 import { OptimizedChatService } from "./OptimizedChatService";
 import { buildChatPrompt, buildSearchPrompt } from "./SearchPromptBuilder";
+import { WebSearchService } from "./WebSearchService";
 
 let messages = [];
 let inputMessage = "";
@@ -36,6 +38,7 @@ let blogRAGService = null;
 
 // 의도 분류 시스템
 let intentClassifier = null;
+let chainOfThoughtService = null;
 
 // 피드백 시스템
 let feedbackService = null;
@@ -444,6 +447,65 @@ async function sendMessage() {
 		}
 	}
 
+	// 1.5단계: Chain of Thought 처리 (복잡한 질문인 경우)
+	let cotDecomposition = null;
+	if (chainOfThoughtService && intentClassification?.intent === "search") {
+		cotDecomposition =
+			await chainOfThoughtService.decomposeQuestion(userMessage);
+
+		if (cotDecomposition.needsDecomposition) {
+			console.log("🧠 CoT Decomposition:", cotDecomposition);
+
+			// CoT 처리 중임을 표시
+			messages[messageIndex] = {
+				...messages[messageIndex],
+				isCoT: true,
+				cotProgress: 0,
+				cotSubQuestions: cotDecomposition.subQuestions,
+			};
+			messages = [...messages];
+
+			// 하위 질문들을 순차적으로 처리
+			const subAnswers = [];
+			for (const [index, subQ] of cotDecomposition.subQuestions.entries()) {
+				// 진행 상황 업데이트
+				messages[messageIndex] = {
+					...messages[messageIndex],
+					cotProgress:
+						((index + 1) / cotDecomposition.subQuestions.length) * 100,
+					cotCurrentQuestion: subQ.question,
+				};
+				messages = [...messages];
+
+				// 각 하위 질문에 대해 웹 검색 수행
+				const subAnswer =
+					await chainOfThoughtService.searchForSubQuestion(subQ);
+				subAnswers.push(subAnswer);
+
+				// 약간의 딜레이 추가 (시각적 효과)
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
+
+			// 답변 종합
+			const synthesis = chainOfThoughtService.synthesizeAnswers(
+				cotDecomposition.originalQuery,
+				subAnswers,
+			);
+
+			// 종합된 답변을 컨텍스트에 추가
+			contextualMessage =
+				chainOfThoughtService.formatSynthesizedAnswer(synthesis);
+
+			// CoT 완료 표시
+			messages[messageIndex] = {
+				...messages[messageIndex],
+				isCoT: false,
+				cotComplete: true,
+			};
+			messages = [...messages];
+		}
+	}
+
 	// 2단계: 의도에 따른 처리
 	if (intentClassification?.intent === "blog") {
 		// 블로그 관련 질문 처리
@@ -513,15 +575,48 @@ async function sendMessage() {
 			intentClassification,
 		);
 
-		// 검색 전용 프롬프트 생성
-		contextualMessage = `${buildSearchPrompt(
-			userMessage,
-			intentClassification,
-		)}\n\n[최적화된 검색 쿼리]\n${optimizedQuery}\n\n[원본 질문]\n${userMessage}`;
+		// 웹 검색 실행
+		if (!chainOfThoughtService) {
+			chainOfThoughtService = new ChainOfThoughtService();
+		}
 
-		// 메시지에 검색 지시사항 추가
-		contextualMessage +=
-			"\n\n[중요: 위의 검색 쿼리를 사용하여 웹 검색을 수행하고, 검색 결과를 기반으로 답변해주세요.]";
+		const webSearchService = new WebSearchService();
+		try {
+			const searchResults = await webSearchService.search(optimizedQuery, {
+				maxResults: 5,
+				language: "ko",
+			});
+
+			// 검색 결과를 포함한 프롬프트 생성
+			if (searchResults.length > 0) {
+				contextualMessage = buildSearchPrompt(
+					userMessage,
+					intentClassification,
+				);
+				contextualMessage += "\n\n[검색 결과]\n";
+				contextualMessage += webSearchService.formatResultsAsMarkdown(
+					searchResults,
+					optimizedQuery,
+				);
+				contextualMessage += `\n\n[사용자 질문]\n${userMessage}`;
+				contextualMessage +=
+					"\n\n위의 검색 결과를 참고하여 정확하고 유용한 답변을 제공해주세요.";
+			} else {
+				contextualMessage = buildSearchPrompt(
+					userMessage,
+					intentClassification,
+				);
+				contextualMessage +=
+					"\n\n검색 결과를 찾을 수 없습니다. 일반적인 지식으로 답변하겠습니다.\n\n";
+				contextualMessage += userMessage;
+			}
+		} catch (error) {
+			console.error("웹 검색 오류:", error);
+			contextualMessage = buildSearchPrompt(userMessage, intentClassification);
+			contextualMessage +=
+				"\n\n웹 검색 중 오류가 발생했습니다. 일반적인 지식으로 답변하겠습니다.\n\n";
+			contextualMessage += userMessage;
+		}
 	} else {
 		// 일반 대화 (검색 불필요)
 		contextualMessage = buildChatPrompt(userMessage) + baseInstructions;
@@ -723,6 +818,7 @@ onMount(async () => {
 
 	// 의도 분류 시스템 초기화
 	intentClassifier = new IntentClassifier();
+	chainOfThoughtService = new ChainOfThoughtService();
 
 	// 비동기로 초기화 (블로킹하지 않음)
 	Promise.all([contextDetector.initialize(), blogRAGService.initialize()])
@@ -830,6 +926,27 @@ onMount(async () => {
                 <div class="async-status">
                   <span class="status-icon">⏳</span>
                   <span class="status-text">{taskStatusMessage}</span>
+                </div>
+              </div>
+            {:else if message.isCoT}
+              <!-- Chain of Thought 처리 중 표시 -->
+              <div class="cot-message">
+                <div class="cot-header">
+                  <i class="fas fa-brain"></i> 복잡한 질문을 단계별로 분석하고 있습니다...
+                </div>
+                <div class="cot-questions">
+                  {#each message.cotSubQuestions as subQ, idx}
+                    <div class="cot-question" class:active={message.cotCurrentQuestion === subQ.question}>
+                      <span class="cot-number">{idx + 1}</span>
+                      <span class="cot-text">{subQ.question}</span>
+                      {#if message.cotCurrentQuestion === subQ.question}
+                        <span class="cot-loader"></span>
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: {message.cotProgress}%"></div>
                 </div>
               </div>
             {:else if message.role === 'assistant' && marked && !message.isTyping}
@@ -1237,6 +1354,84 @@ onMount(async () => {
   
   .status-text {
     font-style: italic;
+  }
+  
+  /* Chain of Thought 스타일 */
+  .cot-message {
+    position: relative;
+    padding: 16px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 8px;
+  }
+  
+  .cot-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  .cot-header i {
+    font-size: 20px;
+    color: #667eea;
+    animation: pulse 2s infinite;
+  }
+  
+  .cot-questions {
+    margin-bottom: 16px;
+  }
+  
+  .cot-question {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e1e4e8;
+    transition: all 0.3s ease;
+  }
+  
+  .cot-question.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateX(4px);
+  }
+  
+  .cot-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .cot-question.active .cot-number {
+    background: white;
+    color: #667eea;
+  }
+  
+  .cot-text {
+    flex: 1;
+    font-size: 14px;
+  }
+  
+  .cot-loader {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
   }
   
   /* 마크다운 스타일링 */

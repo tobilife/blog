@@ -43,6 +43,7 @@
     "gray-matter": "^4.0.3",
     "hastscript": "^9.0.1",
     "katex": "^0.16.22",
+    "korean-text-analytics": "^0.0.7",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
     "marked": "^15.0.12",
