@@ -1,53 +1,53 @@
 <script>
-	import { fade, scale } from "svelte/transition";
-	import { createEventDispatcher } from "svelte";
+import { createEventDispatcher } from "svelte";
+import { fade, scale } from "svelte/transition";
 
-	export let visible = false;
-	export let currentFeedback = 0; // 1: 좋아요, -1: 싫어요, 0: 없음
+export let visible = false;
+export let currentFeedback = 0; // 1: 좋아요, -1: 싫어요, 0: 없음
 
-	const dispatch = createEventDispatcher();
+const dispatch = createEventDispatcher();
 
-	let comment = "";
-	let selectedReason = "";
+let comment = "";
+let selectedReason = "";
 
-	// 피드백별 이유 옵션
-	const positiveReasons = [
-		"정확한 답변",
-		"도움이 되었음",
-		"이해하기 쉬움",
-		"빠른 응답",
-		"기타",
-	];
+// 피드백별 이유 옵션
+const positiveReasons = [
+	"정확한 답변",
+	"도움이 되었음",
+	"이해하기 쉬움",
+	"빠른 응답",
+	"기타",
+];
 
-	const negativeReasons = [
-		"부정확한 정보",
-		"이해하기 어려움",
-		"관련없는 답변",
-		"응답이 느림",
-		"기타",
-	];
+const negativeReasons = [
+	"부정확한 정보",
+	"이해하기 어려움",
+	"관련없는 답변",
+	"응답이 느림",
+	"기타",
+];
 
-	$: reasons = currentFeedback > 0 ? positiveReasons : negativeReasons;
+$: reasons = currentFeedback > 0 ? positiveReasons : negativeReasons;
 
-	function handleSubmit() {
-		dispatch("submit", {
-			reason: selectedReason,
-			comment: comment.trim(),
-		});
+function handleSubmit() {
+	dispatch("submit", {
+		reason: selectedReason,
+		comment: comment.trim(),
+	});
+	close();
+}
+
+function close() {
+	visible = false;
+	comment = "";
+	selectedReason = "";
+}
+
+function handleBackdropClick(e) {
+	if (e.target === e.currentTarget) {
 		close();
 	}
-
-	function close() {
-		visible = false;
-		comment = "";
-		selectedReason = "";
-	}
-
-	function handleBackdropClick(e) {
-		if (e.target === e.currentTarget) {
-			close();
-		}
-	}
+}
 </script>
 
 {#if visible}

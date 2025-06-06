@@ -1,23 +1,23 @@
 <script>
-	import { createEventDispatcher } from "svelte";
+import { createEventDispatcher } from "svelte";
 
-	export let messageId;
-	export let currentFeedback = 0; // 1: 좋아요, -1: 싫어요, 0: 없음
-	export let disabled = false;
+export let messageId;
+export let currentFeedback = 0; // 1: 좋아요, -1: 싫어요, 0: 없음
+export let disabled = false;
 
-	const dispatch = createEventDispatcher();
+const dispatch = createEventDispatcher();
 
-	function handleThumbsUp() {
-		if (disabled) return;
-		const newValue = currentFeedback === 1 ? 0 : 1;
-		dispatch("feedback", { messageId, value: newValue });
-	}
+function handleThumbsUp() {
+	if (disabled) return;
+	const newValue = currentFeedback === 1 ? 0 : 1;
+	dispatch("feedback", { messageId, value: newValue });
+}
 
-	function handleThumbsDown() {
-		if (disabled) return;
-		const newValue = currentFeedback === -1 ? 0 : -1;
-		dispatch("feedback", { messageId, value: newValue });
-	}
+function handleThumbsDown() {
+	if (disabled) return;
+	const newValue = currentFeedback === -1 ? 0 : -1;
+	dispatch("feedback", { messageId, value: newValue });
+}
 </script>
 
 <div class="feedback-buttons">
