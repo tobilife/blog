@@ -326,38 +326,49 @@ function enhancePromptWithSearchResults(
   
   let enhancedPrompt = '';
   
+  // 시스템 지침을 가장 먼저 추가
+  enhancedPrompt += `### 중요 시스템 지침 ###\n`;
+  enhancedPrompt += `현재 날짜: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n`;
+  enhancedPrompt += `이것은 ${year}년 ${month}월 ${day}일 기준 최신 정보입니다.\n`;
+  enhancedPrompt += `당신의 기존 지식은 2025년 1월까지의 과거 정보입니다.\n\n`;
+  
   // 대화 맥락이 있는 경우 포함
   if (conversationHistory.length > 0) {
     enhancedPrompt += '이전 대화:\n';
-    // 최근 3개의 대화만 포함
     const recentHistory = conversationHistory.slice(-3);
     recentHistory.forEach((msg: any) => {
       const content = msg.content.length > 100 ? 
         msg.content.substring(0, 100) + '...' : msg.content;
       enhancedPrompt += `${msg.role === 'user' ? 'U' : 'A'}: ${content}\n`;
     });
-    }
-    
-    enhancedPrompt += `현재 사용자 질문: ${originalQuery}\n`;
-    enhancedPrompt += `현재 날짜: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n\n`;
+    enhancedPrompt += '\n';
+  }
   
+  enhancedPrompt += `사용자 질문: ${originalQuery}\n\n`;
 
   if (searchResults && searchResults.length > 0) {
-    enhancedPrompt += `[웹 검색 결과 - ${year}년 ${month}월 ${day}일 기준]\n\n`;
+    enhancedPrompt += `### 최신 웹 검색 결과 (${year}년 ${month}월 ${day}일 검색됨) ###\n\n`;
 
     for (const [index, result] of searchResults.entries()) {
-      enhancedPrompt += `[${index + 1}] ${result.title}\n`;
-      const shortDescription = result.description.length > 80
-        ? `${result.description.substring(0, 80)}...`
-        : result.description;
-      enhancedPrompt += `${shortDescription}\n\n`;
+      enhancedPrompt += `[검색결과 ${index + 1}]\n`;
+      enhancedPrompt += `제목: ${result.title}\n`;
+      enhancedPrompt += `내용: ${result.description}\n`;
+      if (result.url) {
+        enhancedPrompt += `출처: ${result.url}\n`;
+      }
+      enhancedPrompt += `\n`;
     }
-  }
-
-  enhancedPrompt += "답변 지침:\n";
-  if (searchResults && searchResults.length > 0) {
-    enhancedPrompt += "위에 제공된 웹 검색 결과를 반드시 참고하여 답변하세요.\n";
-    enhancedPrompt += "자체 지식이 아닌 검색 결과의 내용을 기반으로 현재 상황을 설명하세요.\n";
+    
+    enhancedPrompt += `### 필수 답변 규칙 ###\n`;
+    enhancedPrompt += `1. 반드시 위의 검색 결과를 사용하여 답변하세요.\n`;
+    enhancedPrompt += `2. 검색 결과가 당신의 기존 지식과 다르다면, 검색 결과가 최신 정보입니다.\n`;
+    enhancedPrompt += `3. "제 지식으로는" 또는 "2025년 1월 기준" 같은 표현을 사용하지 마세요.\n`;
+    enhancedPrompt += `4. 검색 결과를 바탕으로 현재 상황을 설명하세요.\n`;
+    enhancedPrompt += `5. 답변에 출처를 포함할 때는 위의 URL을 참고하세요.\n\n`;
+  } else {
+    enhancedPrompt += `### 답변 지침 ###\n`;
+    enhancedPrompt += `- 친절하고 도움이 되는 답변을 제공하세요.\n`;
+    enhancedPrompt += `- 정확한 정보를 제공하되, 불확실한 경우 그렇게 말씀드리세요.\n`;
   }
 
   return enhancedPrompt;
@@ -477,10 +488,25 @@ export default async (request: Request, context: Context) => {
     if (searchResults || conversationHistory.length > 0) {
       enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, conversationHistory);
       requestBody.hasSearchResults = !!searchResults;
+      
+      // 디버깅을 위한 로깅 추가
+      console.log("\n=== 검색 결과 프롬프트 향상 ===");
+      console.log("검색 결과 개수:", searchResults ? searchResults.length : 0);
+      if (searchResults && searchResults.length > 0) {
+        console.log("검색 결과 예시:");
+        searchResults.forEach((result: any, index: number) => {
+          console.log(`  [${index + 1}] ${result.title}`);
+          console.log(`      ${result.description.substring(0, 100)}...`);
+        });
+      }
+      console.log("향상된 프롬프트 길이:", enhancedQuery.length);
+      console.log("향상된 프롬프트 미리보기 (처음 500자):");
+      console.log(enhancedQuery.substring(0, 500) + "...");
+      console.log("=== 프롬프트 향상 완료 ===\n");
     }
-
+    
     requestBody.input_value = enhancedQuery;
-
+    
     // max_tokens 설정
     if (!requestBody.tweaks) {
       requestBody.tweaks = {};
@@ -488,8 +514,9 @@ export default async (request: Request, context: Context) => {
     requestBody.tweaks.ChatOutput = {
       max_tokens: complexity.level === "simple" ? 800 : complexity.level === "moderate" ? 1500 : 2500,
     };
-
+    
     console.log("Forwarding to Langflow...");
+    console.log("Final input_value length:", requestBody.input_value.length);
 
     // Langflow API 호출 (스트리밍 지원)
     const response = await fetch(LANGFLOW_API_URL, {
