@@ -11,7 +11,7 @@ import { FeedbackService } from "./FeedbackService";
 import { IntentClassifier } from "./IntentClassifier";
 import { OptimizedChatService } from "./OptimizedChatService";
 import { buildChatPrompt, buildSearchPrompt } from "./SearchPromptBuilder";
-import { WebSearchService } from "./WebSearchService";
+
 
 let messages = [];
 let inputMessage = "";
@@ -571,52 +571,17 @@ async function sendMessage() {
 
 		// 검색 쿼리 최적화
 		const optimizedQuery = intentClassifier.optimizeSearchQuery(
-			userMessage,
-			intentClassification,
+		 userMessage,
+		 intentClassification,
 		);
-
-		// 웹 검색 실행
+		
+		// 웹 검색 실행 - 실제 검색은 langflow-proxy-astra에서 수행됨
 		if (!chainOfThoughtService) {
-			chainOfThoughtService = new ChainOfThoughtService();
+		 chainOfThoughtService = new ChainOfThoughtService();
 		}
-
-		const webSearchService = new WebSearchService();
-		try {
-			const searchResults = await webSearchService.search(optimizedQuery, {
-				maxResults: 5,
-				language: "ko",
-			});
-
-			// 검색 결과를 포함한 프롬프트 생성
-			if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
-			 contextualMessage = buildSearchPrompt(
-			  userMessage,
-			  intentClassification,
-			 );
-			 contextualMessage += "\n\n[검색 결과]\n";
-			 contextualMessage += webSearchService.formatResultsAsMarkdown(
-			  searchResults,
-			  optimizedQuery,
-			 );
-				contextualMessage += `\n\n[사용자 질문]\n${userMessage}`;
-				contextualMessage +=
-					"\n\n위의 검색 결과를 참고하여 정확하고 유용한 답변을 제공해주세요.";
-			} else {
-				contextualMessage = buildSearchPrompt(
-					userMessage,
-					intentClassification,
-				);
-				contextualMessage +=
-					"\n\n검색 결과를 찾을 수 없습니다. 일반적인 지식으로 답변하겠습니다.\n\n";
-				contextualMessage += userMessage;
-			}
-		} catch (error) {
-			console.error("웹 검색 오류:", error);
-			contextualMessage = buildSearchPrompt(userMessage, intentClassification);
-			contextualMessage +=
-				"\n\n웹 검색 중 오류가 발생했습니다. 일반적인 지식으로 답변하겠습니다.\n\n";
-			contextualMessage += userMessage;
-		}
+		
+		// langflow-proxy-astra가 검색을 수행하므로, 여기서는 사용자 메시지만 전달
+		contextualMessage = userMessage;
 	} else {
 		// 일반 대화 (검색 불필요)
 		contextualMessage = buildChatPrompt(userMessage) + baseInstructions;
