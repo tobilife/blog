@@ -1,7 +1,7 @@
 ---
 title: 보험 IT 15년, 토비라이프의 여정
 slug: tobilife-portfolio
-published: 2025-05-25
+published: 2024-01-28
 description: 손해보험사 IT 개발자 경력 Overview
 category: Portfolio
 tags:
