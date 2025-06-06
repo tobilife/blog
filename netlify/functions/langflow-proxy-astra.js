@@ -394,10 +394,16 @@ async function searchBrave(query, apiKey) {
 
 // Google Custom Search API 호출 함수
 async function searchGoogle(query, apiKey, searchEngineId) {
+ console.log('[searchGoogle] Starting Google search');
+ console.log('[searchGoogle] Query:', query);
+ console.log('[searchGoogle] API Key length:', apiKey ? apiKey.length : 0);
+ console.log('[searchGoogle] Search Engine ID:', searchEngineId);
+ 
  const GOOGLE_API_URL = 'https://www.googleapis.com/customsearch/v1';
  
  // 검색 쿼리 최적화
  const searchQuery = optimizeSearchQuery(query);
+ console.log('[searchGoogle] Optimized query:', searchQuery);
  
  try {
   const params = new URLSearchParams({
@@ -407,10 +413,12 @@ async function searchGoogle(query, apiKey, searchEngineId) {
    num: 5, // 더 많은 결과 가져오기 (Google은 더 정확하므로)
    lr: 'lang_ko', // 한국어 결과 우선
    safe: 'active'
-  });
-  
-  const response = await fetch(`${GOOGLE_API_URL}?${params}`);
-  
+   });
+   
+   const searchUrl = `${GOOGLE_API_URL}?${params}`;
+   console.log('[searchGoogle] Request URL:', searchUrl);
+   
+   const response = await fetch(searchUrl);
   if (!response.ok) {
    const errorData = await response.json();
    console.error('Google Search API error:', response.status, errorData);
@@ -591,10 +599,13 @@ function mergeSearchResults(googleResults, braveResults, tavilyResults) {
  // Google 우선 + 선택적 보완 검색 함수
  async function performEnhancedSearch(query, googleApiKey, googleSearchEngineId, braveApiKey, tavilyApiKey) {
  console.log('Performing enhanced search for:', query);
+ console.log('Google API Key exists:', !!googleApiKey);
+ console.log('Google Search Engine ID exists:', !!googleSearchEngineId);
  
  // Google 검색 사용량 확인
  const googleUsage = await getGoogleSearchCount();
  console.log(`Google search usage: ${googleUsage.count}/100, can use: ${googleUsage.canUse}`);
+ console.log('Google usage details:', googleUsage);
  
  // 타임아웃 설정
  const searchWithTimeout = async (searchFn, ...args) => {
@@ -617,15 +628,16 @@ function mergeSearchResults(googleResults, braveResults, tavilyResults) {
  let googleResults = null;
  let braveResults = null;
  let tavilyResults = null;
- 
  // Google 검색 (사용 가능한 경우)
  if (googleApiKey && googleSearchEngineId && googleUsage.canUse) {
+  console.log('Attempting Google search...');
   googleResults = await searchWithTimeout(searchGoogle, query, googleApiKey, googleSearchEngineId);
+  console.log('Google search results:', googleResults);
   
   // Google 검색 성공 시 카운트 증가
   if (googleResults && !googleResults.quotaExceeded && googleResults.length > 0) {
+   console.log('Google search successful, incrementing count...');
    await incrementGoogleSearchCount(googleUsage.dateKey);
-   
    // Google 결과가 충분한 경우 (3개 이상) 다른 API 호출 생략
    if (googleResults.length >= 3) {
     console.log('Sufficient Google results, skipping other APIs');
