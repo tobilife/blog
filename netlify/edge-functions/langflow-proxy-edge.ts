@@ -83,10 +83,15 @@ class AstraDBCache {
   }
 
   async getCacheEntry(question: string): Promise<any> {
-    const cacheKey = this.generateCacheKey(question);
-    const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/chat_cache/${encodeURIComponent(cacheKey)}`;
-    
-    try {
+   const cacheKey = this.generateCacheKey(question);
+   const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/chat_cache/${encodeURIComponent(cacheKey)}`;
+   console.log('🔍 AstraDB Cache lookup:', {
+    question,
+    cacheKey,
+    url: url.replace(this.token, '***TOKEN***')
+   });
+   
+   try {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -104,6 +109,15 @@ class AstraDBCache {
       }
 
       const result = await response.json();
+      console.log('🔍 AstraDB Cache response:', {
+       hasData: !!(result && result.data),
+       dataLength: result?.data?.length || 0,
+       firstEntry: result?.data?.[0] ? {
+        cache_key: result.data[0].cache_key,
+        hasResponse: !!result.data[0].response,
+        expiresAt: result.data[0].expires_at
+       } : null
+      });
       if (result.data && result.data.length > 0) {
         const entry = result.data[0];
         const expiresAt = new Date(entry.expires_at);
@@ -119,8 +133,13 @@ class AstraDBCache {
       }
       return null;
     } catch (error) {
-      console.error('Cache get error:', error);
-      return null;
+     console.error('Cache get error:', {
+      error: error.message,
+      stack: error.stack,
+      cacheKey,
+      url: url.replace(this.token, '***TOKEN***')
+     });
+     return null;
     }
   }
 
