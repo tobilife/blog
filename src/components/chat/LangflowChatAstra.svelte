@@ -7,7 +7,9 @@ import { BlogListHelper } from "./BlogListHelper";
 import { BlogRAGService } from "./BlogRAGService";
 import { ContextDetector } from "./ContextDetector";
 import { FeedbackService } from "./FeedbackService";
+import { IntentClassifier } from "./IntentClassifier";
 import { OptimizedChatService } from "./OptimizedChatService";
+import { buildChatPrompt, buildSearchPrompt } from "./SearchPromptBuilder";
 
 let messages = [];
 let inputMessage = "";
@@ -31,6 +33,9 @@ let isPolling = false;
 // 블로그 RAG 서비스 인스턴스
 let contextDetector = null;
 let blogRAGService = null;
+
+// 의도 분류 시스템
+let intentClassifier = null;
 
 // 피드백 시스템
 let feedbackService = null;
@@ -231,46 +236,51 @@ async function handleFeedbackSubmit(event) {
 }
 
 function showToastMessage(message, type = "success") {
- toastMessage = message;
- toastType = type;
- showToast = true;
+	toastMessage = message;
+	toastType = type;
+	showToast = true;
 }
 
 // 기본 지침 생성 함수
 function generateBaseInstructions() {
- let instructions =
-  "\n\n[중요 지침]\n" +
-  "- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
-  "- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
-  "- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇입니다\n" +
-  "- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
-  "- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
+	let instructions =
+		"\n\n[중요 지침]\n" +
+		"- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n" +
+		"- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
+		"- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇입니다\n" +
+		"- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
+		"- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
 
- // BlogRAGService가 초기화되고 데이터가 있으면 동적으로 게시물 목록 추가
- if (blogRAGService?.knowledgeBase?.posts && blogRAGService.knowledgeBase.posts.length > 0) {
-  instructions += "- 블로그의 실제 게시물:\n";
-  
-  // 최신순으로 정렬
-  const sortedPosts = [...blogRAGService.knowledgeBase.posts].sort(
-   (a, b) => new Date(b.published) - new Date(a.published)
-  );
-  
-  for (const [index, post] of sortedPosts.entries()) {
-   const date = new Date(post.published).toLocaleDateString('ko-KR');
-   instructions += `  ${index + 1}. '${post.title}' (${date}, ${post.category} 카테고리)\n`;
-  }
-  
-  instructions += "- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
- } else {
-  // 기본 게시물 정보 (폴백)
-  instructions += "- 블로그의 실제 게시물:\n" +
-   "  1. 'Sim Studio: 코딩 없이 만드는 AI 에이전트 워크플로우' (2025-05-27, AI 카테고리)\n" +
-   "  2. '30분 만에 만드는 우리 회사 전용 AI 검색 시스템 - 무료로 구축하는 RAG 지식베이스' (2025-04-13, AI 카테고리)\n" +
-   "  3. 'Git/GitHub 명령어 가이드' (2024-02-18, Git&GitHub 카테고리)\n" +
-   "- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
- }
- 
- return instructions;
+	// BlogRAGService가 초기화되고 데이터가 있으면 동적으로 게시물 목록 추가
+	if (
+		blogRAGService?.knowledgeBase?.posts &&
+		blogRAGService.knowledgeBase.posts.length > 0
+	) {
+		instructions += "- 블로그의 실제 게시물:\n";
+
+		// 최신순으로 정렬
+		const sortedPosts = [...blogRAGService.knowledgeBase.posts].sort(
+			(a, b) => new Date(b.published) - new Date(a.published),
+		);
+
+		for (const [index, post] of sortedPosts.entries()) {
+			const date = new Date(post.published).toLocaleDateString("ko-KR");
+			instructions += `  ${index + 1}. '${post.title}' (${date}, ${post.category} 카테고리)\n`;
+		}
+
+		instructions +=
+			"- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
+	} else {
+		// 기본 게시물 정보 (폴백)
+		instructions +=
+			"- 블로그의 실제 게시물:\n" +
+			"  1. 'Sim Studio: 코딩 없이 만드는 AI 에이전트 워크플로우' (2025-05-27, AI 카테고리)\n" +
+			"  2. '30분 만에 만드는 우리 회사 전용 AI 검색 시스템 - 무료로 구축하는 RAG 지식베이스' (2025-04-13, AI 카테고리)\n" +
+			"  3. 'Git/GitHub 명령어 가이드' (2024-02-18, Git&GitHub 카테고리)\n" +
+			"- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
+	}
+
+	return instructions;
 }
 
 // 타이핑 효과 함수
@@ -376,23 +386,23 @@ async function pollTaskStatus(taskId, messageIndex) {
 	}
 
 	isPolling = false;
-	}
-	
-	async function sendMessage() {
+}
+
+async function sendMessage() {
 	if (!inputMessage.trim() || isLoading) return;
-	
+
 	const userMessage = inputMessage;
 	inputMessage = "";
-	
+
 	// 사용자 메시지 추가 (ID 포함)
 	const userMessageId = `msg_${Date.now()}_user`;
 	messages = [
-	 ...messages,
-	 {
-	  id: userMessageId,
-	  role: "user",
-	  content: userMessage,
-	  },
+		...messages,
+		{
+			id: userMessageId,
+			role: "user",
+			content: userMessage,
+		},
 	];
 
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
@@ -409,24 +419,36 @@ async function pollTaskStatus(taskId, messageIndex) {
 		},
 	];
 
-	// 블로그 컨텍스트 감지 및 RAG 검색
+	// 의도 분류 시스템을 통한 질문 분석
 	let contextualMessage = userMessage;
 	let searchResults = [];
 	let isAboutBlog = false;
+	let requiresWebSearch = false;
+	let intentClassification = null;
 
 	// 모든 메시지에 기본 지침 추가 (동적으로 생성)
 	const baseInstructions = generateBaseInstructions();
 
-	// RAG 시스템 - 우선순위에 따른 처리
-	// 우선순위 1: "블로그" + "검색" 패턴
-	const blogSearchPattern =
-		/(블로그.*검색|검색.*블로그|이\s*블로그|여기|토비라이프)/i;
-	const isBlogSearchRequest = blogSearchPattern.test(userMessage);
+	// 1단계: 의도 분류
+	if (intentClassifier) {
+		intentClassification = intentClassifier.classifyIntent(userMessage);
+		console.log("🧠 Intent Classification:", intentClassification);
 
-	if (isBlogSearchRequest && contextDetector && blogRAGService) {
-		// 블로그 검색 요청이면 RAG 시스템 사용
+		// 검색 필요 여부 표시
+		if (intentClassification.searchRequired) {
+			messages[messageIndex] = {
+				...messages[messageIndex],
+				isSearching: true,
+			};
+			messages = [...messages];
+		}
+	}
+
+	// 2단계: 의도에 따른 처리
+	if (intentClassification?.intent === "blog") {
+		// 블로그 관련 질문 처리
 		try {
-			console.log("☝️ 블로그 검색 요청 감지!");
+			console.log("📚 블로그 관련 질문 감지!");
 
 			// 블로그 목록 요청인지 확인
 			if (BlogListHelper.isBlogListRequest(userMessage)) {
@@ -445,11 +467,10 @@ async function pollTaskStatus(taskId, messageIndex) {
 				}
 			}
 
-			// 키워드 추출
+			// 키워드 추출 및 블로그 포스트 검색
 			const keywords = await contextDetector.extractSearchKeywords(userMessage);
 			console.log("Extracted keywords:", keywords);
 
-			// 블로그 포스트 검색
 			const searchQuery = keywords.join(" ");
 			searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
 			console.log(`Found ${searchResults.length} blog posts`);
@@ -477,11 +498,43 @@ async function pollTaskStatus(taskId, messageIndex) {
 			console.error("Blog search error:", error);
 			contextualMessage = userMessage + baseInstructions;
 		}
+	} else if (intentClassification?.intent === "search") {
+		// 웹 검색이 필요한 질문 처리
+		requiresWebSearch = true;
+		console.log("🔍 웹 검색이 필요한 질문:", {
+			domains: intentClassification.domains,
+			reasons: intentClassification.reasons,
+			keywords: intentClassification.keywords,
+		});
+
+		// 검색 쿼리 최적화
+		const optimizedQuery = intentClassifier.optimizeSearchQuery(
+			userMessage,
+			intentClassification,
+		);
+
+		// 검색 전용 프롬프트 생성
+		contextualMessage = `${buildSearchPrompt(
+			userMessage,
+			intentClassification,
+		)}\n\n[최적화된 검색 쿼리]\n${optimizedQuery}\n\n[원본 질문]\n${userMessage}`;
+
+		// 메시지에 검색 지시사항 추가
+		contextualMessage +=
+			"\n\n[중요: 위의 검색 쿼리를 사용하여 웹 검색을 수행하고, 검색 결과를 기반으로 답변해주세요.]";
 	} else {
-		// 블로그 검색이 아닌 경우에도 기본 지침 추가
-		contextualMessage = userMessage + baseInstructions;
+		// 일반 대화 (검색 불필요)
+		contextualMessage = buildChatPrompt(userMessage) + baseInstructions;
 	}
 
+	// 검색 상태 업데이트
+	if (requiresWebSearch) {
+		messages[messageIndex] = {
+			...messages[messageIndex],
+			isSearching: false, // 검색 완료 후 업데이트
+		};
+		messages = [...messages];
+	}
 	isLoading = true;
 
 	try {
@@ -668,6 +721,9 @@ onMount(async () => {
 	contextDetector = new ContextDetector();
 	blogRAGService = new BlogRAGService();
 
+	// 의도 분류 시스템 초기화
+	intentClassifier = new IntentClassifier();
+
 	// 비동기로 초기화 (블로킹하지 않음)
 	Promise.all([contextDetector.initialize(), blogRAGService.initialize()])
 		.then(() => {
@@ -704,7 +760,7 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-				"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🚀 <strong>Astra DB 최적화 기능!</strong><br>- 응답 캐싱으로 빠른 답변 제공<br>- 복잡한 질문은 비동기 처리로 타임아웃 방지<br><br>📚 <strong>블로그 콘텐츠 RAG 시스템!</strong><br>블로그 관련 질문 시<br>자동으로 모든 포스트를 참조하여 답변합니다.<br><br>🔍 <strong>최신 정보 검색 기능!</strong><br>웹 검색을 통해 최신 정보를 확인하여 답변드립니다.<br>특정주제에 대해 '검색' 해줘라고 해보세요😊<br><br>궁금한 점이 있으시면 물어봐주세요!🤖",
+				"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🚀 <strong>AI 기반 지능형 대화 시스템!</strong><br>- 질문 의도를 분석하여 최적의 답변 제공<br>- 실시간 정보가 필요하면 자동으로 웹 검색<br>- 블로그 관련 질문은 모든 포스트 참조<br><br>🧠 <strong>무한한 질문 범위!</strong><br>- 날씨, 뉴스, 주식, 환율 등 실시간 정보<br>- 건강, 여행, 맛집, 쇼핑 등 생활 정보<br>- 기술, 교육, 법률, 스포츠 등 전문 지식<br>- 블로그 콘텐츠와 AI/프로그래밍 기술<br><br>🔍 <strong>예시 질문:</strong><br>- '오늘 서울 날씨 알려줘'<br>- '최근 아이폰 16 가격이 얼마야?'<br>- '토비라이프 블로그에 AI 관련 글 보여줘'<br><br>무엇이든 물어보세요! 🤖",
 		},
 	];
 
