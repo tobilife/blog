@@ -193,6 +193,197 @@ class AstraDBCache {
   }
 }
 
+// API 사용량 추적 클래스
+class ApiUsageTracker {
+ private baseUrl: string;
+ private token: string;
+ private keyspace: string;
+
+ constructor(baseUrl: string, token: string, keyspace: string) {
+  this.baseUrl = baseUrl;
+  this.token = token;
+  this.keyspace = keyspace;
+ }
+
+ // 현재 날짜를 YYYY-MM-DD 형식으로 가져오기 (한국 시간 기준)
+ private getKoreaDateKey(): string {
+  const now = new Date();
+  const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const year = koreaTime.getUTCFullYear();
+  const month = (koreaTime.getUTCMonth() + 1).toString().padStart(2, "0");
+  const day = koreaTime.getUTCDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+ }
+
+ // API 사용량 가져오기
+ async getUsageStats(): Promise<any> {
+  const dateKey = this.getKoreaDateKey();
+  const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/api_usage_stats/${encodeURIComponent(dateKey)}`;
+
+  try {
+   const response = await fetch(url, {
+    method: "GET",
+    headers: {
+     "X-Cassandra-Token": this.token,
+     "Content-Type": "application/json"
+    }
+   });
+
+   if (!response.ok) {
+    if (response.status === 404) {
+     // 오늘 데이터가 없으면 새로 생성
+     return {
+      date_key: dateKey,
+      google_search_count: 0,
+      brave_search_count: 0,
+      tavily_search_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+     };
+    }
+    throw new Error(`Usage stats fetch error: ${response.status}`);
+   }
+
+   const result = await response.json();
+   if (result.data && result.data.length > 0) {
+    return result.data[0];
+   }
+
+   // 데이터가 없으면 새로 생성
+   return {
+    date_key: dateKey,
+    google_search_count: 0,
+    brave_search_count: 0,
+    tavily_search_count: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+   };
+  } catch (error) {
+   console.error("Get usage stats error:", error);
+   // 에러 발생 시 기본값 반환
+   return {
+    date_key: dateKey,
+    google_search_count: 0,
+    brave_search_count: 0,
+    tavily_search_count: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+   };
+  }
+ }
+
+ // API 사용량 업데이트
+ async updateUsageStats(apiType: "google" | "brave" | "tavily"): Promise<boolean> {
+  const dateKey = this.getKoreaDateKey();
+  const currentStats = await this.getUsageStats();
+
+  // 카운트 증가
+  if (apiType === "google") {
+   currentStats.google_search_count = (currentStats.google_search_count || 0) + 1;
+  } else if (apiType === "brave") {
+   currentStats.brave_search_count = (currentStats.brave_search_count || 0) + 1;
+  } else if (apiType === "tavily") {
+   currentStats.tavily_search_count = (currentStats.tavily_search_count || 0) + 1;
+  }
+
+  currentStats.updated_at = new Date().toISOString();
+
+  const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/api_usage_stats/${encodeURIComponent(dateKey)}`;
+
+  try {
+   const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+     "X-Cassandra-Token": this.token,
+     "Content-Type": "application/json"
+    },
+    body: JSON.stringify(currentStats)
+   });
+
+   if (response.ok) {
+    console.log(`${apiType} API usage updated:`, currentStats);
+    return true;
+   }
+
+   console.error("Usage stats update error:", response.status, await response.text());
+   return false;
+  } catch (error) {
+   console.error("Update usage stats error:", error);
+   return false;
+  }
+ }
+
+ // 월간 사용량 체크 (Brave와 Tavily용)
+ async getMonthlyUsage(apiType: "brave" | "tavily"): Promise<number> {
+  const now = new Date();
+  const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const year = koreaTime.getUTCFullYear();
+  const month = (koreaTime.getUTCMonth() + 1).toString().padStart(2, "0");
+
+  let totalUsage = 0;
+
+  // 이번 달의 모든 날짜에 대해 사용량 합산
+  for (let day = 1; day <= 31; day++) {
+   const dateKey = `${year}-${month}-${day.toString().padStart(2, "0")}`;
+   const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/api_usage_stats/${encodeURIComponent(dateKey)}`;
+
+   try {
+    const response = await fetch(url, {
+     method: "GET",
+     headers: {
+      "X-Cassandra-Token": this.token,
+      "Content-Type": "application/json"
+     }
+    });
+
+    if (response.ok) {
+     const result = await response.json();
+     if (result.data && result.data.length > 0) {
+      const stats = result.data[0];
+      if (apiType === "brave") {
+       totalUsage += stats.brave_search_count || 0;
+      } else if (apiType === "tavily") {
+       totalUsage += stats.tavily_search_count || 0;
+      }
+     }
+    }
+   } catch (error) {
+    // 개별 날짜 조회 실패는 무시
+    continue;
+   }
+  }
+
+  return totalUsage;
+ }
+
+ // 사용 가능한 API 결정
+ async determineAvailableApi(): Promise<{
+  canUseGoogle: boolean;
+  canUseBrave: boolean;
+  canUseTavily: boolean;
+  googleRemaining: number;
+  braveRemaining: number;
+  tavilyRemaining: number;
+ }> {
+  const dailyStats = await this.getUsageStats();
+  const braveMonthly = await this.getMonthlyUsage("brave");
+  const tavilyMonthly = await this.getMonthlyUsage("tavily");
+
+  const googleRemaining = Math.max(0, 99 - (dailyStats.google_search_count || 0));
+  const braveRemaining = Math.max(0, 1000 - braveMonthly);
+  const tavilyRemaining = Math.max(0, 1000 - tavilyMonthly);
+
+  return {
+   canUseGoogle: googleRemaining > 0,
+   canUseBrave: braveRemaining > 0,
+   canUseTavily: tavilyRemaining > 0,
+   googleRemaining,
+   braveRemaining,
+   tavilyRemaining
+  };
+ }
+}
+
 // 질문의 복잡도를 분석하는 함수
 function analyzeQueryComplexity(query: string) {
   const features = {
@@ -362,6 +553,83 @@ async function searchBrave(query: string, apiKey: string) {
   }
 }
 
+// Google Search API 호출
+async function searchGoogle(query: string, apiKey: string, cx: string) {
+ const GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1";
+
+ try {
+  const response = await fetch(
+   `${GOOGLE_API_URL}?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&num=3`,
+   {
+    headers: {
+     "Accept": "application/json",
+    },
+   }
+  );
+
+  if (!response.ok) {
+   console.error("Google Search API error:", response.status);
+   return null;
+  }
+
+  const data = await response.json();
+
+  if (data.items) {
+   return data.items.slice(0, 3).map((item: any) => ({
+    title: item.title,
+    description: item.snippet,
+    url: item.link,
+   }));
+  }
+
+  return null;
+ } catch (error) {
+  console.error("Google Search error:", error);
+  return null;
+ }
+}
+
+// Tavily Search API 호출
+async function searchTavily(query: string, apiKey: string) {
+ const TAVILY_API_URL = "https://api.tavily.com/search";
+
+ try {
+  const response = await fetch(TAVILY_API_URL, {
+   method: "POST",
+   headers: {
+    "Content-Type": "application/json",
+   },
+   body: JSON.stringify({
+    api_key: apiKey,
+    query: query,
+    max_results: 3,
+    search_depth: "basic",
+    include_raw_content: false,
+   }),
+  });
+
+  if (!response.ok) {
+   console.error("Tavily Search API error:", response.status);
+   return null;
+  }
+
+  const data = await response.json();
+
+  if (data.results) {
+   return data.results.slice(0, 3).map((result: any) => ({
+    title: result.title,
+    description: result.content,
+    url: result.url,
+   }));
+  }
+
+  return null;
+ } catch (error) {
+  console.error("Tavily Search error:", error);
+  return null;
+ }
+}
+
 // 프롬프트 향상 함수
 function enhancePromptWithSearchResults(
   originalQuery: string,
@@ -456,11 +724,16 @@ export default async (request: Request, context: Context) => {
     const ASTRA_DB_REST_URL = Deno.env.get("ASTRA_DB_REST_URL");
     const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get("ASTRA_DB_APPLICATION_TOKEN");
     const ASTRA_DB_KEYSPACE = Deno.env.get("ASTRA_DB_KEYSPACE");
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_SEARCH_API_KEY");
+    const GOOGLE_CX = Deno.env.get("GOOGLE_SEARCH_CX");
+    const TAVILY_API_KEY = Deno.env.get("TAVILY_API_KEY");
     
     console.log("Environment check:", {
       hasLangflow: !!LANGFLOW_API_TOKEN,
       hasBrave: !!BRAVE_API_KEY,
-      hasAstra: !!ASTRA_DB_REST_URL && !!ASTRA_DB_APPLICATION_TOKEN && !!ASTRA_DB_KEYSPACE
+      hasAstra: !!ASTRA_DB_REST_URL && !!ASTRA_DB_APPLICATION_TOKEN && !!ASTRA_DB_KEYSPACE,
+      hasGoogle: !!GOOGLE_API_KEY && !!GOOGLE_CX,
+      hasTavily: !!TAVILY_API_KEY
     });
 
     if (!LANGFLOW_API_TOKEN) {
@@ -523,21 +796,163 @@ export default async (request: Request, context: Context) => {
       }
     }
 
+    // API 사용량 추적기 초기화
+    let usageTracker: ApiUsageTracker | null = null;
+    if (ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
+      usageTracker = new ApiUsageTracker(ASTRA_DB_REST_URL, ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_KEYSPACE);
+    }
+
     let searchResults = null;
     let enhancedQuery = userQuery;
+    let searchApiUsed: "google" | "brave" | "tavily" | null = null;
     
     // 의도 분석
     const intent = analyzeQueryIntent(userQuery);
     console.log("Query intent:", intent);
     
     // 검색이 필요한 경우
-    if (BRAVE_API_KEY && intent.needsSearch) {
+    if (intent.needsSearch) {
       console.log("Searching web...");
-      searchResults = await searchBrave(userQuery, BRAVE_API_KEY);
-      if (searchResults) {
-        console.log(`Found ${searchResults.length} search results`);
+      
+      // API 사용 가능 여부 확인
+      let apiAvailability = {
+        canUseGoogle: false,
+        canUseBrave: false,
+        canUseTavily: false,
+        googleRemaining: 0,
+        braveRemaining: 0,
+        tavilyRemaining: 0
+      };
+      
+      if (usageTracker) {
+        apiAvailability = await usageTracker.determineAvailableApi();
+        console.log("API availability:", apiAvailability);
       }
-    }
+      
+      // Google Search API 우선 사용
+      if (GOOGLE_API_KEY && GOOGLE_CX && apiAvailability.canUseGoogle) {
+        searchResults = await searchGoogle(userQuery, GOOGLE_API_KEY, GOOGLE_CX);
+        if (searchResults) {
+          searchApiUsed = "google";
+          console.log(`Found ${searchResults.length} Google search results`);
+        }
+      }
+      
+      // Google이 안 되면 Brave + Tavily 동시 검색
+      if (!searchResults) {
+        // Brave와 Tavily를 동시에 호출
+        const searchPromises = [];
+        let braveResults = null;
+        let tavilyResults = null;
+        
+        if (BRAVE_API_KEY && apiAvailability.canUseBrave) {
+          searchPromises.push(
+            searchBrave(userQuery, BRAVE_API_KEY).then(results => {
+              braveResults = results;
+              return { type: "brave", results };
+            }).catch(err => {
+              console.error("Brave search error:", err);
+              return { type: "brave", results: null };
+            })
+          );
+        }
+        
+        if (TAVILY_API_KEY && apiAvailability.canUseTavily) {
+          searchPromises.push(
+            searchTavily(userQuery, TAVILY_API_KEY).then(results => {
+              tavilyResults = results;
+              return { type: "tavily", results };
+            }).catch(err => {
+              console.error("Tavily search error:", err);
+              return { type: "tavily", results: null };
+            })
+          );
+        }
+        
+        // 동시 검색 실행
+        if (searchPromises.length > 0) {
+          console.log("Executing parallel search with Brave and Tavily...");
+          const parallelResults = await Promise.allSettled(searchPromises);
+          
+          // 결과 통합 및 정확성 체크
+          const combinedResults = [];
+          const resultsByUrl = new Map();
+          
+          // Brave 결과 처리
+          if (braveResults && braveResults.length > 0) {
+            for (const result of braveResults) {
+              resultsByUrl.set(result.url, {
+                ...result,
+                sources: ["brave"],
+                score: 1.0
+              });
+            }
+            console.log(`Brave: ${braveResults.length} results`);
+          }
+          
+          // Tavily 결과 처리 및 비교
+          if (tavilyResults && tavilyResults.length > 0) {
+            for (const result of tavilyResults) {
+              if (resultsByUrl.has(result.url)) {
+                // 동일 URL이 있으면 신뢰도 증가
+                const existing = resultsByUrl.get(result.url);
+                existing.sources.push("tavily");
+                existing.score = 1.5; // 두 API에서 모두 반환된 결과는 더 높은 점수
+                // 설명 병합 (더 긴 것 사용)
+                if (result.description.length > existing.description.length) {
+                  existing.description = result.description;
+                }
+              } else {
+                resultsByUrl.set(result.url, {
+                  ...result,
+                  sources: ["tavily"],
+                  score: 1.0
+                });
+              }
+            }
+            console.log(`Tavily: ${tavilyResults.length} results`);
+          }
+          
+          // 점수 기준으로 정렬
+          const sortedResults = Array.from(resultsByUrl.values())
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3); // 상위 3개만 사용
+          
+          if (sortedResults.length > 0) {
+            searchResults = sortedResults;
+            searchApiUsed = braveResults && tavilyResults ? "brave+tavily" : 
+                          braveResults ? "brave" : "tavily";
+            console.log(`Combined search: ${searchResults.length} results (${searchApiUsed})`);
+            
+            // 결과 품질 로그
+            for (const result of searchResults) {
+              console.log(`- ${result.title} (sources: ${result.sources.join("+")}, score: ${result.score})`);
+            }
+          }
+        }
+      }
+      
+      // 모든 API가 한도 초과한 경우
+      if (!searchResults && intent.needsSearch) {
+        console.warn("All search APIs exhausted or unavailable");
+        console.log("API limits:", {
+          google: `${apiAvailability.googleRemaining}/99 remaining today`,
+          brave: `${apiAvailability.braveRemaining}/1000 remaining this month`,
+          tavily: `${apiAvailability.tavilyRemaining}/1000 remaining this month`
+        });
+      }
+      
+      // API 사용량 업데이트
+      if (searchApiUsed && usageTracker) {
+        if (searchApiUsed === "brave+tavily") {
+          // 동시 검색의 경우 두 API 모두 업데이트
+          await usageTracker.updateUsageStats("brave");
+          await usageTracker.updateUsageStats("tavily");
+        } else {
+          await usageTracker.updateUsageStats(searchApiUsed as "google" | "brave" | "tavily");
+        }
+      }
+      }
 
     // 프롬프트 향상
     if (searchResults || conversationHistory.length > 0) {
@@ -675,7 +1090,35 @@ export default async (request: Request, context: Context) => {
         // 품질 평가 또는 캐시 저장 실패는 무시
       }
     }
-
+    
+    // API 사용량 정보 추가
+    if (usageTracker && searchApiUsed) {
+      const currentUsage = await usageTracker.determineAvailableApi();
+      parsedResponse.apiUsageInfo = {
+        searchApiUsed,
+        limits: {
+          google: {
+            used: 99 - currentUsage.googleRemaining,
+            remaining: currentUsage.googleRemaining,
+            limit: 99,
+            resets: "daily at 00:01 KST"
+          },
+          brave: {
+            used: 1000 - currentUsage.braveRemaining,
+            remaining: currentUsage.braveRemaining,
+            limit: 1000,
+            resets: "monthly on 1st at 00:01 KST"
+          },
+          tavily: {
+            used: 1000 - currentUsage.tavilyRemaining,
+            remaining: currentUsage.tavilyRemaining,
+            limit: 1000,
+            resets: "monthly on 1st at 00:01 KST"
+          }
+        }
+      };
+    }
+    
     return new Response(
       JSON.stringify(parsedResponse),
       {
@@ -685,7 +1128,8 @@ export default async (request: Request, context: Context) => {
           "Content-Type": "application/json",
           "X-Query-Complexity": complexity.level,
           "X-Response-Time": String(Date.now() - startTime),
-          "X-Cache": "MISS"
+          "X-Cache": "MISS",
+          "X-Search-API-Used": searchApiUsed || "none"
         },
       }
     );
