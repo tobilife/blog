@@ -5,7 +5,8 @@
  */
 export class WebSearchService {
 	constructor() {
-		this.searchEndpoint = "/api/langflow/search";
+		// Langflow 프록시는 검색 엔드포인트가 없고 일반 채팅 엔드포인트를 사용
+		this.searchEndpoint = "/.netlify/functions/langflow-proxy-astra";
 		this.cache = new Map();
 		this.cacheExpiry = 5 * 60 * 1000; // 5분
 	}
@@ -29,23 +30,31 @@ export class WebSearchService {
 			}
 
 			// Langflow 프록시로 검색 요청
+			// langflow-proxy-astra.js는 input_value로 쿼리를 받음
 			const response = await fetch(this.searchEndpoint, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ query }),
+				body: JSON.stringify({
+					input_value: query,
+					conversation_history: [], // 검색만 할 때는 대화 기록 없음
+				}),
 			});
 
 			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("[WebSearchService] API 응답 오류:", errorText);
 				throw new Error(`검색 API 오류: ${response.status}`);
 			}
 
 			const data = await response.json();
 			console.log("[WebSearchService] 검색 응답 받음");
 
-			// 검색 결과 포맷팅
-			const formattedResults = this.formatSearchResults(data);
+			// Langflow 응답에서 검색 결과 추출
+			// Langflow는 검색 결과를 응답 텍스트에 포함시킴
+			const searchResults = this.extractSearchResultsFromResponse(data);
+			const formattedResults = this.formatSearchResults(searchResults, query);
 
 			// 캐시 저장
 			this.saveToCache(cacheKey, formattedResults);
@@ -63,13 +72,49 @@ export class WebSearchService {
 	}
 
 	/**
+	 * Langflow 응답에서 검색 결과 추출
+	 * @param {Object} data - Langflow 응답
+	 * @returns {Array} 검색 결과
+	 */
+	extractSearchResultsFromResponse(data) {
+		// Langflow 응답에서 텍스트 추출
+		const responseText = data?.outputs?.[0]?.outputs?.[0]?.results?.message?.text || "";
+		
+		// 검색 결과가 포함된 경우 파싱 시도
+		const results = [];
+		
+		// 간단한 검색 결과 파싱 (번호 목록 형태)
+		const resultPattern = /\d+\.\s*(.+?):\s*(.+?)(?=\n\d+\.|$)/gs;
+		let match;
+		
+		while ((match = resultPattern.exec(responseText)) !== null) {
+			results.push({
+				title: match[1].trim(),
+				description: match[2].trim(),
+				url: "", // URL 정보가 없는 경우
+			});
+		}
+		
+		// 검색 결과가 없는 경우 전체 텍스트를 하나의 결과로
+		if (results.length === 0 && responseText.length > 0) {
+			results.push({
+				title: "검색 결과",
+				description: responseText.substring(0, 200),
+				url: "",
+			});
+		}
+		
+		return results;
+	}
+
+	/**
 	 * 검색 결과 포맷팅
-	 * Langflow 프록시의 응답을 ChatInterface에 맞게 변환
-	 * @param {Object} data - Langflow 검색 결과
+	 * @param {Array} searchResults - 추출된 검색 결과
+	 * @param {string} query - 원본 검색 쿼리
 	 * @returns {Object} 포맷팅된 결과
 	 */
-	formatSearchResults(data) {
-		if (!data || !data.results) {
+	formatSearchResults(searchResults, query) {
+		if (!searchResults || searchResults.length === 0) {
 			return {
 				success: false,
 				results: [],
@@ -77,28 +122,28 @@ export class WebSearchService {
 			};
 		}
 
-		// Langflow 프록시는 이미 최적의 결과를 선택해서 반환함
-		const formattedResults = data.results.map((result, index) => ({
+		// 검색 결과 포맷팅
+		const formattedResults = searchResults.map((result, index) => ({
 			id: `search-${Date.now()}-${index}`,
 			title: result.title || "제목 없음",
-			url: result.url || result.link || "",
-			snippet: result.snippet || result.description || "",
-			source: result.source || this.extractDomain(result.url || result.link),
-			displayUrl: result.displayUrl || result.url || result.link || "",
-			publishedDate: result.published_date || result.date || null,
-			relevanceScore: result.relevance_score || result.score || 0.5,
+			url: result.url || "",
+			snippet: result.description || "",
+			source: result.source || this.extractDomain(result.url),
+			displayUrl: result.url || "",
+			publishedDate: result.published_date || null,
+			relevanceScore: result.score || 0.5,
 		}));
 
 		// 검색 결과 요약 생성
-		const summary = this.generateSummary(formattedResults, data.query || "");
+		const summary = this.generateSummary(formattedResults, query);
 
 		return {
 			success: true,
 			results: formattedResults,
 			summary,
 			totalResults: formattedResults.length,
-			searchEngine: data.searchEngine || "Tavily/Brave", // 프록시에서 선택한 엔진
-			query: data.query || "",
+			searchEngine: "Tavily/Brave", // Langflow 프록시가 사용하는 엔진
+			query: query,
 		};
 	}
 
@@ -129,9 +174,13 @@ export class WebSearchService {
 		}
 
 		const topResults = results.slice(0, 3);
-		const sources = topResults.map((r) => r.source).join(", ");
+		const sources = topResults.map((r) => r.source).filter(s => s).join(", ");
 
-		return `"${query}"에 대한 ${results.length}개의 검색 결과를 찾았습니다. 주요 출처: ${sources}`;
+		if (sources) {
+			return `"${query}"에 대한 ${results.length}개의 검색 결과를 찾았습니다. 주요 출처: ${sources}`;
+		} else {
+			return `"${query}"에 대한 ${results.length}개의 검색 결과를 찾았습니다.`;
+		}
 	}
 
 	/**
