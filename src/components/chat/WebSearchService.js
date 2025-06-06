@@ -248,4 +248,45 @@ export class WebSearchService {
 		// Langflow 프록시 엔드포인트 확인
 		return true;
 	}
+	
+	/**
+	 * 검색 결과를 마크다운 형식으로 포맷팅
+	 * @param {Object} searchResult - 검색 결과 객체
+	 * @param {string} query - 검색 쿼리
+	 * @returns {string} 마크다운 형식의 검색 결과
+	 */
+	formatResultsAsMarkdown(searchResult, query) {
+	 if (!searchResult || !searchResult.success || !searchResult.results || searchResult.results.length === 0) {
+	  return "검색 결과가 없습니다.";
+	 }
+	
+	 let markdown = "";
+	 const results = searchResult.results;
+	
+	 // 검색 결과 요약
+	 if (searchResult.summary) {
+	  markdown += `${searchResult.summary}\n\n`;
+	 }
+	
+	 // 각 검색 결과 포맷팅
+	 for (const [index, result] of results.entries()) {
+	  markdown += `### ${index + 1}. ${result.title || "제목 없음"}\n`;
+	  
+	  if (result.url) {
+	   markdown += `**출처**: [${result.source || result.displayUrl || result.url}](${result.url})\n`;
+	  }
+	  
+	  if (result.snippet) {
+	   markdown += `${result.snippet}\n`;
+	  }
+	  
+	  if (result.publishedDate) {
+	   markdown += `*게시일: ${result.publishedDate}*\n`;
+	  }
+	  
+	  markdown += "\n";
+	 }
+	
+	 return markdown.trim();
+	}
 }

@@ -588,16 +588,16 @@ async function sendMessage() {
 			});
 
 			// 검색 결과를 포함한 프롬프트 생성
-			if (searchResults.length > 0) {
-				contextualMessage = buildSearchPrompt(
-					userMessage,
-					intentClassification,
-				);
-				contextualMessage += "\n\n[검색 결과]\n";
-				contextualMessage += webSearchService.formatResultsAsMarkdown(
-					searchResults,
-					optimizedQuery,
-				);
+			if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
+			 contextualMessage = buildSearchPrompt(
+			  userMessage,
+			  intentClassification,
+			 );
+			 contextualMessage += "\n\n[검색 결과]\n";
+			 contextualMessage += webSearchService.formatResultsAsMarkdown(
+			  searchResults,
+			  optimizedQuery,
+			 );
 				contextualMessage += `\n\n[사용자 질문]\n${userMessage}`;
 				contextualMessage +=
 					"\n\n위의 검색 결과를 참고하여 정확하고 유용한 답변을 제공해주세요.";
