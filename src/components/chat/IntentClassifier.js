@@ -11,37 +11,97 @@ export class IntentClassifier {
 	initializePatterns() {
 		// 1. 실시간/최신 정보가 필요한 패턴 (검색 필수)
 		this.realtimePatterns = {
-			temporal: [
-				/최신|최근|현재|오늘|어제|이번\s*(주|달|년)|지금|방금|새로운|업데이트/,
-				/\d{4}년\s*\d{1,2}월|\d{1,2}월\s*\d{1,2}일|이번|다음|지난/,
-				/요즘|요새|근래|최근에|얼마\s*전|며칠\s*전/,
-			],
-			news: [
-				/뉴스|소식|발표|사건|이슈|동향|트렌드|핫한|화제|기사/,
-				/논란|파문|속보|단독|긴급|브레이킹/,
-			],
-			weather: [
-				/날씨|기온|온도|비|눈|태풍|미세먼지|황사|일기예보/,
-				/춥|덥|따뜻|선선|포근|쌀쌀|습도|강수/,
-			],
-			financial: [
-				/주가|주식|코스피|코스닥|나스닥|다우|환율|금리/,
-				/비트코인|이더리움|암호화폐|코인|가상화폐/,
-				/부동산|아파트|집값|전세|월세|매매가/,
-			],
-			sports: [
-				/경기|시합|스코어|결과|순위|리그|월드컵|올림픽/,
-				/축구|야구|농구|배구|골프|테니스|격투기/,
-				/선수|감독|팀|구단|이적|계약/,
-			],
-			entertainment: [
-				/영화|드라마|예능|방송|개봉|상영|시청률/,
-				/가수|배우|아이돌|연예인|콘서트|공연|앨범/,
-				/넷플릭스|유튜브|티빙|웨이브|디즈니/,
-			],
+		 temporal: [
+		  /최신|최근|현재|오늘|어제|이번\s*(주|달|년)|지금|방금|새로운|업데이트/,
+		  /\d{4}년\s*\d{1,2}월|\d{1,2}월\s*\d{1,2}일|이번|다음|지난/,
+		  /요즘|요새|근래|최근에|얼마\s*전|며칠\s*전/,
+		 ],
+		 news: [
+		  /뉴스|소식|발표|사건|이슈|동향|트렌드|핫한|화제|기사/,
+		  /논란|파문|속보|단독|긴급|브레이킹/,
+		  /정치|선거|대통령|이재명|윤석열/, // Edge Function 패턴 포함
+		 ],
+		 weather: [
+		  /날씨|기온|온도|비|눈|태풍|미세먼지|황사|일기예보/,
+		  /춥|덥|따뜻|선선|포근|쌀쌀|습도|강수/,
+		  /비.*올|비.*오|눈.*올|눈.*오/, // Edge Function 패턴 포함
+		 ],
+		 financial: [
+		  /주가|주식|코스피|코스닥|나스닥|다우|환율|금리/,
+		  /비트코인|이더리움|암호화폐|코인|가상화폐/,
+		  /부동산|아파트|집값|전세|월세|매매가/,
+		  /달러|원화/, // Edge Function 패턴 포함
+		 ],
+		 sports: [
+		  /경기|시합|스코어|결과|순위|리그|월드컵|올림픽/,
+		  /축구|야구|농구|배구|골프|테니스|격투기/,
+		  /선수|감독|팀|구단|이적|계약/,
+		  /프로야구|시즌|우승|1위|등수|성적/, // Edge Function 패턴 포함
+		 ],
+		 entertainment: [
+		  /영화|드라마|예능|방송|개봉|상영|시청률/,
+		  /가수|배우|아이돌|연예인|콘서트|공연|앨범/,
+		  /넷플릭스|유튜브|티빙|웨이브|디즈니/,
+		 ],
+		 general: [
+		  /가격|시세|요금/, // Edge Function 패턴 포함
+		 ],
 		};
-
-		// 2. 팩트 체크/정보 확인이 필요한 패턴
+		
+		// Edge Function과 동일한 패턴 추가
+		this.searchPatterns = [
+		 /검색해/,
+		 /검색해줘/,
+		 /검색/,
+		 /알려줘/,
+		 /최신.*뉴스/,
+		 /뉴스/,
+		 /현재/,
+		 /지금/,
+		 /오늘/,
+		 /정치/,
+		 /선거/,
+		 /대통령/,
+		 /이재명/,
+		 /윤석열/,
+		 /github.*토픽/,
+		 /깃허브.*토픽/,
+		 /될거/,
+		 /될거 같/,
+		 /될 것 같/,
+		 // 스포츠 관련
+		 /순위/,
+		 /프로야구/,
+		 /축구/,
+		 /야구/,
+		 /경기.*결과/,
+		 /스포츠/,
+		 /리그/,
+		 /시즌/,
+		 /우승/,
+		 /1위/,
+		 /등수/,
+		 /성적/,
+		 // 날씨 관련
+		 /날씨/,
+		 /기온/,
+		 /비.*올/,
+		 /비.*오/,
+		 /눈.*올/,
+		 /눈.*오/,
+		 // 주식/경제 관련
+		 /주가/,
+		 /주식/,
+		 /코스피/,
+		 /코스닥/,
+		 /환율/,
+		 /달러/,
+		 /원화/,
+		 // 실시간 정보가 필요한 것들
+		 /가격/,
+		 /시세/,
+		 /요금/,
+		];
 		this.factCheckPatterns = {
 			verification: [
 				/맞아?|맞나?|진짜?|정말?|사실|확인|검증|팩트/,
@@ -112,7 +172,7 @@ export class IntentClassifier {
 	}
 
 	/**
-	 * 주요 의도 분류 메서드
+	 * 주요 의도 분류 메서드 - Edge Function과 동일한 로직 사용
 	 * @returns {Object} { intent: 'search'|'blog'|'chat', confidence: 0-1, reasons: [], domains: [] }
 	 */
 	classifyIntent(query) {
@@ -134,18 +194,42 @@ export class IntentClassifier {
 			return result;
 		}
 
-		// 2. 명시적 검색 요청 체크
-		const explicitSearch = this.checkExplicitSearch(normalizedQuery);
-		if (explicitSearch.matched) {
+		// 2. Edge Function과 동일한 패턴으로 검색 필요성 체크
+		const needsSearch = this.searchPatterns.some((pattern) => pattern.test(normalizedQuery));
+		
+		if (needsSearch) {
 			result.intent = "search";
-			result.confidence = 1.0;
+			result.confidence = 0.9;
 			result.searchRequired = true;
-			result.reasons = explicitSearch.reasons;
-			result.keywords = explicitSearch.keywords;
+			
+			// 도메인 분석
+			if (/순위|프로야구|축구|야구|경기|스포츠|리그|시즌|우승|1위|등수|성적/.test(normalizedQuery)) {
+				result.domains.push("sports");
+				result.reasons.push("sports 관련 실시간 정보 필요");
+			}
+			if (/날씨|기온|비.*올|비.*오|눈.*올|눈.*오/.test(normalizedQuery)) {
+				result.domains.push("weather");
+				result.reasons.push("weather 관련 실시간 정보 필요");
+			}
+			if (/주가|주식|코스피|코스닥|환율|달러|원화/.test(normalizedQuery)) {
+				result.domains.push("financial");
+				result.reasons.push("financial 관련 실시간 정보 필요");
+			}
+			if (/뉴스|정치|선거|대통령/.test(normalizedQuery)) {
+				result.domains.push("news");
+				result.reasons.push("news 관련 최신 정보 필요");
+			}
+			
+			// 기본 이유 추가
+			if (result.reasons.length === 0) {
+				result.reasons.push("검색이 필요한 키워드 감지");
+			}
+			
 			return result;
 		}
 
-		// 3. 실시간 정보 필요성 체크
+		// 3. 기존 상세 패턴들도 체크 (호환성을 위해)
+		// 실시간 정보 필요성 체크
 		const realtimeCheck = this.checkRealtimeNeeds(normalizedQuery);
 		if (realtimeCheck.needed) {
 			result.intent = "search";
@@ -157,7 +241,7 @@ export class IntentClassifier {
 			return result;
 		}
 
-		// 4. 도메인 특화 정보 체크
+		// 도메인 특화 정보 체크
 		const domainCheck = this.checkDomainKnowledge(normalizedQuery);
 		if (domainCheck.matched && domainCheck.requiresSearch) {
 			result.intent = "search";
@@ -169,7 +253,7 @@ export class IntentClassifier {
 			return result;
 		}
 
-		// 5. 팩트 체크 필요성 분석
+		// 팩트 체크 필요성 분석
 		const factCheck = this.checkFactVerification(normalizedQuery);
 		if (factCheck.needed) {
 			result.intent = "search";
@@ -180,7 +264,7 @@ export class IntentClassifier {
 			return result;
 		}
 
-		// 6. 문맥적 단서 분석 (고급)
+		// 문맥적 단서 분석 (고급)
 		const contextualHints = this.analyzeContextualHints(normalizedQuery);
 		if (contextualHints.searchSuggested) {
 			result.intent = "search";
