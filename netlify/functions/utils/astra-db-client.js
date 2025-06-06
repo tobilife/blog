@@ -62,18 +62,37 @@ class AstraDBClient {
     // cache_key를 생성 (질문을 정규화하여 키로 사용)
     const cacheKey = this.generateCacheKey(question);
     const path = `/chat_cache/${encodeURIComponent(cacheKey)}`;
+    console.log('🔍 AstraDB Cache lookup:', {
+     question,
+     cacheKey,
+     path
+    });
     
     try {
-      const result = await this.request('GET', path);
-      
-      if (result && result.data && result.data.length > 0) {
-        const entry = result.data[0];
-        // 만료 시간 확인
-        const expiresAt = new Date(entry.expires_at);
-        if (expiresAt > new Date()) {
-          return entry;
-        }
+     const result = await this.request('GET', path);
+     console.log('🔍 AstraDB Cache result:', {
+      hasResult: !!result,
+      hasData: !!(result && result.data),
+      dataLength: result?.data?.length || 0
+     });
+     
+     if (result && result.data && result.data.length > 0) {
+      const entry = result.data[0];
+      console.log('📦 Cache entry found:', {
+       cacheKey: entry.cache_key,
+       hasResponse: !!entry.response,
+       responseLength: entry.response ? entry.response.length : 0,
+       expiresAt: entry.expires_at
+      });
+      // 만료 시간 확인
+      const expiresAt = new Date(entry.expires_at);
+      if (expiresAt > new Date()) {
+       console.log('✅ Cache entry is valid (not expired)');
+       return entry;
+      } else {
+       console.log('⚠️ Cache entry expired');
       }
+     }
     } catch (error) {
       // 404는 정상적인 캐시 미스
       if (error.message.includes('404')) {

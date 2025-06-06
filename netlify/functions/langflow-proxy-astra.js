@@ -880,8 +880,13 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
       cacheService = getCacheService();
       if (cacheService) {
         console.log('Cache service initialized successfully');
-        cachedResult = await cacheService.get(userQuery, { 
-          conversationLength: conversationHistory.length 
+        cachedResult = await cacheService.get(userQuery, {
+         conversationLength: conversationHistory.length
+        });
+        console.log('Cache lookup result:', {
+         hit: cachedResult.hit,
+         hasAnswer: !!cachedResult.answer,
+         answerLength: cachedResult.answer ? cachedResult.answer.length : 0
         });
       } else {
         console.log('Cache service not available');
