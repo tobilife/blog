@@ -392,6 +392,7 @@ async function pollTaskStatus(taskId, messageIndex) {
 	  id: userMessageId,
 	  role: "user",
 	  content: userMessage,
+	  },
 	];
 
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
