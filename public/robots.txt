@@ -7,6 +7,19 @@ User-agent: Googlebot-Image
 Allow: /
 Crawl-delay: 0
 
+# Naver Bot
+User-agent: Yeti
+Allow: /
+Crawl-delay: 0
+
+User-agent: NaverBot
+Allow: /
+Crawl-delay: 0
+
+User-agent: NaverBot-Scrap
+Allow: /
+Crawl-delay: 0
+
 # Allow all web crawlers
 User-agent: *
 Allow: /

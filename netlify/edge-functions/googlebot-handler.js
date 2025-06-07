@@ -42,12 +42,17 @@ export default async (request, context) => {
 	const userAgent = request.headers.get("user-agent") || "";
 	const isGooglebot = userAgent.toLowerCase().includes("googlebot");
 	
-	// Also support other search engine bots
+	// Also support other search engine bots including Naver
+	const isNaverBot = userAgent.toLowerCase().includes("yeti") || // Naver search bot
+	 userAgent.toLowerCase().includes("naverbot") ||
+	 userAgent.toLowerCase().includes("daumoa"); // Daum search (now part of Kakao)
+	
 	const isSearchBot = isGooglebot ||
-		userAgent.toLowerCase().includes("bingbot") ||
-		userAgent.toLowerCase().includes("yandexbot") ||
-		userAgent.toLowerCase().includes("duckduckbot") ||
-		userAgent.toLowerCase().includes("slurp"); // Yahoo
+	 isNaverBot ||
+	 userAgent.toLowerCase().includes("bingbot") ||
+	 userAgent.toLowerCase().includes("yandexbot") ||
+	 userAgent.toLowerCase().includes("duckduckbot") ||
+	 userAgent.toLowerCase().includes("slurp"); // Yahoo
 
 	// Log bot requests for debugging
 	if (isSearchBot) {
@@ -56,6 +61,7 @@ export default async (request, context) => {
 			userAgent: userAgent,
 			method: request.method,
 			isGooglebot: isGooglebot,
+			isNaverBot: isNaverBot,
 			timestamp: new Date().toISOString()
 		});
 	}

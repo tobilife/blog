@@ -15,18 +15,18 @@
 
 ### 2. Edge Functions
 
-#### Facebook 크롤러 핸들러
-- **파일**: `netlify/edge-functions/facebook-crawler-handler.js`
+#### 소셜 미디어 크롤러 핸들러
+- **파일**: `netlify/edge-functions/social-crawler-handler.js`
 - **기능**:
-  - Facebook, Twitter, LinkedIn 등 소셜 미디어 크롤러 감지
-  - 502 오류 방지를 위한 타임아웃 처리
+  - 네이버, 카카오, Facebook, Twitter, LinkedIn 등 소셜 미디어 크롤러 감지
+  - 502 오류 방지를 위한 타임아웃 처리 (네이버/카카오: 5초, 기타: 8초)
   - 실제 포스트 메타데이터 기반 Open Graph 태그 생성
   - 5분 캐싱으로 성능 최적화
 
 #### Googlebot 핸들러
 - **파일**: `netlify/edge-functions/googlebot-handler.js`
 - **기능**:
-  - Google, Bing, Yandex 등 검색 엔진 봇 감지
+  - Google, 네이버(Yeti), Bing, Yandex 등 검색 엔진 봇 감지
   - 구조화된 데이터(Schema.org) 생성
   - Breadcrumb 구조 데이터 포함
   - 상세한 로깅 및 성능 모니터링
@@ -65,9 +65,18 @@ node scripts/build-posts-metadata.js
 2. URL 입력: `https://tobilife.netlify.app/posts/[slug]/`
 3. "초기화" 버튼 클릭하여 캐시 갱신
 
+#### 네이버 공유 디버거
+1. https://share.naver.com/web/debugger 접속
+2. URL 입력: `https://tobilife.netlify.app/posts/[slug]/`
+3. "확인" 버튼 클릭
+
 #### Google Search Console
 1. URL 검사 도구 사용
 2. 색인 생성 요청
+
+#### 네이버 웹마스터 도구
+1. https://searchadvisor.naver.com/ 접속
+2. 사이트 등록 및 사이트맵 제출
 
 ## 메타데이터 형식
 

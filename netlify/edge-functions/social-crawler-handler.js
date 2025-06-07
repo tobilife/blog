@@ -41,16 +41,21 @@ export default async (request, context) => {
 
 	const userAgent = request.headers.get("user-agent") || "";
 	
+	// Check if it's Naver crawler for sharing
+	const isNaverBot = userAgent.toLowerCase().includes("naverbot-scrap") || // Naver sharing bot
+	 userAgent.toLowerCase().includes("naver") ||
+	 userAgent.toLowerCase().includes("yeti"); // Naver search bot
+	
 	// Check if it's Kakao crawler - Kakao uses various user agents
 	const isKakaoCrawler = userAgent.toLowerCase().includes("kakaotalk") || 
-		userAgent.toLowerCase().includes("kakaostory") ||
-		userAgent.toLowerCase().includes("kakao") ||
-		userAgent.toLowerCase().includes("daum"); // Daum is owned by Kakao
+	 userAgent.toLowerCase().includes("kakaostory") ||
+	 userAgent.toLowerCase().includes("kakao") ||
+	 userAgent.toLowerCase().includes("daum"); // Daum is owned by Kakao
 	
 	// Check if it's Facebook crawler or other social media crawlers
 	const isFacebookCrawler = userAgent.toLowerCase().includes("facebookexternalhit") || 
-		userAgent.toLowerCase().includes("facebookcatalog") ||
-		userAgent.toLowerCase().includes("facebookbot");
+	 userAgent.toLowerCase().includes("facebookcatalog") ||
+	 userAgent.toLowerCase().includes("facebookbot");
 	
 	const isTwitterBot = userAgent.toLowerCase().includes("twitterbot");
 	const isLinkedInBot = userAgent.toLowerCase().includes("linkedinbot");
@@ -59,8 +64,8 @@ export default async (request, context) => {
 	const isTelegramBot = userAgent.toLowerCase().includes("telegrambot");
 	const isWhatsAppBot = userAgent.toLowerCase().includes("whatsapp");
 	
-	const isSocialCrawler = isKakaoCrawler || isFacebookCrawler || isTwitterBot || 
-		isLinkedInBot || isSlackBot || isDiscordBot || isTelegramBot || isWhatsAppBot;
+	const isSocialCrawler = isNaverBot || isKakaoCrawler || isFacebookCrawler || isTwitterBot || 
+	 isLinkedInBot || isSlackBot || isDiscordBot || isTelegramBot || isWhatsAppBot;
 
 	// Log social crawler requests for debugging
 	if (isSocialCrawler) {
@@ -69,14 +74,15 @@ export default async (request, context) => {
 			userAgent: userAgent,
 			method: request.method,
 			crawler: {
-				kakao: isKakaoCrawler,
-				facebook: isFacebookCrawler,
-				twitter: isTwitterBot,
-				linkedin: isLinkedInBot,
-				slack: isSlackBot,
-				discord: isDiscordBot,
-				telegram: isTelegramBot,
-				whatsapp: isWhatsAppBot
+			 naver: isNaverBot,
+			 kakao: isKakaoCrawler,
+			 facebook: isFacebookCrawler,
+			 twitter: isTwitterBot,
+			 linkedin: isLinkedInBot,
+			 slack: isSlackBot,
+			 discord: isDiscordBot,
+			 telegram: isTelegramBot,
+			 whatsapp: isWhatsAppBot
 			},
 			timestamp: new Date().toISOString()
 		});
@@ -85,8 +91,8 @@ export default async (request, context) => {
 	// Handle social crawler requests with special care
 	if (isSocialCrawler && request.method === "GET") {
 		try {
-			// For Kakao crawler, use a shorter timeout as it's more sensitive
-			const timeoutDuration = isKakaoCrawler ? 5000 : 8000;
+			// For Kakao and Naver crawlers, use a shorter timeout as they're more sensitive
+			const timeoutDuration = (isKakaoCrawler || isNaverBot) ? 5000 : 8000;
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 			
