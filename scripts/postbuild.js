@@ -9,8 +9,19 @@ const robotsSrc = join(publicPath, "robots.txt");
 const robotsDest = join(distPath, "robots.txt");
 
 if (existsSync(robotsSrc)) {
-	copyFileSync(robotsSrc, robotsDest);
+ copyFileSync(robotsSrc, robotsDest);
 } else {
+}
+
+// Copy posts-metadata.json from public to dist
+const metadataSrc = join(publicPath, "posts-metadata.json");
+const metadataDest = join(distPath, "posts-metadata.json");
+
+if (existsSync(metadataSrc)) {
+ copyFileSync(metadataSrc, metadataDest);
+ console.log("Copied posts-metadata.json to dist");
+} else {
+ console.log("posts-metadata.json not found in public directory");
 }
 
 // Check if sitemap files exist
