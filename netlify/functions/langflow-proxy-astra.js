@@ -1072,22 +1072,35 @@ exports.handler = async (event, context) => {
 			: complexity.recommendations.searchLimit;
 
 		// 사용자가 웹 검색을 활성화한 경우에만 웹 검색 수행
+		console.log("🔍 웹검색 플래그:", enableWebSearch);
+		console.log("🔍 검색 필요 여부:", intent.needsSearch);
+		console.log("🔍 블로그 관련:", intent.isBlogRelated);
+		
 		if (
-			enableWebSearch &&
-			(GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY) &&
-			intent.needsSearch &&
-			!intent.isWeather &&
-			!intent.isDateTime &&
-			!intent.isBlogRelated &&
-			(hasExplicitSearchRequest || effectiveSearchLimit > 0)
+		 enableWebSearch &&
+		 (GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY)
 		) {
-			searchResults = await performEnhancedSearch(
-				userQuery,
-				GOOGLE_API_KEY,
-				GOOGLE_SEARCH_ENGINE_ID,
-				BRAVE_API_KEY,
-				TAVILY_API_KEY,
-			);
+		 // 웹검색이 활성화되면 더 넓은 범위의 질문에 대해 검색 수행
+		 // 단, 날씨/날짜/블로그 관련 질문은 제외
+		 if (
+		  !intent.isWeather &&
+		  !intent.isDateTime &&
+		  !intent.isBlogRelated &&
+		  (intent.needsSearch || hasExplicitSearchRequest || complexity.score >= 2) // 복잡도가 2 이상이면 검색
+		 ) {
+		  console.log("✅ 웹검색 실행");
+		  searchResults = await performEnhancedSearch(
+		   userQuery,
+		   GOOGLE_API_KEY,
+		   GOOGLE_SEARCH_ENGINE_ID,
+		   BRAVE_API_KEY,
+		   TAVILY_API_KEY,
+		  );
+		 } else {
+		  console.log("❌ 웹검색 스킵 - 날씨/날짜/블로그 관련 질문");
+		 }
+		} else if (!enableWebSearch) {
+		 console.log("❌ 웹검색 비활성화됨");
 		}
 
 		// 프롬프트 향상

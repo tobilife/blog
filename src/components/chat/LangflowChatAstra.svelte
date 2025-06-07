@@ -587,6 +587,7 @@ async function sendMessage() {
 
 		// Astra DB 최적화 항상 사용
 		if (optimizedChatService) {
+		 console.log("🔍 웹검색 토글 상태:", enableWebSearch);
 		 const response = await optimizedChatService.sendMessage({
 		  input_value: contextualMessage,
 		  session_id: sessionId,
