@@ -33,9 +33,9 @@ export default async (request, context) => {
     <link rel="canonical" href="${request.url}">
 </head>
 <body>
-    <h1>TobiLife</h1>
-    <p>IT 개발자의 기술 블로그입니다.</p>
-    <p>AI, RAG, Git/GitHub, 보험IT 등 다양한 개발 경험과 지식을 공유합니다.</p>
+    <h1>TobiLife 블로그</h1>
+    <p>토비라이프 블로그입니다.</p>
+    <p>AI,보험IT 등 다양한 개발 경험과 지식을 공유합니다.</p>
     <nav>
         <a href="/">홈</a>
         <a href="/archive/">글 목록</a>
