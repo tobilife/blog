@@ -21,6 +21,17 @@ let marked = null;
 let katex = null;
 let chatMessagesEl = null;
 
+// 웹 검색 활성화 상태
+let enableWebSearch = false;
+
+// 로컬 스토리지에서 사용자 설정 불러오기
+if (typeof window !== "undefined") {
+ const savedWebSearchPref = localStorage.getItem("enableWebSearch");
+ if (savedWebSearchPref !== null) {
+  enableWebSearch = savedWebSearchPref === "true";
+ }
+}
+
 // Astra DB 최적화 서비스
 let optimizedChatService = null;
 let useAstraOptimization = true; // 기본값: Astra DB 최적화 사용
@@ -163,7 +174,16 @@ function copyCode(codeId) {
 
 // 전역 함수로 등록
 if (typeof window !== "undefined") {
-	window.copyCode = copyCode;
+ window.copyCode = copyCode;
+}
+
+// 웹 검색 토글 함수
+function toggleWebSearch() {
+ enableWebSearch = !enableWebSearch;
+ // 로컬 스토리지에 저장
+ if (typeof window !== "undefined") {
+  localStorage.setItem("enableWebSearch", enableWebSearch.toString());
+ }
 }
 
 // 피드백 처리 함수들
@@ -567,12 +587,13 @@ async function sendMessage() {
 
 		// Astra DB 최적화 항상 사용
 		if (optimizedChatService) {
-			const response = await optimizedChatService.sendMessage({
-				input_value: contextualMessage,
-				session_id: sessionId,
-				conversation_history: recentMessages,
-				tweaks: {},
-			});
+		 const response = await optimizedChatService.sendMessage({
+		  input_value: contextualMessage,
+		  session_id: sessionId,
+		  conversation_history: recentMessages,
+		  enableWebSearch: enableWebSearch, // 웹 검색 플래그 추가
+		  tweaks: {},
+		 });
 
 			// 모든 응답을 동기 처리로 간주
 			if (response.type === "sync" || response.type === "async") {
@@ -618,18 +639,19 @@ async function sendMessage() {
           
           // 폴링 시작
           pollTaskStatus(activeTaskId, messageIndex);
-        }
-        */
-		} else {
-			const payload = {
-				input_value: contextualMessage,
-				output_type: "chat",
-				input_type: "chat",
-				stream: false,
-				session_id: sessionId,
-				conversation_history: recentMessages,
-				tweaks: {},
-			};
+          }
+          */
+          } else {
+         const payload = {
+          input_value: contextualMessage,
+          output_type: "chat",
+          input_type: "chat",
+          stream: false,
+          session_id: sessionId,
+          conversation_history: recentMessages,
+          enableWebSearch: enableWebSearch, // 웹 검색 플래그 추가
+          tweaks: {},
+         };
 
 			const response = await fetch("/.netlify/functions/langflow-proxy-astra", {
 				method: "POST",
@@ -762,7 +784,7 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-				"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🚀 <strong>AI 기반 지능형 대화 시스템!</strong><br>- 질문 의도를 분석하여 최적의 답변 제공<br>- 실시간 정보가 필요하면 자동으로 웹 검색<br>- 블로그 관련 질문은 모든 포스트 참조<br><br>🧠 <strong>무한한 질문 범위!</strong><br>- 날씨, 뉴스, 주식, 환율 등 실시간 정보<br>- 건강, 여행, 맛집, 쇼핑 등 생활 정보<br>- 기술, 교육, 법률, 스포츠 등 전문 지식<br>- 블로그 콘텐츠와 AI/프로그래밍 기술<br><br>🔍 <strong>예시 질문:</strong><br>- '오늘 서울 날씨 알려줘'<br>- '최근 아이폰 16 가격이 얼마야?'<br>- '토비라이프 블로그에 AI 관련 글 보여줘'<br><br>무엇이든 물어보세요! 🤖",
+			 "안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🌐 <strong>웹 검색 기능!</strong><br>- 입력창 옆 지구본 아이콘으로 웹 검색 ON/OFF<br>- 비활성화 시: 빠른 AI 답변 (기본값)<br>- 활성화 시: 실시간 정보 검색<br><br>🚀 <strong>AI 기반 지능형 대화 시스템!</strong><br>- 질문 의도를 분석하여 최적의 답변 제공<br>- 블로그 관련 질문은 모든 포스트 참조<br><br>🧠 <strong>무한한 질문 범위!</strong><br>- 날씨, 뉴스, 주식, 환율 등 실시간 정보<br>- 건강, 여행, 맛집, 쇼핑 등 생활 정보<br>- 기술, 교육, 법률, 스포츠 등 전문 지식<br>- 블로그 콘텐츠와 AI/프로그래밍 기술<br><br>🔍 <strong>예시 질문:</strong><br>- '오늘 서울 날씨 알려줘'<br>- '최근 아이폰 16 가격이 얼마야?'<br>- '토비라이프 블로그에 AI 관련 글 보여줘'<br><br>무엇이든 물어보세요! 🤖",
 		},
 	];
 
@@ -889,6 +911,17 @@ onMount(async () => {
       
       <!-- 입력 영역 -->
       <div class="chat-input-container">
+        <!-- 웹 검색 토글 버튼 -->
+        <button
+          class="web-search-toggle"
+          class:active={enableWebSearch}
+          on:click={toggleWebSearch}
+          title={enableWebSearch ? "웹 검색 활성화됨" : "웹 검색 비활성화됨"}
+          aria-label="웹 검색 토글"
+        >
+          <i class="fas fa-globe"></i>
+        </button>
+        
         <input
           type="text"
           class="chat-input"
@@ -1561,6 +1594,44 @@ onMount(async () => {
     padding: 12px;
     background-color: white;
     border-top: 1px solid #e0e0e0;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  /* 웹 검색 토글 버튼 스타일 */
+  .web-search-toggle {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: #666;
+  }
+  
+  .web-search-toggle:hover {
+    background-color: #e8e8e8;
+    border-color: #999;
+  }
+  
+  .web-search-toggle.active {
+    background-color: #4A90E2;
+    color: white;
+    border-color: #4A90E2;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+  }
+  
+  .web-search-toggle.active:hover {
+    background-color: #357ABD;
+    border-color: #357ABD;
+  }
+  
+  .web-search-toggle i {
+    font-size: 18px;
   }
   
   .chat-input {

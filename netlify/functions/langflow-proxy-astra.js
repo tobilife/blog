@@ -926,6 +926,7 @@ exports.handler = async (event, context) => {
 		const requestBody = JSON.parse(event.body);
 		const userQuery = requestBody.input_value || "";
 		const conversationHistory = requestBody.conversation_history || [];
+		const enableWebSearch = requestBody.enableWebSearch !== false; // 기본값 true
 
 		// 빈 쿼리 체크
 		if (!userQuery || !userQuery.trim()) {
@@ -1033,8 +1034,9 @@ exports.handler = async (event, context) => {
 			? Math.max(3, complexity.recommendations.searchLimit)
 			: complexity.recommendations.searchLimit;
 
-		// 날씨 정보를 이미 가져왔거나, 날씨 질문이 아니고, 블로그 관련 질문이 아닌 경우에만 웹 검색
+		// 사용자가 웹 검색을 활성화한 경우에만 웹 검색 수행
 		if (
+		 enableWebSearch &&
 		 (GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY) &&
 		 intent.needsSearch &&
 		 !intent.isWeather &&
