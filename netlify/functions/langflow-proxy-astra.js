@@ -60,13 +60,42 @@ function analyzeQueryComplexity(query) {
 
 // 질문의 주제를 분석하는 함수 (기존 코드 재사용)
 function analyzeQueryIntent(query) {
-	const lowerQuery = query.toLowerCase();
+ const lowerQuery = query.toLowerCase();
 
-	// 날짜/시간 전용 패턴
-	const dateTimePatterns = [
-		/오늘.*날짜/,
-		/오늘.*몇.*일/,
-		/오늘.*무슨.*요일/,
+ // 블로그 관련 패턴 추가
+ const blogPatterns = [
+  /이\s*블로그/,
+  /여기서/,
+  /여기에/,
+  /토비라이프/,
+  /tobilife/,
+  /포스트/,
+  /작성한/,
+  /쓴/,
+  /올린/,
+  /블로그\s*주인/,
+  /블로그에서/,
+  /여기\s*있는/,
+  /토비라이프가/,
+  /토비라이프의/,
+  /목록/,
+  // AI 관련 키워드도 블로그 내용으로 간주
+  /rag/i,
+  /langchain/i,
+  /chromadb/i,
+  /ollama/i,
+  /docker/i,
+  /sim\s*studio/i,
+  /ai\s*agent/i,
+  /워크플로우/,
+  /자동화/,
+  /지식베이스/,
+ ];
+
+ // 날짜/시간 전용 패턴
+ const dateTimePatterns = [
+  /오늘.*날짜/,
+  /오늘.*몇.*일/,
 		/현재.*시간/,
 		/지금.*몇.*시/,
 		/오늘이.*며칠/,
@@ -153,27 +182,33 @@ function analyzeQueryIntent(query) {
 		/총리/,
 	];
 
+	// 블로그 관련 질문 확인
+	const isBlogRelated = blogPatterns.some((pattern) => pattern.test(lowerQuery));
+	
 	// 날짜/시간 질문 확인
 	const isDateTime = dateTimePatterns.some((pattern) => pattern.test(lowerQuery));
-
+	
 	// 날씨 질문 확인
 	const isWeather = weatherPatterns.some((pattern) => pattern.test(lowerQuery));
-
-	// 일반 검색 필요 확인
+	
+	// 일반 검색 필요 확인 (블로그 관련 질문이면 웹 검색 제외)
 	const needsSearch =
-		searchPatterns.some((pattern) => pattern.test(lowerQuery)) ||
-		((lowerQuery.includes("최신") ||
-			lowerQuery.includes("현재") ||
-			lowerQuery.includes("오늘") ||
-			lowerQuery.includes("요즘")) &&
-			!isDateTime &&
-			!isWeather);
+	 !isBlogRelated && (
+	  searchPatterns.some((pattern) => pattern.test(lowerQuery)) ||
+	  ((lowerQuery.includes("최신") ||
+	   lowerQuery.includes("현재") ||
+	   lowerQuery.includes("오늘") ||
+	   lowerQuery.includes("요즘")) &&
+	   !isDateTime &&
+	   !isWeather)
+	 );
 
 	return {
-		isDateTime,
-		isWeather,
-		needsSearch,
-		originalQuery: query,
+	 isDateTime,
+	 isWeather,
+	 isBlogRelated,
+	 needsSearch,
+	 originalQuery: query,
 	};
 }
 
@@ -998,13 +1033,14 @@ exports.handler = async (event, context) => {
 			? Math.max(3, complexity.recommendations.searchLimit)
 			: complexity.recommendations.searchLimit;
 
-		// 날씨 정보를 이미 가져왔거나, 날씨 질문이 아닌 경우에만 웹 검색
+		// 날씨 정보를 이미 가져왔거나, 날씨 질문이 아니고, 블로그 관련 질문이 아닌 경우에만 웹 검색
 		if (
-			(GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY) &&
-			intent.needsSearch &&
-			!intent.isWeather &&
-			!intent.isDateTime &&
-			(hasExplicitSearchRequest || effectiveSearchLimit > 0)
+		 (GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY) &&
+		 intent.needsSearch &&
+		 !intent.isWeather &&
+		 !intent.isDateTime &&
+		 !intent.isBlogRelated &&
+		 (hasExplicitSearchRequest || effectiveSearchLimit > 0)
 		) {
 			searchResults = await performEnhancedSearch(
 				userQuery,
