@@ -92,13 +92,6 @@ async function indexPosts() {
 
 	// JSON 파일로 저장
 	fs.writeFileSync(OUTPUT_FILE, JSON.stringify(knowledgeBase, null, 2));
-
-	console.log(
-		`✅ Knowledge base created with ${knowledgeBase.totalPosts} posts`,
-	);
-	console.log(`📁 Output: ${OUTPUT_FILE}`);
-	console.log(`🏷️  Tags: ${knowledgeBase.tags.join(", ")}`);
-	console.log(`📂 Categories: ${knowledgeBase.categories.join(", ")}`);
 }
 
 // 실행

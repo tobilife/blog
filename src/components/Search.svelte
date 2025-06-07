@@ -30,8 +30,7 @@ const fakeResult: SearchResult[] = [
 		meta: {
 			title: "This Is a Fake Search Result",
 		},
-		excerpt:
-			"Because the search cannot work in the <mark>dev</mark> environment.",
+		excerpt: "Because the search cannot work in the <mark>dev</mark> environment.",
 	},
 	{
 		url: url("/"),
@@ -58,10 +57,7 @@ const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 	}
 };
 
-const searchImpl = async (
-	keyword: string,
-	isDesktop: boolean,
-): Promise<void> => {
+const searchImpl = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	if (!keyword) {
 		setPanelVisibility(false, isDesktop);
 		result = [];
@@ -75,9 +71,7 @@ const searchImpl = async (
 
 		if (import.meta.env.PROD && pagefindLoaded) {
 			const response = await window.pagefind.search(keyword);
-			searchResults = await Promise.all(
-				response.results.map((item) => item.data()),
-			);
+			searchResults = await Promise.all(response.results.map((item) => item.data()));
 		} else {
 			searchResults = fakeResult;
 		}
@@ -94,22 +88,13 @@ const searchImpl = async (
 };
 
 // Debounced search functions
-const searchDesktop = debounce(
-	(keyword: string) => searchImpl(keyword, true),
-	300,
-);
-const searchMobile = debounce(
-	(keyword: string) => searchImpl(keyword, false),
-	300,
-);
+const searchDesktop = debounce((keyword: string) => searchImpl(keyword, true), 300);
+const searchMobile = debounce((keyword: string) => searchImpl(keyword, false), 300);
 
 onMount(async () => {
 	pagefindLoaded = typeof window !== "undefined" && "pagefind" in window;
 
 	if (import.meta.env.DEV) {
-		console.log(
-			"Pagefind is not available in development mode. Using mock data.",
-		);
 	}
 });
 

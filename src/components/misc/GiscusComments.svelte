@@ -16,10 +16,7 @@ function getCurrentTheme() {
 function updateGiscusTheme(theme: string) {
 	const iframe = document.querySelector<HTMLIFrameElement>(".giscus-frame");
 	if (iframe?.contentWindow) {
-		iframe.contentWindow.postMessage(
-			{ giscus: { setConfig: { theme } } },
-			"https://giscus.app",
-		);
+		iframe.contentWindow.postMessage({ giscus: { setConfig: { theme } } }, "https://giscus.app");
 	}
 }
 

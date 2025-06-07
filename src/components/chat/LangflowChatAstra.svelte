@@ -85,44 +85,39 @@ function renderMarkdown(text) {
 			});
 
 			// 블록 수식: $$...$$
-			processedText = processedText.replace(
-				/\$\$([^\$]+)\$\$/g,
-				(match, math) => {
-					try {
-						return katex.renderToString(math, {
-							throwOnError: false,
-							displayMode: true,
-						});
-					} catch (e) {
-						return match;
-					}
-				},
-			);
+			processedText = processedText.replace(/\$\$([^\$]+)\$\$/g, (match, math) => {
+				try {
+					return katex.renderToString(math, {
+						throwOnError: false,
+						displayMode: true,
+					});
+				} catch (e) {
+					return match;
+				}
+			});
 		}
 
 		// 그 다음 마크다운 처리
 		let html = marked.parse(processedText);
 
 		// 코드 블록에 복사 버튼 추가
-		html = html.replace(
-			/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g,
-			(match, attrs, code) => {
-				// 언어 추출
-				const langMatch = attrs.match(/class="language-([^"]+)"/);
-				const language = langMatch ? langMatch[1] : "plaintext";
+		html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (match, attrs, code) => {
+			// 언어 추출
+			const langMatch = attrs.match(/class="language-([^"]+)"/);
+			const language = langMatch ? langMatch[1] : "plaintext";
 
-				// HTML 엔티티 디코드
-				const decodedCode = code
-					.replace(/&lt;/g, "<")
-					.replace(/&gt;/g, ">")
-					.replace(/&amp;/g, "&")
-					.replace(/&quot;/g, '"')
-					.replace(/&#39;/g, "'");
+			// HTML 엔티티 디코드
+			const decodedCode = code
+				.replace(/&lt;/g, "<")
+				.replace(/&gt;/g, ">")
+				.replace(/&amp;/g, "&")
+				.replace(/&quot;/g, '"')
+				.replace(/&#39;/g, "'");
 
-				// 고유 ID 생성
-				const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
+			// 고유 ID 생성
+			const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
 
-				return `
+			return `
     <div class="code-block-wrapper">
       <div class="code-block-header">
       <span class="code-language">${language}</span>
@@ -134,8 +129,7 @@ function renderMarkdown(text) {
       <pre><code id="${codeId}" class="language-${language}">${decodedCode}</code></pre>
     </div>
     `;
-			},
-		);
+		});
 
 		return html;
 	} catch (error) {
@@ -154,9 +148,7 @@ function copyCode(codeId) {
 			.then(() => {
 				// 복사 성공 피드백
 				const button =
-					codeElement.parentElement.previousElementSibling.querySelector(
-						".copy-button",
-					);
+					codeElement.parentElement.previousElementSibling.querySelector(".copy-button");
 				const copyText = button.querySelector(".copy-text");
 				copyText.textContent = "복사됨!";
 				setTimeout(() => {
@@ -214,11 +206,7 @@ async function handleFeedbackSubmit(event) {
 	const fullComment = reason + (comment ? `: ${comment}` : "");
 
 	// 서버에 피드백 제출
-	const result = await feedbackService.submitFeedback(
-		message.cacheKey,
-		feedback,
-		fullComment,
-	);
+	const result = await feedbackService.submitFeedback(message.cacheKey, feedback, fullComment);
 
 	if (result.success) {
 		showToastMessage("피드백이 제출되었습니다. 감사합니다!", "success");
@@ -254,10 +242,7 @@ function generateBaseInstructions() {
 		"- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
 
 	// BlogRAGService가 초기화되고 데이터가 있으면 동적으로 게시물 목록 추가
-	if (
-		blogRAGService?.knowledgeBase?.posts &&
-		blogRAGService.knowledgeBase.posts.length > 0
-	) {
+	if (blogRAGService?.knowledgeBase?.posts && blogRAGService.knowledgeBase.posts.length > 0) {
 		instructions += "- 블로그의 실제 게시물:\n";
 
 		// 최신순으로 정렬
@@ -270,8 +255,7 @@ function generateBaseInstructions() {
 			instructions += `  ${index + 1}. '${post.title}' (${date}, ${post.category} 카테고리)\n`;
 		}
 
-		instructions +=
-			"- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
+		instructions += "- 블로그 글 목록을 요청받으면 위의 실제 게시물들을 참조하여 답변하세요\n";
 	} else {
 		// 기본 게시물 정보 (폴백)
 		instructions +=
@@ -434,7 +418,6 @@ async function sendMessage() {
 	// 1단계: 의도 분류
 	if (intentClassifier) {
 		intentClassification = intentClassifier.classifyIntent(userMessage);
-		console.log("🧠 Intent Classification:", intentClassification);
 
 		// 검색 필요 여부 표시
 		if (intentClassification.searchRequired) {
@@ -449,12 +432,9 @@ async function sendMessage() {
 	// 1.5단계: Chain of Thought 처리 (복잡한 질문인 경우)
 	let cotDecomposition = null;
 	if (chainOfThoughtService && intentClassification?.intent === "search") {
-		cotDecomposition =
-			await chainOfThoughtService.decomposeQuestion(userMessage);
+		cotDecomposition = await chainOfThoughtService.decomposeQuestion(userMessage);
 
 		if (cotDecomposition.needsDecomposition) {
-			console.log("🧠 CoT Decomposition:", cotDecomposition);
-
 			// CoT 처리 중임을 표시
 			messages[messageIndex] = {
 				...messages[messageIndex],
@@ -470,15 +450,13 @@ async function sendMessage() {
 				// 진행 상황 업데이트
 				messages[messageIndex] = {
 					...messages[messageIndex],
-					cotProgress:
-						((index + 1) / cotDecomposition.subQuestions.length) * 100,
+					cotProgress: ((index + 1) / cotDecomposition.subQuestions.length) * 100,
 					cotCurrentQuestion: subQ.question,
 				};
 				messages = [...messages];
 
 				// 각 하위 질문에 대해 웹 검색 수행
-				const subAnswer =
-					await chainOfThoughtService.searchForSubQuestion(subQ);
+				const subAnswer = await chainOfThoughtService.searchForSubQuestion(subQ);
 				subAnswers.push(subAnswer);
 
 				// 약간의 딜레이 추가 (시각적 효과)
@@ -492,8 +470,7 @@ async function sendMessage() {
 			);
 
 			// 종합된 답변을 컨텍스트에 추가
-			contextualMessage =
-				chainOfThoughtService.formatSynthesizedAnswer(synthesis);
+			contextualMessage = chainOfThoughtService.formatSynthesizedAnswer(synthesis);
 
 			// CoT 완료 표시
 			messages[messageIndex] = {
@@ -509,12 +486,8 @@ async function sendMessage() {
 	if (intentClassification?.intent === "blog") {
 		// 블로그 관련 질문 처리
 		try {
-			console.log("📚 블로그 관련 질문 감지!");
-
 			// 블로그 목록 요청인지 확인
 			if (BlogListHelper.isBlogListRequest(userMessage)) {
-				console.log("📝 블로그 목록 요청으로 확인됨");
-
 				// 모든 포스트 가져오기
 				if (blogRAGService.knowledgeBase?.posts) {
 					const blogListResponse = BlogListHelper.formatBlogList(
@@ -530,26 +503,13 @@ async function sendMessage() {
 
 			// 키워드 추출 및 블로그 포스트 검색
 			const keywords = await contextDetector.extractSearchKeywords(userMessage);
-			console.log("Extracted keywords:", keywords);
 
 			const searchQuery = keywords.join(" ");
 			searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
-			console.log(`Found ${searchResults.length} blog posts`);
 
 			if (searchResults.length > 0) {
-				console.log(
-					"Blog search results:",
-					searchResults.map((r) => ({
-						title: r.post.title,
-						score: r.score,
-					})),
-				);
-
 				// LLM 프롬프트에 블로그 컨텍스트 추가
-				contextualMessage = blogRAGService.buildContextualPrompt(
-					userMessage,
-					searchResults,
-				);
+				contextualMessage = blogRAGService.buildContextualPrompt(userMessage, searchResults);
 				isAboutBlog = true;
 			} else {
 				// 블로그 검색 결과가 없어도 기본 지침 추가
@@ -562,17 +522,9 @@ async function sendMessage() {
 	} else if (intentClassification?.intent === "search") {
 		// 웹 검색이 필요한 질문 처리
 		requiresWebSearch = true;
-		console.log("🔍 웹 검색이 필요한 질문:", {
-			domains: intentClassification.domains,
-			reasons: intentClassification.reasons,
-			keywords: intentClassification.keywords,
-		});
 
 		// 검색 쿼리 최적화
-		const optimizedQuery = intentClassifier.optimizeSearchQuery(
-			userMessage,
-			intentClassification,
-		);
+		const optimizedQuery = intentClassifier.optimizeSearchQuery(userMessage, intentClassification);
 
 		// 웹 검색 실행 - 실제 검색은 langflow-proxy-astra에서 수행됨
 		if (!chainOfThoughtService) {
@@ -615,8 +567,6 @@ async function sendMessage() {
 
 		// Astra DB 최적화 항상 사용
 		if (optimizedChatService) {
-			console.log("🚀 Astra DB 최적화 모드로 메시지 전송");
-
 			const response = await optimizedChatService.sendMessage({
 				input_value: contextualMessage,
 				session_id: sessionId,
@@ -628,12 +578,9 @@ async function sendMessage() {
 			if (response.type === "sync" || response.type === "async") {
 				// 캐시 히트 또는 즉시 완료
 				if (response.cacheHit) {
-					console.log("🎯 Cache hit!");
 				}
 				await new Promise((resolve) => setTimeout(resolve, 300));
-				const parsedResponse = optimizedChatService.parseResponse(
-					response.data,
-				);
+				const parsedResponse = optimizedChatService.parseResponse(response.data);
 
 				// 블로그 참조 링크 추가
 				let finalResponse = parsedResponse;
@@ -674,9 +621,6 @@ async function sendMessage() {
         }
         */
 		} else {
-			// 기존 방식으로 처리
-			console.log("📡 일반 모드로 메시지 전송");
-
 			const payload = {
 				input_value: contextualMessage,
 				output_type: "chat",
@@ -786,9 +730,7 @@ onMount(async () => {
 
 	// 비동기로 초기화 (블로킹하지 않음)
 	Promise.all([contextDetector.initialize(), blogRAGService.initialize()])
-		.then(() => {
-			console.log("✅ Blog RAG services initialized");
-		})
+		.then(() => {})
 		.catch((error) => {
 			console.error("Failed to initialize RAG services:", error);
 		});

@@ -16,9 +16,7 @@ let posts = await getSortedPosts();
 
 if (Array.isArray(tags) && tags.length > 0) {
 	posts = posts.filter(
-		(post) =>
-			Array.isArray(post.data.tags) &&
-			post.data.tags.some((tag) => tags.includes(tag)),
+		(post) => Array.isArray(post.data.tags) && post.data.tags.some((tag) => tags.includes(tag)),
 	);
 }
 
@@ -31,17 +29,14 @@ if (Array.isArray(categories) && categories.length > 0) {
 }
 
 const groups: { year: number; posts: typeof posts }[] = (() => {
-	const groupedPosts = posts.reduce(
-		(grouped: { [year: number]: typeof posts }, post) => {
-			const year = post.data.published.getFullYear();
-			if (!grouped[year]) {
-				grouped[year] = [];
-			}
-			grouped[year].push(post);
-			return grouped;
-		},
-		{},
-	);
+	const groupedPosts = posts.reduce((grouped: { [year: number]: typeof posts }, post) => {
+		const year = post.data.published.getFullYear();
+		if (!grouped[year]) {
+			grouped[year] = [];
+		}
+		grouped[year].push(post);
+		return grouped;
+	}, {});
 
 	// convert the object to an array
 	const groupedPostsArray = Object.keys(groupedPosts).map((key) => ({

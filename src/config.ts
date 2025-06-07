@@ -1,9 +1,4 @@
-import type {
-	LicenseConfig,
-	NavBarConfig,
-	ProfileConfig,
-	SiteConfig,
-} from "./types/config";
+import type { LicenseConfig, NavBarConfig, ProfileConfig, SiteConfig } from "./types/config";
 import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {

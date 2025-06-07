@@ -1,7 +1,5 @@
-import { copyFileSync, existsSync, readdirSync } from "fs";
-import { join } from "path";
-
-console.log("Running postbuild checks...");
+import { copyFileSync, existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 
 const distPath = "./dist";
 const publicPath = "./public";
@@ -11,31 +9,21 @@ const robotsSrc = join(publicPath, "robots.txt");
 const robotsDest = join(distPath, "robots.txt");
 
 if (existsSync(robotsSrc)) {
- copyFileSync(robotsSrc, robotsDest);
- console.log("✓ Copied robots.txt to dist folder");
+	copyFileSync(robotsSrc, robotsDest);
 } else {
- console.log("✗ robots.txt not found in public folder");
 }
 
 // Check if sitemap files exist
 const sitemapFiles = ["sitemap-index.xml", "sitemap-0.xml", "robots.txt"];
 
 for (const file of sitemapFiles) {
- const filePath = join(distPath, file);
- if (existsSync(filePath)) {
-  console.log(`✓ ${file} found in dist folder`);
- } else {
-  console.log(`✗ ${file} NOT found in dist folder`);
- }
+	const filePath = join(distPath, file);
+	if (existsSync(filePath)) {
+	} else {
+	}
 }
-
-// List all files in dist root
-console.log("\nFiles in dist root:");
 const files = readdirSync(distPath);
 for (const file of files) {
- if (file.includes("sitemap") || file === "robots.txt") {
-  console.log(`  - ${file}`);
- }
+	if (file.includes("sitemap") || file === "robots.txt") {
+	}
 }
-
-console.log("Postbuild check complete.");

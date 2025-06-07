@@ -11,13 +11,7 @@ let comment = "";
 let selectedReason = "";
 
 // 피드백별 이유 옵션
-const positiveReasons = [
-	"정확한 답변",
-	"도움이 되었음",
-	"이해하기 쉬움",
-	"빠른 응답",
-	"기타",
-];
+const positiveReasons = ["정확한 답변", "도움이 되었음", "이해하기 쉬움", "빠른 응답", "기타"];
 
 const negativeReasons = [
 	"부정확한 정보",

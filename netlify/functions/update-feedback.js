@@ -40,14 +40,14 @@ exports.handler = async (event, context) => {
 		// 현재 캐시 항목 조회 - cacheKey를 직접 사용
 		const path = `/chat_cache/${encodeURIComponent(cacheKey)}`;
 		let currentEntry = null;
-		
+
 		try {
-			const result = await astraClient.request('GET', path);
-			if (result && result.data && result.data.length > 0) {
+			const result = await astraClient.request("GET", path);
+			if (result?.data && result.data.length > 0) {
 				currentEntry = result.data[0];
 			}
 		} catch (error) {
-			if (error.message.includes('404')) {
+			if (error.message.includes("404")) {
 				return {
 					statusCode: 404,
 					headers,
@@ -56,7 +56,7 @@ exports.handler = async (event, context) => {
 			}
 			throw error;
 		}
-		
+
 		if (!currentEntry) {
 			return {
 				statusCode: 404,
@@ -90,7 +90,7 @@ exports.handler = async (event, context) => {
 		// 낮은 품질 점수 처리 (자동 삭제)
 		if (qualityScore < 30 && feedbackCount >= 5) {
 			// 품질이 매우 낮은 경우 캐시에서 삭제
-			await astraClient.request('DELETE', path);
+			await astraClient.request("DELETE", path);
 
 			return {
 				statusCode: 200,
@@ -113,13 +113,13 @@ exports.handler = async (event, context) => {
 			quality_score: qualityScore,
 			confidence_level: confidenceLevel,
 			quality_details: qualityDetails,
-			last_validated: new Date().toISOString()
+			last_validated: new Date().toISOString(),
 		};
 
 		// cache_key는 URL에 포함되므로 데이터에서 제거
-		delete updatedEntry.cache_key;
+		updatedEntry.cache_key = undefined;
 
-		await astraClient.request('PUT', path, updatedEntry);
+		await astraClient.request("PUT", path, updatedEntry);
 
 		return {
 			statusCode: 200,

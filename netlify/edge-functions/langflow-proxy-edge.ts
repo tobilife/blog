@@ -1,8 +1,62 @@
 import type { Config, Context } from "https://edge.netlify.com";
 
+// 타입 정의
+interface QualityScores {
+	completeness: number;
+	relevance: number;
+	structure: number;
+	references: number;
+	length: number;
+}
+
+interface QualityWeights {
+	completeness: number;
+	relevance: number;
+	structure: number;
+	references: number;
+	length: number;
+}
+
+interface EvaluationResult {
+	scores: QualityScores;
+	totalScore: number;
+	needsImprovement: boolean;
+	reasons: string[];
+}
+
+interface ConversationMessage {
+	role: "user" | "assistant";
+	content: string;
+}
+
+interface SearchResult {
+	title: string;
+	description: string;
+	url: string;
+	score?: number;
+}
+
+interface CacheEntry {
+	answer: string;
+	context?: Record<string, unknown>;
+	timestamp: string;
+	expiresAt?: string;
+}
+
+interface UsageStats {
+	date_key: string;
+	total_requests: number;
+	google_search_count: number;
+	tavily_search_count: number;
+	brave_search_count: number;
+	tts_requests: number;
+	stt_requests: number;
+	last_updated: string;
+}
+
 // 응답 품질 평가 클래스
 class ResponseQualityEvaluator {
-	private weights = {
+	private weights: QualityWeights = {
 		completeness: 0.3,
 		relevance: 0.25,
 		structure: 0.2,
@@ -11,11 +65,7 @@ class ResponseQualityEvaluator {
 	};
 	private minQualityScore = 0.7;
 
-	evaluateResponse(
-		response: string,
-		query: string,
-		hasSearchResults: boolean = false,
-	): any {
+	evaluateResponse(response: string, query: string, hasSearchResults = false): EvaluationResult {
 		const scores = {
 			completeness: this.evaluateCompleteness(response, query),
 			relevance: this.evaluateRelevance(response, query),
@@ -25,15 +75,14 @@ class ResponseQualityEvaluator {
 		};
 
 		const totalScore = Object.entries(scores).reduce((total, [key, score]) => {
-			return total + score * (this.weights as any)[key];
+			return total + score * this.weights[key as keyof QualityWeights];
 		}, 0);
 
 		return {
 			totalScore: Math.round(totalScore * 100) / 100,
 			scores,
 			shouldCache: totalScore >= this.minQualityScore,
-			confidence:
-				totalScore >= 0.8 ? "high" : totalScore >= 0.6 ? "medium" : "low",
+			confidence: totalScore >= 0.8 ? "high" : totalScore >= 0.6 ? "medium" : "low",
 		};
 	}
 
@@ -49,9 +98,7 @@ class ResponseQualityEvaluator {
 		let score = 0.5;
 		const queryWords = query.toLowerCase().split(/\s+/);
 		const responseWords = response.toLowerCase().split(/\s+/);
-		const matchCount = queryWords.filter((word) =>
-			responseWords.includes(word),
-		).length;
+		const matchCount = queryWords.filter((word) => responseWords.includes(word)).length;
 		score += (matchCount / queryWords.length) * 0.5;
 		return Math.min(score, 1);
 	}
@@ -89,14 +136,9 @@ class AstraDBCache {
 		return question.toLowerCase().trim().replace(/\s+/g, " ");
 	}
 
-	async getCacheEntry(question: string): Promise<any> {
+	async getCacheEntry(question: string): Promise<CacheEntry | null> {
 		const cacheKey = this.generateCacheKey(question);
 		const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/chat_cache/${encodeURIComponent(cacheKey)}`;
-		console.log("🔍 AstraDB Cache lookup:", {
-			question,
-			cacheKey,
-			url: url.replace(this.token, "***TOKEN***"),
-		});
 
 		try {
 			const response = await fetch(url, {
@@ -109,29 +151,16 @@ class AstraDBCache {
 
 			if (!response.ok) {
 				if (response.status === 404) {
-					console.log("Cache miss:", cacheKey);
 					return null;
 				}
 				throw new Error(`Cache fetch error: ${response.status}`);
 			}
 
 			const result = await response.json();
-			console.log("🔍 AstraDB Cache response:", {
-				hasData: !!(result && result.data),
-				dataLength: result?.data?.length || 0,
-				firstEntry: result?.data?.[0]
-					? {
-							cache_key: result.data[0].cache_key,
-							hasResponse: !!result.data[0].response,
-							expiresAt: result.data[0].expires_at,
-						}
-					: null,
-			});
 			if (result.data && result.data.length > 0) {
 				const entry = result.data[0];
 				const expiresAt = new Date(entry.expires_at);
 				if (expiresAt > new Date()) {
-					console.log("Cache hit:", cacheKey);
 					return {
 						hit: true,
 						answer: entry.response,
@@ -155,7 +184,7 @@ class AstraDBCache {
 	async setCacheEntry(
 		question: string,
 		answer: string,
-		context: any = {},
+		context: Record<string, unknown> = {},
 	): Promise<boolean> {
 		const cacheKey = this.generateCacheKey(question);
 		const ttlSeconds = 3600; // 1시간
@@ -193,15 +222,10 @@ class AstraDBCache {
 			});
 
 			if (response.ok) {
-				console.log("Cache saved:", cacheKey);
 				return true;
 			}
 
-			console.error(
-				"Cache save error:",
-				response.status,
-				await response.text(),
-			);
+			console.error("Cache save error:", response.status, await response.text());
 			return false;
 		} catch (error) {
 			console.error("Cache set error:", error);
@@ -233,7 +257,7 @@ class ApiUsageTracker {
 	}
 
 	// API 사용량 가져오기
-	async getUsageStats(): Promise<any> {
+	async getUsageStats(): Promise<UsageStats | null> {
 		const dateKey = this.getKoreaDateKey();
 		const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/api_usage_stats/${encodeURIComponent(dateKey)}`;
 
@@ -290,25 +314,17 @@ class ApiUsageTracker {
 	}
 
 	// API 사용량 업데이트
-	async updateUsageStats(
-		apiType: "google" | "brave" | "tavily",
-	): Promise<boolean> {
+	async updateUsageStats(apiType: "google" | "brave" | "tavily"): Promise<boolean> {
 		const dateKey = this.getKoreaDateKey();
 		const currentStats = await this.getUsageStats();
 
-		console.log(`Updating ${apiType} usage for date: ${dateKey}`);
-		console.log("Current stats before update:", currentStats);
-
 		// 카운트 증가
 		if (apiType === "google") {
-			currentStats.google_search_count =
-				(currentStats.google_search_count || 0) + 1;
+			currentStats.google_search_count = (currentStats.google_search_count || 0) + 1;
 		} else if (apiType === "brave") {
-			currentStats.brave_search_count =
-				(currentStats.brave_search_count || 0) + 1;
+			currentStats.brave_search_count = (currentStats.brave_search_count || 0) + 1;
 		} else if (apiType === "tavily") {
-			currentStats.tavily_search_count =
-				(currentStats.tavily_search_count || 0) + 1;
+			currentStats.tavily_search_count = (currentStats.tavily_search_count || 0) + 1;
 		}
 
 		// PUT 요청을 위한 데이터 준비 - date_key는 URL에 포함되므로 body에서 제외
@@ -319,8 +335,6 @@ class ApiUsageTracker {
 			updated_at: new Date().toISOString(),
 			created_at: currentStats.created_at || new Date().toISOString(),
 		};
-
-		console.log("Updated stats to save:", updateData);
 
 		const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/api_usage_stats/${encodeURIComponent(dateKey)}`;
 
@@ -334,15 +348,10 @@ class ApiUsageTracker {
 				body: JSON.stringify(updateData),
 			});
 			if (response.ok) {
-				console.log(`${apiType} API usage updated:`, updateData);
 				return true;
 			}
 
-			console.error(
-				"Usage stats update error:",
-				response.status,
-				await response.text(),
-			);
+			console.error("Usage stats update error:", response.status, await response.text());
 			return false;
 		} catch (error) {
 			console.error("Update usage stats error:", error);
@@ -386,10 +395,7 @@ class ApiUsageTracker {
 						}
 					}
 				}
-			} catch (error) {
-				// 개별 날짜 조회 실패는 무시
-				continue;
-			}
+			} catch (error) {}
 		}
 
 		return totalUsage;
@@ -408,10 +414,7 @@ class ApiUsageTracker {
 		const braveMonthly = await this.getMonthlyUsage("brave");
 		const tavilyMonthly = await this.getMonthlyUsage("tavily");
 
-		const googleRemaining = Math.max(
-			0,
-			99 - (dailyStats.google_search_count || 0),
-		);
+		const googleRemaining = Math.max(0, 99 - (dailyStats.google_search_count || 0));
 		const braveRemaining = Math.max(0, 1000 - braveMonthly);
 		const tavilyRemaining = Math.max(0, 1000 - tavilyMonthly);
 
@@ -433,8 +436,7 @@ function analyzeQueryComplexity(query: string) {
 		hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
 		requiresReasoning: /왜|어떻게|분석|비교|설명|차이|장단점|평가/i.test(query),
 		requiresLatestInfo: /최신|현재|오늘|요즘|최근|실시간/i.test(query),
-		isSimpleFactCheck:
-			/무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
+		isSimpleFactCheck: /무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
 		hasComplexTerms: /github|프로그래밍|개발|AI|기술|경제|정치/i.test(query),
 	};
 
@@ -524,9 +526,7 @@ function analyzeQueryIntent(query: string) {
 		/요금/,
 	];
 
-	const needsSearch = searchPatterns.some((pattern) =>
-		pattern.test(lowerQuery),
-	);
+	const needsSearch = searchPatterns.some((pattern) => pattern.test(lowerQuery));
 
 	return {
 		needsSearch,
@@ -538,29 +538,28 @@ function analyzeQueryIntent(query: string) {
 function removeChinese(text: string): string {
 	let result = text;
 	result = result.replace(/集中/g, "집중");
-	result = result.replace(
-		/([\uAC00-\uD7AF\s]+)([\u4E00-\u9FFF]+)([\uAC00-\uD7AF\s]+)/g,
-		"$1 $3",
-	);
+	result = result.replace(/([\uAC00-\uD7AF\s]+)([\u4E00-\u9FFF]+)([\uAC00-\uD7AF\s]+)/g, "$1 $3");
 	return result.trim();
 }
 
 // 재귀적으로 중국어 제거
-function deepRemoveChinese(obj: any): any {
-	if (typeof obj === "string") {
-		return removeChinese(obj);
-	} else if (Array.isArray(obj)) {
-		return obj.map((item) => deepRemoveChinese(item));
-	} else if (obj !== null && typeof obj === "object") {
-		const newObj: any = {};
-		for (const key in obj) {
-			if (obj.hasOwnProperty(key)) {
-				newObj[key] = deepRemoveChinese(obj[key]);
-			}
-		}
-		return newObj;
-	}
-	return obj;
+function deepRemoveChinese<T>(obj: T): T {
+ if (typeof obj === "string") {
+  return removeChinese(obj) as T;
+ }
+ if (Array.isArray(obj)) {
+  return obj.map((item) => deepRemoveChinese(item)) as T;
+ }
+ if (obj !== null && typeof obj === "object") {
+  const newObj: Record<string, unknown> = {};
+  for (const key in obj) {
+   if (Object.hasOwn(obj, key)) {
+    newObj[key] = deepRemoveChinese((obj as Record<string, unknown>)[key]);
+   }
+  }
+  return newObj as T;
+ }
+ return obj;
 }
 
 // Brave Search API 호출
@@ -587,11 +586,13 @@ async function searchBrave(query: string, apiKey: string) {
 		const data = await response.json();
 
 		if (data.web?.results) {
-			return data.web.results.slice(0, 3).map((result: any) => ({
-				title: result.title,
-				description: result.description,
-				url: result.url,
-			}));
+			return data.web.results
+				.slice(0, 3)
+				.map((result: { title: string; description: string; url: string }) => ({
+					title: result.title,
+					description: result.description,
+					url: result.url,
+				}));
 		}
 
 		return null;
@@ -623,11 +624,13 @@ async function searchGoogle(query: string, apiKey: string, cx: string) {
 		const data = await response.json();
 
 		if (data.items) {
-			return data.items.slice(0, 3).map((item: any) => ({
-				title: item.title,
-				description: item.snippet,
-				url: item.link,
-			}));
+			return data.items
+				.slice(0, 3)
+				.map((item: { title: string; snippet: string; link: string }) => ({
+					title: item.title,
+					description: item.snippet,
+					url: item.link,
+				}));
 		}
 
 		return null;
@@ -664,11 +667,13 @@ async function searchTavily(query: string, apiKey: string) {
 		const data = await response.json();
 
 		if (data.results) {
-			return data.results.slice(0, 3).map((result: any) => ({
-				title: result.title,
-				description: result.content,
-				url: result.url,
-			}));
+			return data.results
+				.slice(0, 3)
+				.map((result: { title: string; content: string; url: string }) => ({
+					title: result.title,
+					description: result.content,
+					url: result.url,
+				}));
 		}
 
 		return null;
@@ -681,37 +686,33 @@ async function searchTavily(query: string, apiKey: string) {
 // 프롬프트 향상 함수
 function enhancePromptWithSearchResults(
 	originalQuery: string,
-	searchResults: any[] | null,
-	conversationHistory: any[] = [],
+	searchResults: SearchResult[] | null,
+	conversationHistory: ConversationMessage[] = [],
 ) {
 	const now = new Date();
 	const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
 	const year = koreaTime.getUTCFullYear();
 	const month = koreaTime.getUTCMonth() + 1;
 	const day = koreaTime.getUTCDate();
-	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
-		koreaTime.getUTCDay()
-	];
+	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][koreaTime.getUTCDay()];
 
 	let enhancedPrompt = "";
 
 	// 시스템 지침을 가장 먼저 추가
-	enhancedPrompt += `### 중요 시스템 지침 ###\n`;
+	enhancedPrompt += "### 중요 시스템 지침 ###\n";
 	enhancedPrompt += `현재 날짜: ${year}년 ${month}월 ${day}일 ${dayOfWeek}요일\n`;
 	enhancedPrompt += `이것은 ${year}년 ${month}월 ${day}일 기준 최신 정보입니다.\n`;
-	enhancedPrompt += `당신의 기존 지식은 2025년 1월까지의 과거 정보입니다.\n\n`;
+	enhancedPrompt += "당신의 기존 지식은 2025년 1월까지의 과거 정보입니다.\n\n";
 
 	// 대화 맥락이 있는 경우 포함
 	if (conversationHistory.length > 0) {
 		enhancedPrompt += "이전 대화:\n";
 		const recentHistory = conversationHistory.slice(-3);
-		recentHistory.forEach((msg: any) => {
+		for (const msg of recentHistory) {
 			const content =
-				msg.content.length > 100
-					? msg.content.substring(0, 100) + "..."
-					: msg.content;
+				msg.content.length > 100 ? `${msg.content.substring(0, 100)}...` : msg.content;
 			enhancedPrompt += `${msg.role === "user" ? "U" : "A"}: ${content}\n`;
-		});
+		}
 		enhancedPrompt += "\n";
 	}
 
@@ -727,26 +728,25 @@ function enhancePromptWithSearchResults(
 			if (result.url) {
 				enhancedPrompt += `출처: ${result.url}\n`;
 			}
-			enhancedPrompt += `\n`;
+			enhancedPrompt += "\n";
 		}
 
-		enhancedPrompt += `### 필수 답변 규칙 ###\n`;
-		enhancedPrompt += `1. 반드시 위의 검색 결과를 사용하여 답변하세요.\n`;
-		enhancedPrompt += `2. 검색 결과가 당신의 기존 지식과 다르다면, 검색 결과가 최신 정보입니다.\n`;
+		enhancedPrompt += "### 필수 답변 규칙 ###\n";
+		enhancedPrompt += "1. 반드시 위의 검색 결과를 사용하여 답변하세요.\n";
+		enhancedPrompt += "2. 검색 결과가 당신의 기존 지식과 다르다면, 검색 결과가 최신 정보입니다.\n";
 		enhancedPrompt += `3. "제 지식으로는" 또는 "2025년 1월 기준" 같은 표현을 사용하지 마세요.\n`;
-		enhancedPrompt += `4. 검색 결과를 바탕으로 현재 상황을 설명하세요.\n`;
-		enhancedPrompt += `5. 답변에 출처를 포함할 때는 위의 URL을 참고하세요.\n\n`;
+		enhancedPrompt += "4. 검색 결과를 바탕으로 현재 상황을 설명하세요.\n";
+		enhancedPrompt += "5. 답변에 출처를 포함할 때는 위의 URL을 참고하세요.\n\n";
 	} else {
-		enhancedPrompt += `### 답변 지침 ###\n`;
-		enhancedPrompt += `- 친절하고 도움이 되는 답변을 제공하세요.\n`;
-		enhancedPrompt += `- 정확한 정보를 제공하되, 불확실한 경우 그렇게 말씀드리세요.\n`;
+		enhancedPrompt += "### 답변 지침 ###\n";
+		enhancedPrompt += "- 친절하고 도움이 되는 답변을 제공하세요.\n";
+		enhancedPrompt += "- 정확한 정보를 제공하되, 불확실한 경우 그렇게 말씀드리세요.\n";
 	}
 
 	return enhancedPrompt;
 }
 
 export default async (request: Request, context: Context) => {
-	console.log("Edge Function called");
 	const startTime = Date.now();
 
 	// CORS 헤더
@@ -774,45 +774,17 @@ export default async (request: Request, context: Context) => {
 		const LANGFLOW_API_TOKEN = Deno.env.get("LANGFLOW_API_TOKEN");
 		const BRAVE_API_KEY = Deno.env.get("BRAVE_SEARCH_API_KEY");
 		const ASTRA_DB_REST_URL = Deno.env.get("ASTRA_DB_REST_URL");
-		const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get(
-			"ASTRA_DB_APPLICATION_TOKEN",
-		);
+		const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get("ASTRA_DB_APPLICATION_TOKEN");
 		const ASTRA_DB_KEYSPACE = Deno.env.get("ASTRA_DB_KEYSPACE");
 		const GOOGLE_API_KEY = Deno.env.get("GOOGLE_SEARCH_API_KEY");
 		const GOOGLE_CX = Deno.env.get("GOOGLE_SEARCH_CX");
 		const TAVILY_API_KEY = Deno.env.get("TAVILY_API_KEY");
-
-		// 디버깅: Google 환경 변수 상태 확인
-		console.log("[DEBUG] Google API Key:", {
-			exists: !!GOOGLE_API_KEY,
-			length: GOOGLE_API_KEY ? GOOGLE_API_KEY.length : 0,
-			firstChars: GOOGLE_API_KEY
-				? GOOGLE_API_KEY.substring(0, 5) + "..."
-				: "NOT_SET",
-		});
-		console.log("[DEBUG] Google CX:", {
-			exists: !!GOOGLE_CX,
-			length: GOOGLE_CX ? GOOGLE_CX.length : 0,
-			firstChars: GOOGLE_CX ? GOOGLE_CX.substring(0, 5) + "..." : "NOT_SET",
-		});
 
 		// 모든 환경 변수 목록 확인 (Google 관련만)
 		const allEnvVars = Object.keys(Deno.env.toObject());
 		const googleRelatedVars = allEnvVars.filter(
 			(key) => key.includes("GOOGLE") || key.includes("SEARCH"),
 		);
-		console.log("[DEBUG] Google-related env vars:", googleRelatedVars);
-
-		console.log("Environment check:", {
-			hasLangflow: !!LANGFLOW_API_TOKEN,
-			hasBrave: !!BRAVE_API_KEY,
-			hasAstra:
-				!!ASTRA_DB_REST_URL &&
-				!!ASTRA_DB_APPLICATION_TOKEN &&
-				!!ASTRA_DB_KEYSPACE,
-			hasGoogle: !!GOOGLE_API_KEY && !!GOOGLE_CX,
-			hasTavily: !!TAVILY_API_KEY,
-		});
 
 		if (!LANGFLOW_API_TOKEN) {
 			throw new Error("LANGFLOW_API_TOKEN is not configured");
@@ -834,12 +806,8 @@ export default async (request: Request, context: Context) => {
 			});
 		}
 
-		console.log("User query:", userQuery);
-		console.log("Conversation history length:", conversationHistory.length);
-
 		// 복잡도 분석
 		const complexity = analyzeQueryComplexity(userQuery);
-		console.log("Query complexity:", complexity);
 
 		// Astra DB 캐시 초기화 및 확인
 		let cacheService: AstraDBCache | null = null;
@@ -853,13 +821,8 @@ export default async (request: Request, context: Context) => {
 					ASTRA_DB_KEYSPACE,
 				);
 				cachedResult = await cacheService.getCacheEntry(userQuery);
-				console.log("Cache lookup result:", {
-					query: userQuery,
-					cachedResult: cachedResult,
-				});
 
 				if (cachedResult?.hit) {
-					console.log("Returning cached response");
 					return new Response(cachedResult.answer, {
 						status: 200,
 						headers: {
@@ -892,12 +855,9 @@ export default async (request: Request, context: Context) => {
 
 		// 의도 분석
 		const intent = analyzeQueryIntent(userQuery);
-		console.log("Query intent:", intent);
 
 		// 검색이 필요한 경우
 		if (intent.needsSearch) {
-			console.log("Searching web...");
-
 			// API 사용 가능 여부 확인
 			let apiAvailability = {
 				canUseGoogle: true, // 기본값을 true로 변경
@@ -910,21 +870,14 @@ export default async (request: Request, context: Context) => {
 
 			if (usageTracker) {
 				apiAvailability = await usageTracker.determineAvailableApi();
-				console.log("API availability:", apiAvailability);
 			} else {
-				console.log("Using default API availability (no tracker)");
 			}
 
 			// Google Search API 우선 사용
 			if (GOOGLE_API_KEY && GOOGLE_CX && apiAvailability.canUseGoogle) {
-				searchResults = await searchGoogle(
-					userQuery,
-					GOOGLE_API_KEY,
-					GOOGLE_CX,
-				);
+				searchResults = await searchGoogle(userQuery, GOOGLE_API_KEY, GOOGLE_CX);
 				if (searchResults) {
 					searchApiUsed = "google";
-					console.log(`Found ${searchResults.length} Google search results`);
 				}
 			}
 
@@ -965,7 +918,6 @@ export default async (request: Request, context: Context) => {
 
 				// 동시 검색 실행
 				if (searchPromises.length > 0) {
-					console.log("Executing parallel search with Brave and Tavily...");
 					const parallelResults = await Promise.allSettled(searchPromises);
 
 					// 결과 통합 및 정확성 체크
@@ -981,7 +933,6 @@ export default async (request: Request, context: Context) => {
 								score: 1.0,
 							});
 						}
-						console.log(`Brave: ${braveResults.length} results`);
 					}
 
 					// Tavily 결과 처리 및 비교
@@ -1004,7 +955,6 @@ export default async (request: Request, context: Context) => {
 								});
 							}
 						}
-						console.log(`Tavily: ${tavilyResults.length} results`);
 					}
 
 					// 점수 기준으로 정렬
@@ -1015,20 +965,10 @@ export default async (request: Request, context: Context) => {
 					if (sortedResults.length > 0) {
 						searchResults = sortedResults;
 						searchApiUsed =
-							braveResults && tavilyResults
-								? "brave+tavily"
-								: braveResults
-									? "brave"
-									: "tavily";
-						console.log(
-							`Combined search: ${searchResults.length} results (${searchApiUsed})`,
-						);
+							braveResults && tavilyResults ? "brave+tavily" : braveResults ? "brave" : "tavily";
 
 						// 결과 품질 로그
 						for (const result of searchResults) {
-							console.log(
-								`- ${result.title} (sources: ${result.sources.join("+")}, score: ${result.score})`,
-							);
 						}
 					}
 				}
@@ -1037,64 +977,31 @@ export default async (request: Request, context: Context) => {
 			// 모든 API가 한도 초과한 경우
 			if (!searchResults && intent.needsSearch) {
 				console.warn("All search APIs exhausted or unavailable");
-				console.log("API limits:", {
-					google: `${apiAvailability.googleRemaining}/99 remaining today`,
-					brave: `${apiAvailability.braveRemaining}/1000 remaining this month`,
-					tavily: `${apiAvailability.tavilyRemaining}/1000 remaining this month`,
-				});
 			}
 
 			// API 사용량 업데이트
 			if (searchApiUsed && usageTracker) {
-				console.log(`Updating API usage for: ${searchApiUsed}`);
 				try {
 					if (searchApiUsed === "brave+tavily") {
 						// 동시 검색의 경우 두 API 모두 업데이트
 						const braveUpdated = await usageTracker.updateUsageStats("brave");
 						const tavilyUpdated = await usageTracker.updateUsageStats("tavily");
-						console.log(
-							`Usage update results - Brave: ${braveUpdated}, Tavily: ${tavilyUpdated}`,
-						);
 					} else {
 						const updated = await usageTracker.updateUsageStats(
 							searchApiUsed as "google" | "brave" | "tavily",
 						);
-						console.log(`Usage update result for ${searchApiUsed}: ${updated}`);
 					}
 				} catch (error) {
 					console.error("Failed to update API usage:", error);
 				}
 			} else {
-				console.log("No API usage to update:", {
-					searchApiUsed,
-					hasTracker: !!usageTracker,
-				});
 			}
 		}
 
 		// 프롬프트 향상
 		if (searchResults || conversationHistory.length > 0) {
-			enhancedQuery = enhancePromptWithSearchResults(
-				userQuery,
-				searchResults,
-				conversationHistory,
-			);
+			enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, conversationHistory);
 			requestBody.hasSearchResults = !!searchResults;
-
-			// 디버깅을 위한 로깅 추가
-			console.log("\n=== 검색 결과 프롬프트 향상 ===");
-			console.log("검색 결과 개수:", searchResults ? searchResults.length : 0);
-			if (searchResults && searchResults.length > 0) {
-				console.log("검색 결과 예시:");
-				searchResults.forEach((result: any, index: number) => {
-					console.log(`  [${index + 1}] ${result.title}`);
-					console.log(`      ${result.description.substring(0, 100)}...`);
-				});
-			}
-			console.log("향상된 프롬프트 길이:", enhancedQuery.length);
-			console.log("향상된 프롬프트 미리보기 (처음 500자):");
-			console.log(enhancedQuery.substring(0, 500) + "...");
-			console.log("=== 프롬프트 향상 완료 ===\n");
 		}
 
 		requestBody.input_value = enhancedQuery;
@@ -1105,15 +1012,8 @@ export default async (request: Request, context: Context) => {
 		}
 		requestBody.tweaks.ChatOutput = {
 			max_tokens:
-				complexity.level === "simple"
-					? 800
-					: complexity.level === "moderate"
-						? 1500
-						: 2500,
+				complexity.level === "simple" ? 800 : complexity.level === "moderate" ? 1500 : 2500,
 		};
-
-		console.log("Forwarding to Langflow...");
-		console.log("Final input_value length:", requestBody.input_value.length);
 
 		// Langflow API 호출 (스트리밍 지원)
 		const response = await fetch(LANGFLOW_API_URL, {
@@ -1154,8 +1054,6 @@ export default async (request: Request, context: Context) => {
 			parsedResponse.hasSearchResults = true;
 		}
 
-		console.log("Response time:", Date.now() - startTime, "ms");
-
 		// 응답 품질 평가 및 캐싱
 		if (cacheService) {
 			try {
@@ -1165,8 +1063,7 @@ export default async (request: Request, context: Context) => {
 				// 응답 텍스트 추출 (JSON에서 실제 응답 텍스트 찾기)
 				let responseText = JSON.stringify(parsedResponse);
 				if (parsedResponse.outputs?.[0]?.outputs?.[0]?.results?.message?.text) {
-					responseText =
-						parsedResponse.outputs[0].outputs[0].results.message.text;
+					responseText = parsedResponse.outputs[0].outputs[0].results.message.text;
 				} else if (parsedResponse.result) {
 					responseText = parsedResponse.result;
 				} else if (parsedResponse.message) {
@@ -1180,36 +1077,17 @@ export default async (request: Request, context: Context) => {
 					requestBody.hasSearchResults,
 				);
 
-				console.log("Response quality evaluation:", {
-					query: userQuery,
-					totalScore: evaluation.totalScore,
-					shouldCache: evaluation.shouldCache,
-					confidence: evaluation.confidence,
-				});
-
 				// 품질 기준을 통과한 경우에만 캐싱
 				if (evaluation.shouldCache) {
-					await cacheService.setCacheEntry(
-						userQuery,
-						JSON.stringify(parsedResponse),
-						{
-							complexity: complexity.score,
-							hasSearchResults: requestBody.hasSearchResults,
-							responseTime: Date.now() - startTime,
-							qualityScore: evaluation.totalScore,
-							confidence: evaluation.confidence,
-							qualityDetails: evaluation.scores, // 품질 평가 세부 점수 추가
-						},
-					);
-					console.log(
-						"Response cached with quality score:",
-						evaluation.totalScore,
-					);
+					await cacheService.setCacheEntry(userQuery, JSON.stringify(parsedResponse), {
+						complexity: complexity.score,
+						hasSearchResults: requestBody.hasSearchResults,
+						responseTime: Date.now() - startTime,
+						qualityScore: evaluation.totalScore,
+						confidence: evaluation.confidence,
+						qualityDetails: evaluation.scores, // 품질 평가 세부 점수 추가
+					});
 				} else {
-					console.log(
-						"Response not cached due to low quality score:",
-						evaluation.totalScore,
-					);
 				}
 
 				// 응답에 품질 정보 추가

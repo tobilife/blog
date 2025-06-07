@@ -19,13 +19,10 @@ export class WebSearchService {
 	 */
 	async search(query, options = {}) {
 		try {
-			console.log("[WebSearchService] 검색 쿼리:", query);
-
 			// 캐시 확인
 			const cacheKey = `search_${query}`;
 			const cached = this.getFromCache(cacheKey);
 			if (cached) {
-				console.log("[WebSearchService] 캐시 히트:", query);
 				return cached;
 			}
 
@@ -49,7 +46,6 @@ export class WebSearchService {
 			}
 
 			const data = await response.json();
-			console.log("[WebSearchService] 검색 응답 받음");
 
 			// Langflow 응답에서 검색 결과 추출
 			// Langflow는 검색 결과를 응답 텍스트에 포함시킴
@@ -78,8 +74,7 @@ export class WebSearchService {
 	 */
 	extractSearchResultsFromResponse(data) {
 		// Langflow 응답에서 텍스트 추출
-		const responseText =
-			data?.outputs?.[0]?.outputs?.[0]?.results?.message?.text || "";
+		const responseText = data?.outputs?.[0]?.outputs?.[0]?.results?.message?.text || "";
 
 		// 검색 결과가 포함된 경우 파싱 시도
 		const results = [];
@@ -194,8 +189,6 @@ export class WebSearchService {
 	 * @returns {Promise<Array>} 검색 결과 배열
 	 */
 	async searchMultiple(queries, options = {}) {
-		console.log("[WebSearchService] 다중 검색 시작:", queries);
-
 		const searchPromises = queries.map((query) => this.search(query, options));
 
 		try {

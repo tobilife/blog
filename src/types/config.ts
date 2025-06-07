@@ -67,10 +67,7 @@ export type LicenseConfig = {
 	url: string;
 };
 
-export type LIGHT_DARK_MODE =
-	| typeof LIGHT_MODE
-	| typeof DARK_MODE
-	| typeof AUTO_MODE;
+export type LIGHT_DARK_MODE = typeof LIGHT_MODE | typeof DARK_MODE | typeof AUTO_MODE;
 
 export type BlogPostData = {
 	body: string;

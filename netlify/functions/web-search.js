@@ -29,8 +29,13 @@ exports.handler = async (event, context) => {
 	}
 
 	try {
-		const { query, maxResults = 5, searchEngine = "mock", language = "ko", region = "KR" } =
-			JSON.parse(event.body);
+		const {
+			query,
+			maxResults = 5,
+			searchEngine = "mock",
+			language = "ko",
+			region = "KR",
+		} = JSON.parse(event.body);
 
 		if (!query) {
 			return {
@@ -39,8 +44,6 @@ exports.handler = async (event, context) => {
 				body: JSON.stringify({ error: "Query is required" }),
 			};
 		}
-
-		console.log(`🔍 검색 요청: "${query}" (${searchEngine})`);
 
 		// 검색 엔진별 처리
 		let searchResults = [];
@@ -138,17 +141,15 @@ function getMockResults(query, source) {
 	}
 
 	if (query.includes("주식") || query.includes("코스피")) {
-		results.push(
-			{
-				title: "코스피 2,600선 회복, 외국인 매수세 지속",
-				url: "https://finance.example.com/kospi",
-				snippet:
-					"코스피가 외국인의 매수세에 힘입어 2,600선을 회복했다. 오늘 코스피는 전일 대비 15.32포인트(0.59%) 오른...",
-				displayUrl: "finance.example.com",
-				publishedDate: new Date(baseDate.getTime() - 30 * 60 * 1000).toISOString(), // 30분 전
-				source: source,
-			},
-		);
+		results.push({
+			title: "코스피 2,600선 회복, 외국인 매수세 지속",
+			url: "https://finance.example.com/kospi",
+			snippet:
+				"코스피가 외국인의 매수세에 힘입어 2,600선을 회복했다. 오늘 코스피는 전일 대비 15.32포인트(0.59%) 오른...",
+			displayUrl: "finance.example.com",
+			publishedDate: new Date(baseDate.getTime() - 30 * 60 * 1000).toISOString(), // 30분 전
+			source: source,
+		});
 	}
 
 	// 일반적인 결과 추가
@@ -159,9 +160,7 @@ function getMockResults(query, source) {
 				url: `https://example.com/search/${i}`,
 				snippet: `${query}에 대한 검색 결과입니다. 이것은 테스트 데이터이며, 실제 환경에서는 정확한 검색 결과가 표시됩니다...`,
 				displayUrl: "example.com",
-				publishedDate: new Date(
-					baseDate.getTime() - i * 60 * 60 * 1000
-				).toISOString(),
+				publishedDate: new Date(baseDate.getTime() - i * 60 * 60 * 1000).toISOString(),
 				source: source,
 			});
 		}
@@ -181,7 +180,7 @@ async function searchGoogle(query, maxResults, language) {
 	}
 
 	const url = `https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${CX}&q=${encodeURIComponent(
-		query
+		query,
 	)}&num=${maxResults}&lr=lang_${language}`;
 
 	try {

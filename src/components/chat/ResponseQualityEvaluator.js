@@ -49,10 +49,7 @@ export class ResponseQualityEvaluator {
 		// 질문에 대한 직접적인 답변 포함 여부
 		const queryKeywords = this.extractKeywords(query);
 		const responseKeywords = this.extractKeywords(response);
-		const keywordMatch = this.calculateKeywordOverlap(
-			queryKeywords,
-			responseKeywords,
-		);
+		const keywordMatch = this.calculateKeywordOverlap(queryKeywords, responseKeywords);
 		score += keywordMatch * 0.3;
 
 		// 답변이 질문으로 끝나지 않는지 확인
@@ -75,9 +72,7 @@ export class ResponseQualityEvaluator {
 
 		// 블로그 관련 질문인 경우 검색 결과와의 일치도 확인
 		if (searchResults.length > 0) {
-			const relevantPosts = searchResults.filter((result) =>
-				response.includes(result.post.title),
-			);
+			const relevantPosts = searchResults.filter((result) => response.includes(result.post.title));
 			score += (relevantPosts.length / searchResults.length) * 0.3;
 		}
 
@@ -108,8 +103,7 @@ export class ResponseQualityEvaluator {
 		}
 
 		// 마크다운 또는 HTML 형식 사용
-		const hasFormatting =
-			/<[^>]+>/.test(response) || /\*\*.*\*\*/.test(response);
+		const hasFormatting = /<[^>]+>/.test(response) || /\*\*.*\*\*/.test(response);
 		if (hasFormatting) {
 			score += 0.15;
 		}

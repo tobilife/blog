@@ -23,21 +23,17 @@ export function getTagUrl(tag: string): string {
 	// use common encoding function
 	const encodedTag = encodePathSegment(tag);
 	const tagUrl = `/archive/tag/${encodedTag}/`;
-	console.log(`Generating URL for tag "${tag.trim()}" => "${tagUrl}"`);
 	return url(tagUrl);
 }
 
 export function getCategoryUrl(category: string): string {
-	console.log(`category: ${category}`);
 	if (!category) return url("/archive/category/");
 
 	const trimmedCategory = category.trim();
 	if (trimmedCategory === i18n(i18nKey.uncategorized))
 		return url("/archive/category/uncategorized/");
 
-	return url(
-		`/archive/category/${encodeURIComponent(trimmedCategory).replace(/%20/g, "+")}/`,
-	);
+	return url(`/archive/category/${encodeURIComponent(trimmedCategory).replace(/%20/g, "+")}/`);
 }
 
 export function getDir(path: string): string {

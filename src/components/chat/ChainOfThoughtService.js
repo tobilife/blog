@@ -94,11 +94,7 @@ export class ChainOfThoughtService {
 		const domains = this.identifyDomains(query);
 
 		// 하위 질문 생성
-		const subQuestions = this.generateSubQuestions(
-			query,
-			questionType,
-			domains,
-		);
+		const subQuestions = this.generateSubQuestions(query, questionType, domains);
 
 		return {
 			needsDecomposition: true,
@@ -146,8 +142,7 @@ export class ChainOfThoughtService {
 			// 원인 분석
 			if (questionTypes.includes("causal")) {
 				subQuestions.push({
-					question:
-						"수도권 인구 집중의 주요 원인은? (경제적, 사회적, 문화적 측면)",
+					question: "수도권 인구 집중의 주요 원인은? (경제적, 사회적, 문화적 측면)",
 					type: "analytical",
 					searchRequired: true,
 					priority: 2,
@@ -238,9 +233,7 @@ export class ChainOfThoughtService {
 		}
 
 		// 우선순위로 정렬하고 최대 개수 제한
-		return subQuestions
-			.sort((a, b) => a.priority - b.priority)
-			.slice(0, this.maxSubQuestions);
+		return subQuestions.sort((a, b) => a.priority - b.priority).slice(0, this.maxSubQuestions);
 	}
 
 	/**
@@ -267,8 +260,7 @@ export class ChainOfThoughtService {
 	 */
 	generateStatusQuestion(query, domains) {
 		const subject = this.extractMainSubject(query);
-		const domainContext =
-			domains.length > 0 ? `(${domains.join(", ")} 측면)` : "";
+		const domainContext = domains.length > 0 ? `(${domains.join(", ")} 측면)` : "";
 
 		if (subject) {
 			return `${subject}의 현재 상황과 통계 ${domainContext}`;
@@ -321,10 +313,7 @@ export class ChainOfThoughtService {
 		}
 
 		// 결론 생성
-		synthesis.conclusion = this.generateConclusion(
-			originalQuery,
-			subQuestionsWithAnswers,
-		);
+		synthesis.conclusion = this.generateConclusion(originalQuery, subQuestionsWithAnswers);
 
 		return synthesis;
 	}
@@ -335,13 +324,8 @@ export class ChainOfThoughtService {
 	async searchForSubQuestion(subQuestion) {
 		try {
 			// NLP를 통한 키워드 추출
-			const keywords = this.nlpService.extractSearchKeywords(
-				subQuestion.question,
-			);
+			const keywords = this.nlpService.extractSearchKeywords(subQuestion.question);
 			const searchQuery = keywords.join(" ");
-
-			console.log(`🔍 하위 질문 검색: "${subQuestion.question}"`);
-			console.log(`   키워드: ${keywords.join(", ")}`);
 
 			// 웹 검색 수행
 			const searchResults = await this.searchService.search(searchQuery, {
@@ -351,10 +335,7 @@ export class ChainOfThoughtService {
 
 			// 검색 결과 요약
 			if (searchResults.length > 0) {
-				const summary = this.summarizeSearchResults(
-					searchResults,
-					subQuestion.question,
-				);
+				const summary = this.summarizeSearchResults(searchResults, subQuestion.question);
 				return {
 					...subQuestion,
 					answer: summary,

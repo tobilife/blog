@@ -83,9 +83,7 @@ export class FeedbackService {
 		const confidenceWeight = Math.min(feedbackCount / 10, 1);
 
 		// 최종 점수 (기본값과 실제 점수의 가중 평균)
-		return Math.round(
-			baseScore * confidenceWeight + 50 * (1 - confidenceWeight),
-		);
+		return Math.round(baseScore * confidenceWeight + 50 * (1 - confidenceWeight));
 	}
 
 	/**

@@ -6,9 +6,7 @@ export function optimizeSwupTransitions() {
 	// Disable unnecessary plugins during transition
 	window.swup.hooks.on("visit:start", () => {
 		// Pause any running animations
-		const transitionElements = document.querySelectorAll(
-			".transition, .transition-all",
-		);
+		const transitionElements = document.querySelectorAll(".transition, .transition-all");
 		for (const el of transitionElements) {
 			el.style.transition = "none";
 		}
@@ -30,9 +28,7 @@ export function optimizeSwupTransitions() {
 		// Restore elements after a short delay
 		requestAnimationFrame(() => {
 			// Re-enable transitions
-			const disabledTransitions = document.querySelectorAll(
-				'[style*="transition: none"]',
-			);
+			const disabledTransitions = document.querySelectorAll('[style*="transition: none"]');
 			for (const el of disabledTransitions) {
 				el.style.transition = "";
 			}

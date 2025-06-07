@@ -15,8 +15,7 @@ export async function GET(context: APIContext) {
 		description: siteConfig.subtitle || "No description",
 		site: context.site ?? "https://tobilife.netlify.app",
 		items: blog.map((post) => {
-			const content =
-				typeof post.body === "string" ? post.body : String(post.body || "");
+			const content = typeof post.body === "string" ? post.body : String(post.body || "");
 
 			return {
 				title: post.data.title,

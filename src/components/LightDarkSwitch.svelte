@@ -4,11 +4,7 @@ import { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants.ts";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
-import {
-	applyThemeToDocument,
-	getStoredTheme,
-	setTheme,
-} from "@utils/setting-utils.ts";
+import { applyThemeToDocument, getStoredTheme, setTheme } from "@utils/setting-utils.ts";
 import { onMount } from "svelte";
 
 const seq: LIGHT_DARK_MODE[] = [LIGHT_MODE, DARK_MODE, AUTO_MODE];
@@ -24,10 +20,7 @@ onMount(() => {
 	};
 	darkModePreference.addEventListener("change", changeThemeWhenSchemeChanged);
 	return () => {
-		darkModePreference.removeEventListener(
-			"change",
-			changeThemeWhenSchemeChanged,
-		);
+		darkModePreference.removeEventListener("change", changeThemeWhenSchemeChanged);
 	};
 });
 

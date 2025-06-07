@@ -25,8 +25,7 @@ export function ultraOptimizeSwup() {
 		cache.heightExtend = document.getElementById("page-height-extend");
 
 		const BANNER_HEIGHT = window.BANNER_HEIGHT || 0;
-		cachedBannerThreshold =
-			window.innerHeight * (BANNER_HEIGHT / 100) - 72 - 16;
+		cachedBannerThreshold = window.innerHeight * (BANNER_HEIGHT / 100) - 72 - 16;
 	}
 
 	// Replace heavy scrollbar initialization
@@ -71,10 +70,7 @@ export function ultraOptimizeSwup() {
 		if (cache.toc) cache.toc.classList.add("toc-not-ready");
 
 		// Pause all animations
-		document.documentElement.style.setProperty(
-			"--animation-play-state",
-			"paused",
-		);
+		document.documentElement.style.setProperty("--animation-play-state", "paused");
 	});
 
 	window.swup.hooks.on("content:replace", () => {
@@ -85,11 +81,7 @@ export function ultraOptimizeSwup() {
 		updateCache();
 
 		// Initialize TOC scrollbar if it exists
-		if (
-			cache.tocInner &&
-			window.OverlayScrollbars &&
-			!scrollbarInstances.has(cache.tocInner)
-		) {
+		if (cache.tocInner && window.OverlayScrollbars && !scrollbarInstances.has(cache.tocInner)) {
 			window.OverlayScrollbars(cache.tocInner, {
 				scrollbars: {
 					theme: "scrollbar-base scrollbar-auto",
@@ -103,9 +95,7 @@ export function ultraOptimizeSwup() {
 
 		// Only init scrollbars for new pre elements
 		requestAnimationFrame(() => {
-			const preElements = document.querySelectorAll(
-				"pre:not([data-scrollbar])",
-			);
+			const preElements = document.querySelectorAll("pre:not([data-scrollbar])");
 			for (const el of preElements) {
 				el.setAttribute("data-scrollbar", "true");
 				if (window.OverlayScrollbars) {
@@ -149,10 +139,7 @@ export function ultraOptimizeSwup() {
 				cache.toc.classList.remove("toc-not-ready");
 			}
 
-			document.documentElement.style.setProperty(
-				"--animation-play-state",
-				"running",
-			);
+			document.documentElement.style.setProperty("--animation-play-state", "running");
 
 			// Ensure navbar is visible after transition
 			updateCache();

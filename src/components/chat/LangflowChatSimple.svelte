@@ -58,44 +58,39 @@ function renderMarkdown(text) {
 			});
 
 			// 블록 수식: $$...$$
-			processedText = processedText.replace(
-				/\$\$([^\$]+)\$\$/g,
-				(match, math) => {
-					try {
-						return katex.renderToString(math, {
-							throwOnError: false,
-							displayMode: true,
-						});
-					} catch (e) {
-						return match;
-					}
-				},
-			);
+			processedText = processedText.replace(/\$\$([^\$]+)\$\$/g, (match, math) => {
+				try {
+					return katex.renderToString(math, {
+						throwOnError: false,
+						displayMode: true,
+					});
+				} catch (e) {
+					return match;
+				}
+			});
 		}
 
 		// 그 다음 마크다운 처리
 		let html = marked.parse(processedText);
 
 		// 코드 블록에 복사 버튼 추가
-		html = html.replace(
-			/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g,
-			(match, attrs, code) => {
-				// 언어 추출
-				const langMatch = attrs.match(/class="language-([^"]+)"/);
-				const language = langMatch ? langMatch[1] : "plaintext";
+		html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (match, attrs, code) => {
+			// 언어 추출
+			const langMatch = attrs.match(/class="language-([^"]+)"/);
+			const language = langMatch ? langMatch[1] : "plaintext";
 
-				// HTML 엔티티 디코드
-				const decodedCode = code
-					.replace(/&lt;/g, "<")
-					.replace(/&gt;/g, ">")
-					.replace(/&amp;/g, "&")
-					.replace(/&quot;/g, '"')
-					.replace(/&#39;/g, "'");
+			// HTML 엔티티 디코드
+			const decodedCode = code
+				.replace(/&lt;/g, "<")
+				.replace(/&gt;/g, ">")
+				.replace(/&amp;/g, "&")
+				.replace(/&quot;/g, '"')
+				.replace(/&#39;/g, "'");
 
-				// 고유 ID 생성
-				const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
+			// 고유 ID 생성
+			const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
 
-				return `
+			return `
     <div class="code-block-wrapper">
      <div class="code-block-header">
       <span class="code-language">${language}</span>
@@ -107,8 +102,7 @@ function renderMarkdown(text) {
      <pre><code id="${codeId}" class="language-${language}">${decodedCode}</code></pre>
     </div>
    `;
-			},
-		);
+		});
 
 		return html;
 	} catch (error) {
@@ -127,9 +121,7 @@ function copyCode(codeId) {
 			.then(() => {
 				// 복사 성공 피드백
 				const button =
-					codeElement.parentElement.previousElementSibling.querySelector(
-						".copy-button",
-					);
+					codeElement.parentElement.previousElementSibling.querySelector(".copy-button");
 				const copyText = button.querySelector(".copy-text");
 				copyText.textContent = "복사됨!";
 				setTimeout(() => {
@@ -179,10 +171,8 @@ function toggleEdgeFunction() {
 	useEdgeFunction = !useEdgeFunction;
 	if (useEdgeFunction) {
 		LANGFLOW_API_URL = "/api/chat";
-		console.log("🚀 Switched to Edge Function");
 	} else {
 		LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy";
-		console.log("🔄 Switched to regular Function");
 	}
 }
 
@@ -196,10 +186,7 @@ async function sendMessage() {
 	messages = [...messages, { role: "user", content: userMessage }];
 
 	// 즉시 로딩 인디케이터를 표시하기 위해 빈 assistant 메시지 추가
-	messages = [
-		...messages,
-		{ role: "assistant", content: "", isTyping: true, isSearching: false },
-	];
+	messages = [...messages, { role: "assistant", content: "", isTyping: true, isSearching: false }];
 
 	// 블로그 컨텍스트 감지 및 RAG 검색
 	let contextualMessage = userMessage;
@@ -208,38 +195,22 @@ async function sendMessage() {
 
 	// RAG 시스템 - 우선순위에 따른 처리
 	// 우선순위 1: "블로그" + "검색" 패턴
-	const blogSearchPattern =
-		/(블로그.*검색|검색.*블로그|이\s*블로그|여기|토비라이프)/i;
+	const blogSearchPattern = /(블로그.*검색|검색.*블로그|이\s*블로그|여기|토비라이프)/i;
 	const isBlogSearchRequest = blogSearchPattern.test(userMessage);
 
 	if (isBlogSearchRequest && contextDetector && blogRAGService) {
 		// 블로그 검색 요청이면 RAG 시스템 사용
 		try {
-			console.log("☝️ 블로그 검색 요청 감지!");
-
 			// 키워드 추출
 			const keywords = await contextDetector.extractSearchKeywords(userMessage);
-			console.log("Extracted keywords:", keywords);
 
 			// 블로그 포스트 검색
 			const searchQuery = keywords.join(" ");
 			searchResults = await blogRAGService.searchRelevantPosts(searchQuery);
-			console.log(`Found ${searchResults.length} blog posts`);
 
 			if (searchResults.length > 0) {
-				console.log(
-					"Blog search results:",
-					searchResults.map((r) => ({
-						title: r.post.title,
-						score: r.score,
-					})),
-				);
-
 				// LLM 프롬프트에 블로그 컨텍스트 추가
-				contextualMessage = blogRAGService.buildContextualPrompt(
-					userMessage,
-					searchResults,
-				);
+				contextualMessage = blogRAGService.buildContextualPrompt(userMessage, searchResults);
 				isAboutBlog = true;
 			}
 		} catch (error) {
@@ -250,10 +221,8 @@ async function sendMessage() {
 		const searchPatterns =
 			/(검색해|알려줘|최신|현재|지금|이번달|올해|오늘|방금|아까|좀전|나중에|아직|벌써|곧|이제|이전에|이후에|다음|항상|늘|내일|어제|모레|글피|그제|지난달|다음달|작년|내년|몇년전|며칠전|요즘|최근|동시에|즉시|당장|시절|한때|날씨|뉴스)/i;
 		if (searchPatterns.test(userMessage)) {
-			console.log("🔍 웹 검색이 필요한 질문으로 판단됨");
 			// langflow-proxy에서 자동으로 처리됨
 		} else {
-			console.log("ℹ️ 일반 질문으로 판단됨");
 		}
 	}
 
@@ -283,10 +252,6 @@ async function sendMessage() {
 						: m.content,
 			}));
 
-		console.log(
-			`Sending ${recentMessages.length} conversation history messages (optimized from ${messages.length - 2} total)`,
-		);
-
 		const payload = {
 			input_value: contextualMessage, // 컨텍스트가 추가된 메시지 사용
 			output_type: "chat",
@@ -299,10 +264,6 @@ async function sendMessage() {
 			})),
 			tweaks: {},
 		};
-
-		console.log(
-			`Using ${useEdgeFunction ? "Edge Function" : "Regular Function"}: ${LANGFLOW_API_URL}`,
-		);
 
 		const response = await fetch(LANGFLOW_API_URL, {
 			method: "POST",
@@ -320,9 +281,6 @@ async function sendMessage() {
 		const responseTime = response.headers.get("X-Response-Time");
 
 		if (complexity) {
-			console.log(
-				`Query complexity: ${complexity}, Response time: ${responseTime}ms`,
-			);
 		}
 
 		if (!response.ok) {
@@ -334,7 +292,6 @@ async function sendMessage() {
 		// 검색 수행 여부 확인
 		const hasSearchResults = data.hasSearchResults || false;
 		if (hasSearchResults) {
-			console.log("최신 웹 검색 결과가 답변에 포함되었습니다.");
 		}
 
 		// 응답 파싱 - 다양한 구조 시도
@@ -415,19 +372,9 @@ async function sendMessage() {
 			errorMessage = "Flow를 찾을 수 없습니다. Flow ID를 확인해주세요.";
 		} else if (error.message.includes("500")) {
 			errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-		} else if (
-			error.message.includes("502") ||
-			error.message.includes("Bad Gateway")
-		) {
-			errorMessage =
-				"Langflow API 서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.";
-		} else if (
-			error.message.includes("504") ||
-			error.message.includes("timeout")
-		) {
-			// 504 타임아웃 발생 시 모든 메시지 히스토리 삭제
-			console.log("504 Timeout detected - clearing all message history");
-
+		} else if (error.message.includes("502") || error.message.includes("Bad Gateway")) {
+			errorMessage = "Langflow API 서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.";
+		} else if (error.message.includes("504") || error.message.includes("timeout")) {
 			// 초기 환영 메시지만 남기고 모든 메시지 삭제
 			messages = [
 				{
@@ -441,10 +388,7 @@ async function sendMessage() {
 				"⚠️ 타임아웃이 발생하여 대화 기록을 초기화했습니다.<br><br>더 간단한 질문으로 다시 시작해주세요! 😊";
 
 			// 타임아웃 메시지 추가
-			messages = [
-				...messages,
-				{ role: "assistant", content: errorMessage, isTyping: false },
-			];
+			messages = [...messages, { role: "assistant", content: errorMessage, isTyping: false }];
 			return; // 추가 처리 중단
 		}
 
@@ -475,9 +419,7 @@ onMount(async () => {
 
 	// 비동기로 초기화 (블로킹하지 않음)
 	Promise.all([contextDetector.initialize(), blogRAGService.initialize()])
-		.then(() => {
-			console.log("✅ Blog RAG services initialized");
-		})
+		.then(() => {})
 		.catch((error) => {
 			console.error("Failed to initialize RAG services:", error);
 		});

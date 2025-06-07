@@ -1,8 +1,8 @@
 import { vitePreprocess } from "@astrojs/svelte";
 
 export default {
-  preprocess: vitePreprocess(),
-  compilerOptions: {
-    hydratable: true
-  }
+	preprocess: vitePreprocess(),
+	compilerOptions: {
+		hydratable: true,
+	},
 };

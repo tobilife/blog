@@ -16,15 +16,6 @@ export class OptimizedChatService {
 			body: JSON.stringify(payload),
 		});
 
-		// 응답 헤더 로깅
-		console.log("📡 Response Headers:", {
-			cache: response.headers.get("X-Cache"),
-			complexity: response.headers.get("X-Query-Complexity"),
-			responseTime: response.headers.get("X-Response-Time"),
-			contentType: response.headers.get("Content-Type"),
-			status: response.status,
-		});
-
 		const responseData = await response.json();
 
 		// 202 Accepted - 비동기 처리
@@ -145,7 +136,6 @@ export class OptimizedChatService {
 		if (this.pollingIntervals.has(taskId)) {
 			clearTimeout(this.pollingIntervals.get(taskId));
 			this.pollingIntervals.delete(taskId);
-			console.log(`Stopped polling for task ${taskId}`);
 		}
 	}
 
@@ -153,7 +143,6 @@ export class OptimizedChatService {
 	stopAllPolling() {
 		this.pollingIntervals.forEach((timeoutId, taskId) => {
 			clearTimeout(timeoutId);
-			console.log(`Stopped polling for task ${taskId}`);
 		});
 		this.pollingIntervals.clear();
 	}
@@ -217,8 +206,7 @@ export class OptimizedChatService {
 		const messages = {
 			simple: "빠르게 답변 드리겠습니다! ⚡",
 			moderate: "답변을 준비하고 있습니다... 🤔",
-			complex:
-				"복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠",
+			complex: "복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠",
 		};
 		return messages[complexity] || messages.moderate;
 	}

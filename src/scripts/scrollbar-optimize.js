@@ -30,9 +30,7 @@ function initLightweightScrollbar() {
 
 function initContentScrollbars() {
 	// Initialize pre scrollbars only for visible elements
-	const preElements = document.querySelectorAll(
-		"pre:not([data-scrollbar-init])",
-	);
+	const preElements = document.querySelectorAll("pre:not([data-scrollbar-init])");
 	const observer = new IntersectionObserver(
 		(entries) => {
 			for (const entry of entries) {
@@ -61,9 +59,7 @@ function initContentScrollbars() {
 	}
 
 	// Handle KaTeX elements similarly
-	const katexElements = document.querySelectorAll(
-		".katex-display:not([data-scrollbar-init])",
-	);
+	const katexElements = document.querySelectorAll(".katex-display:not([data-scrollbar-init])");
 	for (const el of katexElements) {
 		observer.observe(el);
 	}

@@ -42,58 +42,58 @@ export default defineConfig({
 			globalInstance: true,
 		}),
 		icon({
-		 include: {
-		  "fa6-brands": ["*"],
-		  "fa6-regular": ["*"],
-		  "fa6-solid": ["*"],
-		  "material-symbols": ["*"],
-		 },
+			include: {
+				"fa6-brands": ["*"],
+				"fa6-regular": ["*"],
+				"fa6-solid": ["*"],
+				"material-symbols": ["*"],
+			},
 		}),
 		svelte({
-		 compilerOptions: {
-		  // Svelte 5 compatibility mode for mixed Svelte 4/5 components
-		  compatibility: {
-		   componentApi: 4,
-		  },
-		 },
+			compilerOptions: {
+				// Svelte 5 compatibility mode for mixed Svelte 4/5 components
+				compatibility: {
+					componentApi: 4,
+				},
+			},
 		}),
 		sitemap({
-		 customPages: [],
-		 entryLimit: 10000,
-		 // serialize 함수를 통해 각 페이지의 설정을 동적으로 조정
-		 serialize: (item) => {
-		  // URL에 따른 우선순위 설정
-		  let priority = 0.7; // 기본값
-		  let changefreq = "weekly"; // 기본값
-		  
-		  // 홈페이지
-		  if (item.url === "https://tobilife.netlify.app/") {
-		   priority = 1.0;
-		   changefreq = "daily";
-		  }
-		  // About, Archive 메인 페이지
-		  else if (item.url.includes("/about/") || item.url.match(/\/archive\/$/)) {
-		   priority = 0.8;
-		   changefreq = "weekly";
-		  }
-		  // 카테고리, 태그 페이지
-		  else if (item.url.includes("/archive/category/") || item.url.includes("/archive/tag/")) {
-		   priority = 0.7;
-		   changefreq = "weekly";
-		  }
-		  // 개별 포스트
-		  else if (item.url.includes("/posts/")) {
-		   priority = 0.6;
-		   changefreq = "monthly";
-		  }
-		  
-		  return {
-		   url: item.url,
-		   lastmod: item.lastmod,
-		   changefreq: changefreq,
-		   priority: priority,
-		  };
-		 },
+			customPages: [],
+			entryLimit: 10000,
+			// serialize 함수를 통해 각 페이지의 설정을 동적으로 조정
+			serialize: (item) => {
+				// URL에 따른 우선순위 설정
+				let priority = 0.7; // 기본값
+				let changefreq = "weekly"; // 기본값
+
+				// 홈페이지
+				if (item.url === "https://tobilife.netlify.app/") {
+					priority = 1.0;
+					changefreq = "daily";
+				}
+				// About, Archive 메인 페이지
+				else if (item.url.includes("/about/") || item.url.match(/\/archive\/$/)) {
+					priority = 0.8;
+					changefreq = "weekly";
+				}
+				// 카테고리, 태그 페이지
+				else if (item.url.includes("/archive/category/") || item.url.includes("/archive/tag/")) {
+					priority = 0.7;
+					changefreq = "weekly";
+				}
+				// 개별 포스트
+				else if (item.url.includes("/posts/")) {
+					priority = 0.6;
+					changefreq = "monthly";
+				}
+
+				return {
+					url: item.url,
+					lastmod: item.lastmod,
+					changefreq: changefreq,
+					priority: priority,
+				};
+			},
 		}),
 	],
 	markdown: {
