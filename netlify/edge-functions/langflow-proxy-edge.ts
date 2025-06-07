@@ -782,6 +782,27 @@ export default async (request: Request, context: Context) => {
 		const GOOGLE_CX = Deno.env.get("GOOGLE_SEARCH_CX");
 		const TAVILY_API_KEY = Deno.env.get("TAVILY_API_KEY");
 
+		// 디버깅: Google 환경 변수 상태 확인
+		console.log("[DEBUG] Google API Key:", {
+			exists: !!GOOGLE_API_KEY,
+			length: GOOGLE_API_KEY ? GOOGLE_API_KEY.length : 0,
+			firstChars: GOOGLE_API_KEY
+				? GOOGLE_API_KEY.substring(0, 5) + "..."
+				: "NOT_SET",
+		});
+		console.log("[DEBUG] Google CX:", {
+			exists: !!GOOGLE_CX,
+			length: GOOGLE_CX ? GOOGLE_CX.length : 0,
+			firstChars: GOOGLE_CX ? GOOGLE_CX.substring(0, 5) + "..." : "NOT_SET",
+		});
+
+		// 모든 환경 변수 목록 확인 (Google 관련만)
+		const allEnvVars = Object.keys(Deno.env.toObject());
+		const googleRelatedVars = allEnvVars.filter(
+			(key) => key.includes("GOOGLE") || key.includes("SEARCH"),
+		);
+		console.log("[DEBUG] Google-related env vars:", googleRelatedVars);
+
 		console.log("Environment check:", {
 			hasLangflow: !!LANGFLOW_API_TOKEN,
 			hasBrave: !!BRAVE_API_KEY,
