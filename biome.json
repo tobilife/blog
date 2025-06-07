@@ -1,43 +1,73 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "vcs": {
-    "enabled": false,
-    "clientKind": "git",
-    "useIgnoreFile": false
-  },
-  "files": {
-    "ignoreUnknown": false,
-    "ignore": ["src/**/*.css","src/public/**/*", "dist/**/*", "node_modules/**/*"]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "tab"
-  },
-  "organizeImports": {
-    "enabled": true
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double"
-    }
-  },
-  "overrides": [
-    {
-      "include": ["*.svelte", "*.astro", "*.vue"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useConst": "off",
-            "useImportType": "off"
-          }
-        }
-      }
-    }
-  ]
+	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"vcs": {
+		"enabled": false,
+		"clientKind": "git",
+		"useIgnoreFile": false
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"ignore": ["src/**/*.css", "src/public/**/*", "dist/**/*", "node_modules/**/*"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 2,
+		"lineWidth": 100,
+		"lineEnding": "lf"
+	},
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"complexity": {
+				"noForEach": "error",
+				"useOptionalChain": "error",
+				"useFlatMap": "warn"
+			},
+			"style": {
+				"noNegationElse": "warn",
+				"noUselessElse": "error",
+				"useForOf": "error",
+				"useTemplate": "warn"
+			},
+			"suspicious": {
+				"noAssignInExpressions": "error",
+				"noConsoleLog": "warn",
+				"noDebugger": "error",
+				"noDoubleEquals": "warn"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double",
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true,
+			"bracketSameLine": false
+		}
+	},
+	"overrides": [
+		{
+			"include": ["*.svelte", "*.astro", "*.vue"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useConst": "off",
+						"useImportType": "off"
+					},
+					"correctness": {
+						"noUnusedVariables": "off"
+					}
+				}
+			}
+		}
+	]
 }
