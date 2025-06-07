@@ -1,9 +1,13 @@
+# 슬래시 없는 URL을 슬래시 있는 URL로 리다이렉트
+/posts/*  /posts/:splat/  301
+/archive/category/*  /archive/category/:splat/  301
+/archive/tag/*  /archive/tag/:splat/  301
+
 # Googlebot을 위한 특별 처리
 /  /  200
 /*  /:splat  200
 
 # 404 에러 페이지
 /*  /404  404
-
 # sitemap 리다이렉트 (만약 필요한 경우)
 /sitemap.xml  /sitemap-index.xml  301

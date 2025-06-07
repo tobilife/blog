@@ -19,7 +19,7 @@ async function getPostsMetadata() {
 		if (response.ok) {
 			metadataCache = await response.json();
 			cacheTimestamp = now;
-			console.log("Posts metadata refreshed for Facebook crawler");
+			console.log("Posts metadata refreshed for social crawler");
 			return metadataCache;
 		}
 	} catch (error) {
@@ -41,6 +41,12 @@ export default async (request, context) => {
 
 	const userAgent = request.headers.get("user-agent") || "";
 	
+	// Check if it's Kakao crawler - Kakao uses various user agents
+	const isKakaoCrawler = userAgent.toLowerCase().includes("kakaotalk") || 
+		userAgent.toLowerCase().includes("kakaostory") ||
+		userAgent.toLowerCase().includes("kakao") ||
+		userAgent.toLowerCase().includes("daum"); // Daum is owned by Kakao
+	
 	// Check if it's Facebook crawler or other social media crawlers
 	const isFacebookCrawler = userAgent.toLowerCase().includes("facebookexternalhit") || 
 		userAgent.toLowerCase().includes("facebookcatalog") ||
@@ -51,9 +57,10 @@ export default async (request, context) => {
 	const isSlackBot = userAgent.toLowerCase().includes("slackbot");
 	const isDiscordBot = userAgent.toLowerCase().includes("discordbot");
 	const isTelegramBot = userAgent.toLowerCase().includes("telegrambot");
+	const isWhatsAppBot = userAgent.toLowerCase().includes("whatsapp");
 	
-	const isSocialCrawler = isFacebookCrawler || isTwitterBot || isLinkedInBot || 
-		isSlackBot || isDiscordBot || isTelegramBot;
+	const isSocialCrawler = isKakaoCrawler || isFacebookCrawler || isTwitterBot || 
+		isLinkedInBot || isSlackBot || isDiscordBot || isTelegramBot || isWhatsAppBot;
 
 	// Log social crawler requests for debugging
 	if (isSocialCrawler) {
@@ -62,12 +69,14 @@ export default async (request, context) => {
 			userAgent: userAgent,
 			method: request.method,
 			crawler: {
+				kakao: isKakaoCrawler,
 				facebook: isFacebookCrawler,
 				twitter: isTwitterBot,
 				linkedin: isLinkedInBot,
 				slack: isSlackBot,
 				discord: isDiscordBot,
-				telegram: isTelegramBot
+				telegram: isTelegramBot,
+				whatsapp: isWhatsAppBot
 			},
 			timestamp: new Date().toISOString()
 		});
@@ -76,9 +85,10 @@ export default async (request, context) => {
 	// Handle social crawler requests with special care
 	if (isSocialCrawler && request.method === "GET") {
 		try {
-			// Add a timeout for the response
+			// For Kakao crawler, use a shorter timeout as it's more sensitive
+			const timeoutDuration = isKakaoCrawler ? 5000 : 8000;
 			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+			const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 			
 			try {
 				// Clone the request and add timeout signal
@@ -92,7 +102,7 @@ export default async (request, context) => {
 
 				// Log response time
 				const responseTime = Date.now() - startTime;
-				console.log(`Response time for social crawler: ${responseTime}ms, status: ${response.status}`);
+				console.log(`Response time for ${isKakaoCrawler ? 'Kakao' : 'social'} crawler: ${responseTime}ms, status: ${response.status}`);
 
 				// If response is OK, return it with optimized headers
 				if (response.ok) {
@@ -100,6 +110,11 @@ export default async (request, context) => {
 					newHeaders.set("cache-control", "public, max-age=3600");
 					newHeaders.set("x-robots-tag", "index, follow");
 					newHeaders.set("x-response-time", `${responseTime}ms`);
+					
+					// For Kakao, ensure proper content-type
+					if (isKakaoCrawler) {
+						newHeaders.set("content-type", "text/html; charset=UTF-8");
+					}
 					
 					return new Response(response.body, {
 						status: response.status,
@@ -109,10 +124,10 @@ export default async (request, context) => {
 				}
 				
 				// If response is not OK, fall through to fallback
-				console.log("Social crawler got error response:", response.status);
+				console.log(`${isKakaoCrawler ? 'Kakao' : 'Social'} crawler got error response:`, response.status);
 			} catch (timeoutError) {
 				clearTimeout(timeoutId);
-				console.log(`Social crawler request timed out after ${Date.now() - startTime}ms`);
+				console.log(`${isKakaoCrawler ? 'Kakao' : 'Social'} crawler request timed out after ${Date.now() - startTime}ms`);
 			}
 			
 			// Extract post information from URL
@@ -139,6 +154,7 @@ export default async (request, context) => {
 			const pageDescription = metadata?.description || 
 				"AI, RAG, Git/GitHub, 보험IT 등 다양한 개발 경험과 지식을 공유하는 기술 블로그";
 			
+			// Ensure absolute URL for images
 			const imageUrl = metadata?.image 
 				? `https://tobilife.netlify.app${metadata.image}`
 				: "https://tobilife.netlify.app/images/banner.png";
@@ -149,28 +165,32 @@ export default async (request, context) => {
 <html lang="ko" prefix="og: http://ogp.me/ns#">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pageTitle}${metadata ? " - TobiLife 블로그" : ""}</title>
     <meta name="description" content="${pageDescription}">
     
-    <!-- Open Graph Tags for Facebook -->
+    <!-- Essential Open Graph Tags -->
     <meta property="og:type" content="${isPostPage ? "article" : "website"}">
+    <meta property="og:url" content="${request.url}">
     <meta property="og:title" content="${pageTitle}">
     <meta property="og:description" content="${pageDescription}">
-    <meta property="og:url" content="${request.url}">
-    <meta property="og:site_name" content="TobiLife 블로그">
     <meta property="og:image" content="${imageUrl}">
+    <meta property="og:site_name" content="TobiLife 블로그">
+    <meta property="og:locale" content="ko_KR">
+    
+    <!-- Additional Open Graph Tags for better compatibility -->
     <meta property="og:image:secure_url" content="${imageUrl}">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="${pageTitle}">
-    <meta property="og:locale" content="ko_KR">
-    <meta property="og:locale:alternate" content="en_US">
-    ${metadata ? `
+    
+    <!-- Article specific tags -->
+    ${metadata && isPostPage ? `
     <meta property="article:published_time" content="${metadata.published}">
     <meta property="article:modified_time" content="${metadata.updated || metadata.published}">
-    <meta property="article:author" content="https://tobilife.netlify.app/about/">
+    <meta property="article:author" content="TobiLife">
     <meta property="article:section" content="${metadata.category}">
     ${metadata.tags.map(tag => `<meta property="article:tag" content="${tag}">`).join("\n    ")}
     ` : ""}
@@ -184,14 +204,17 @@ export default async (request, context) => {
     <meta name="twitter:image" content="${imageUrl}">
     <meta name="twitter:image:alt" content="${pageTitle}">
     
-    <!-- LinkedIn Tags -->
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="627">
+    <!-- Kakao specific meta tags -->
+    <meta property="kakao:title" content="${pageTitle}">
+    <meta property="kakao:description" content="${pageDescription}">
+    <meta property="kakao:image" content="${imageUrl}">
     
     <!-- Additional Meta Tags -->
     <meta name="author" content="TobiLife(토비라이프)">
     <meta name="robots" content="index, follow">
+    <meta name="keywords" content="${metadata?.tags?.join(", ") || "AI, RAG, Git, GitHub, 보험IT"}">
     <link rel="canonical" href="${request.url}">
+    <link rel="image_src" href="${imageUrl}">
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -199,8 +222,8 @@ export default async (request, context) => {
         "@context": "https://schema.org",
         "@type": "${isPostPage ? "BlogPosting" : "WebSite"}",
         ${isPostPage && metadata ? `
-        "headline": "${metadata.title}",
-        "description": "${metadata.description}",
+        "headline": "${metadata.title.replace(/"/g, '\\"')}",
+        "description": "${metadata.description.replace(/"/g, '\\"')}",
         "image": "${imageUrl}",
         "datePublished": "${metadata.published}",
         "dateModified": "${metadata.updated || metadata.published}",
@@ -211,14 +234,14 @@ export default async (request, context) => {
         },
         ` : `
         "name": "TobiLife 블로그",
-        "description": "${pageDescription}",
+        "description": "${pageDescription.replace(/"/g, '\\"')}",
         `}
         "url": "${request.url}",
         "inLanguage": "ko-KR"
     }
     </script>
     
-    <!-- Generated for social crawler in ${responseTime}ms -->
+    <!-- Generated for ${isKakaoCrawler ? 'Kakao' : 'social'} crawler in ${responseTime}ms -->
 </head>
 <body>
     <h1>${pageTitle}</h1>
@@ -242,7 +265,7 @@ export default async (request, context) => {
 </body>
 </html>`;
 
-			console.log(`Generated fallback HTML for social crawler in ${responseTime}ms`);
+			console.log(`Generated fallback HTML for ${isKakaoCrawler ? 'Kakao' : 'social'} crawler in ${responseTime}ms`);
 			
 			return new Response(html, {
 				status: 200,
@@ -256,7 +279,7 @@ export default async (request, context) => {
 			});
 		} catch (error) {
 			const errorTime = Date.now() - startTime;
-			console.error(`Error handling social crawler request after ${errorTime}ms:`, error);
+			console.error(`Error handling ${isKakaoCrawler ? 'Kakao' : 'social'} crawler request after ${errorTime}ms:`, error);
 			
 			// Return a basic but valid response on error
 			return new Response(

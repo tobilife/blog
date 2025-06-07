@@ -60,6 +60,11 @@ node scripts/build-posts-metadata.js
 2. URL 입력: `https://tobilife.netlify.app/posts/[slug]/`
 3. "Scrape Again" 클릭
 
+#### 카카오톡 공유 디버거
+1. https://developers.kakao.com/tool/debugger/sharing 접속
+2. URL 입력: `https://tobilife.netlify.app/posts/[slug]/`
+3. "초기화" 버튼 클릭하여 캐시 갱신
+
 #### Google Search Console
 1. URL 검사 도구 사용
 2. 색인 생성 요청
