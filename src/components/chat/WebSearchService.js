@@ -78,23 +78,25 @@ export class WebSearchService {
 	 */
 	extractSearchResultsFromResponse(data) {
 		// Langflow 응답에서 텍스트 추출
-		const responseText = data?.outputs?.[0]?.outputs?.[0]?.results?.message?.text || "";
-		
+		const responseText =
+			data?.outputs?.[0]?.outputs?.[0]?.results?.message?.text || "";
+
 		// 검색 결과가 포함된 경우 파싱 시도
 		const results = [];
-		
+
 		// 간단한 검색 결과 파싱 (번호 목록 형태)
 		const resultPattern = /\d+\.\s*(.+?):\s*(.+?)(?=\n\d+\.|$)/gs;
-		let match;
-		
-		while ((match = resultPattern.exec(responseText)) !== null) {
+		let match = resultPattern.exec(responseText);
+
+		while (match !== null) {
 			results.push({
 				title: match[1].trim(),
 				description: match[2].trim(),
 				url: "", // URL 정보가 없는 경우
 			});
+			match = resultPattern.exec(responseText);
 		}
-		
+
 		// 검색 결과가 없는 경우 전체 텍스트를 하나의 결과로
 		if (results.length === 0 && responseText.length > 0) {
 			results.push({
@@ -103,7 +105,7 @@ export class WebSearchService {
 				url: "",
 			});
 		}
-		
+
 		return results;
 	}
 
@@ -174,13 +176,15 @@ export class WebSearchService {
 		}
 
 		const topResults = results.slice(0, 3);
-		const sources = topResults.map((r) => r.source).filter(s => s).join(", ");
+		const sources = topResults
+			.map((r) => r.source)
+			.filter((s) => s)
+			.join(", ");
 
 		if (sources) {
 			return `"${query}"에 대한 ${results.length}개의 검색 결과를 찾았습니다. 주요 출처: ${sources}`;
-		} else {
-			return `"${query}"에 대한 ${results.length}개의 검색 결과를 찾았습니다.`;
 		}
+		return `"${query}"에 대한 ${results.length}개의 검색 결과를 찾았습니다.`;
 	}
 
 	/**
@@ -248,7 +252,7 @@ export class WebSearchService {
 		// Langflow 프록시 엔드포인트 확인
 		return true;
 	}
-	
+
 	/**
 	 * 검색 결과를 마크다운 형식으로 포맷팅
 	 * @param {Object} searchResult - 검색 결과 객체
@@ -256,37 +260,42 @@ export class WebSearchService {
 	 * @returns {string} 마크다운 형식의 검색 결과
 	 */
 	formatResultsAsMarkdown(searchResult, query) {
-	 if (!searchResult || !searchResult.success || !searchResult.results || searchResult.results.length === 0) {
-	  return "검색 결과가 없습니다.";
-	 }
-	
-	 let markdown = "";
-	 const results = searchResult.results;
-	
-	 // 검색 결과 요약
-	 if (searchResult.summary) {
-	  markdown += `${searchResult.summary}\n\n`;
-	 }
-	
-	 // 각 검색 결과 포맷팅
-	 for (const [index, result] of results.entries()) {
-	  markdown += `### ${index + 1}. ${result.title || "제목 없음"}\n`;
-	  
-	  if (result.url) {
-	   markdown += `**출처**: [${result.source || result.displayUrl || result.url}](${result.url})\n`;
-	  }
-	  
-	  if (result.snippet) {
-	   markdown += `${result.snippet}\n`;
-	  }
-	  
-	  if (result.publishedDate) {
-	   markdown += `*게시일: ${result.publishedDate}*\n`;
-	  }
-	  
-	  markdown += "\n";
-	 }
-	
-	 return markdown.trim();
+		if (
+			!searchResult ||
+			!searchResult.success ||
+			!searchResult.results ||
+			searchResult.results.length === 0
+		) {
+			return "검색 결과가 없습니다.";
+		}
+
+		let markdown = "";
+		const results = searchResult.results;
+
+		// 검색 결과 요약
+		if (searchResult.summary) {
+			markdown += `${searchResult.summary}\n\n`;
+		}
+
+		// 각 검색 결과 포맷팅
+		for (const [index, result] of results.entries()) {
+			markdown += `### ${index + 1}. ${result.title || "제목 없음"}\n`;
+
+			if (result.url) {
+				markdown += `**출처**: [${result.source || result.displayUrl || result.url}](${result.url})\n`;
+			}
+
+			if (result.snippet) {
+				markdown += `${result.snippet}\n`;
+			}
+
+			if (result.publishedDate) {
+				markdown += `*게시일: ${result.publishedDate}*\n`;
+			}
+
+			markdown += "\n";
+		}
+
+		return markdown.trim();
 	}
 }

@@ -12,7 +12,6 @@ import { IntentClassifier } from "./IntentClassifier";
 import { OptimizedChatService } from "./OptimizedChatService";
 import { buildChatPrompt, buildSearchPrompt } from "./SearchPromptBuilder";
 
-
 let messages = [];
 let inputMessage = "";
 let isLoading = false;
@@ -571,15 +570,15 @@ async function sendMessage() {
 
 		// 검색 쿼리 최적화
 		const optimizedQuery = intentClassifier.optimizeSearchQuery(
-		 userMessage,
-		 intentClassification,
+			userMessage,
+			intentClassification,
 		);
-		
+
 		// 웹 검색 실행 - 실제 검색은 langflow-proxy-astra에서 수행됨
 		if (!chainOfThoughtService) {
-		 chainOfThoughtService = new ChainOfThoughtService();
+			chainOfThoughtService = new ChainOfThoughtService();
 		}
-		
+
 		// langflow-proxy-astra가 검색을 수행하므로, 여기서는 사용자 메시지만 전달
 		contextualMessage = userMessage;
 	} else {

@@ -16,16 +16,16 @@ export class OptimizedChatService {
 			body: JSON.stringify(payload),
 		});
 
-  // 응답 헤더 로깅
-  console.log("📡 Response Headers:", {
-   cache: response.headers.get("X-Cache"),
-   complexity: response.headers.get("X-Query-Complexity"),
-   responseTime: response.headers.get("X-Response-Time"),
-   contentType: response.headers.get("Content-Type"),
-   status: response.status
-  });
+		// 응답 헤더 로깅
+		console.log("📡 Response Headers:", {
+			cache: response.headers.get("X-Cache"),
+			complexity: response.headers.get("X-Query-Complexity"),
+			responseTime: response.headers.get("X-Response-Time"),
+			contentType: response.headers.get("Content-Type"),
+			status: response.status,
+		});
 
-  const responseData = await response.json();
+		const responseData = await response.json();
 
 		// 202 Accepted - 비동기 처리
 		if (response.status === 202) {

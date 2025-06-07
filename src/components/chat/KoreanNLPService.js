@@ -366,15 +366,15 @@ export class KoreanNLPService {
 
 		// 모든 명사 추가
 		for (const noun of analysis.mainNouns) {
-		 keywords.add(noun);
+			keywords.add(noun);
 		}
-		
+
 		// 주어와 목적어 추가
 		for (const subj of analysis.subjects) {
-		 keywords.add(subj.text);
+			keywords.add(subj.text);
 		}
 		for (const obj of analysis.objects) {
-		 keywords.add(obj.text);
+			keywords.add(obj.text);
 		}
 
 		// 의문사 관련 키워드 추가
