@@ -1,0 +1,17 @@
+/*
+  X-Robots-Tag: all
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  X-XSS-Protection: 1; mode=block
+
+/sitemap-index.xml
+  Content-Type: application/xml; charset=UTF-8
+  Cache-Control: public, max-age=3600
+
+/sitemap-*.xml
+  Content-Type: application/xml; charset=UTF-8
+  Cache-Control: public, max-age=3600
+
+/robots.txt
+  Content-Type: text/plain; charset=UTF-8
+  Cache-Control: public, max-age=86400

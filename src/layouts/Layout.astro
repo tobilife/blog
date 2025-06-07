@@ -192,6 +192,31 @@ const bannerOffset =
       
       <!-- Font Awesome -->
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      
+      <!-- Structured Data for SEO -->
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "TobiLife",
+        "url": "https://tobilife.netlify.app/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://tobilife.netlify.app/search?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "TobiLife",
+          "url": "https://tobilife.netlify.app/about/"
+        },
+        "description": "TobiLife - IT 개발자의 기술 블로그. AI, RAG, Git/GitHub, 보험IT 등 다양한 개발 경험과 지식을 공유합니다.",
+        "inLanguage": "ko-KR"
+      }
+      </script>
       </head>
   
   <body 
