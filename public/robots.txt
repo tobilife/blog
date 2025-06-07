@@ -1,6 +1,16 @@
+# Specific for Googlebot - Priority
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Googlebot-Image
+Allow: /
+Crawl-delay: 0
+
 # Allow all web crawlers
 User-agent: *
 Allow: /
+Crawl-delay: 1
 
 # Disallow admin area
 User-agent: *
@@ -8,17 +18,10 @@ Disallow: /admin/
 
 # Sitemap location
 Sitemap: https://tobilife.netlify.app/sitemap-index.xml
+Sitemap: https://tobilife.netlify.app/sitemap-0.xml
 Sitemap: https://tobilife.netlify.app/rss.xml
 
-# Crawl-delay for responsible crawling
-User-agent: *
-Crawl-delay: 1
-
-# Specific search engine bots
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 0
-
+# Other search engine bots
 User-agent: Yeti
 Allow: /
 Crawl-delay: 0
