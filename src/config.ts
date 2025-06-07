@@ -2,7 +2,7 @@ import type { LicenseConfig, NavBarConfig, ProfileConfig, SiteConfig } from "./t
 import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
-	title: "TobiLife",
+	title: "토비라이프",
 	subtitle: "70살까지 꿈꾸고 개발하며 성장하고싶은 개발자입니다.✨",
 	lang: "ko", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
 	themeColor: {
