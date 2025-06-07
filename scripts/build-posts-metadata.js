@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const postsDir = "./src/content/posts";
@@ -58,9 +58,49 @@ function extractFrontmatter(content) {
 	return null;
 }
 
+// Validate metadata
+function validateMetadata(metadata, filename) {
+	const errors = [];
+	
+	if (!metadata.title) {
+		errors.push(`Missing title in ${filename}`);
+	}
+	
+	if (!metadata.description) {
+		errors.push(`Missing description in ${filename}`);
+	}
+	
+	if (!metadata.category) {
+		errors.push(`Missing category in ${filename}`);
+	}
+	
+	if (!metadata.published) {
+		errors.push(`Missing published date in ${filename}`);
+	}
+	
+	if (metadata.image && !metadata.image.startsWith("/")) {
+		errors.push(`Image path should start with "/" in ${filename}`);
+	}
+	
+	// Check if image file exists
+	if (metadata.image) {
+		const imagePath = join("./public", metadata.image);
+		if (!existsSync(imagePath)) {
+			console.warn(`Warning: Image file not found: ${imagePath} (referenced in ${filename})`);
+		}
+	}
+	
+	return errors;
+}
+
 // Read all markdown files and extract metadata
 const metadata = {};
+const allErrors = [];
 const files = readdirSync(postsDir);
+let totalPosts = 0;
+let draftPosts = 0;
+
+console.log("Building posts metadata...");
 
 for (const file of files) {
 	if (file.endsWith(".md")) {
@@ -68,9 +108,15 @@ for (const file of files) {
 		const content = readFileSync(filePath, "utf-8");
 		const frontmatter = extractFrontmatter(content);
 		
-		if (frontmatter && frontmatter.draft !== "true") {
+		if (frontmatter) {
+			if (frontmatter.draft === "true") {
+				draftPosts++;
+				console.log(`Skipping draft: ${file}`);
+				continue;
+			}
+			
 			const slug = frontmatter.slug || file.replace(".md", "");
-			metadata[slug] = {
+			const postMetadata = {
 				title: frontmatter.title || "",
 				description: frontmatter.description || "",
 				category: frontmatter.category || "",
@@ -79,11 +125,65 @@ for (const file of files) {
 				published: frontmatter.published || null,
 				updated: frontmatter.updated || null,
 			};
+			
+			// Validate metadata
+			const errors = validateMetadata(postMetadata, file);
+			if (errors.length > 0) {
+				allErrors.push(...errors);
+			}
+			
+			metadata[slug] = postMetadata;
+			totalPosts++;
+			
+			// Log summary for each post
+			console.log(`✓ ${slug}: "${postMetadata.title}" (${postMetadata.tags.length} tags)`);
+		} else {
+			console.error(`Failed to parse frontmatter in ${file}`);
 		}
 	}
 }
 
 // Write metadata to JSON file
 writeFileSync(outputPath, JSON.stringify(metadata, null, 2));
-console.log(`Posts metadata generated: ${outputPath}`);
-console.log(`Total posts: ${Object.keys(metadata).length}`);
+
+// Print summary
+console.log("\n=== Build Summary ===");
+console.log(`Total posts processed: ${totalPosts}`);
+console.log(`Draft posts skipped: ${draftPosts}`);
+console.log(`Metadata file: ${outputPath}`);
+
+// Print validation errors if any
+if (allErrors.length > 0) {
+	console.log("\n=== Validation Errors ===");
+	allErrors.forEach(error => console.error(`❌ ${error}`));
+} else {
+	console.log("\n✅ All posts validated successfully!");
+}
+
+// Print post statistics
+console.log("\n=== Post Statistics ===");
+const categories = {};
+const allTags = {};
+
+Object.values(metadata).forEach(post => {
+	// Count categories
+	if (post.category) {
+		categories[post.category] = (categories[post.category] || 0) + 1;
+	}
+	
+	// Count tags
+	post.tags.forEach(tag => {
+		allTags[tag] = (allTags[tag] || 0) + 1;
+	});
+});
+
+console.log("\nCategories:");
+Object.entries(categories)
+	.sort((a, b) => b[1] - a[1])
+	.forEach(([cat, count]) => console.log(`  - ${cat}: ${count} posts`));
+
+console.log("\nTop Tags:");
+Object.entries(allTags)
+	.sort((a, b) => b[1] - a[1])
+	.slice(0, 10)
+	.forEach(([tag, count]) => console.log(`  - ${tag}: ${count} posts`));

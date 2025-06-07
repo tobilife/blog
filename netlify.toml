@@ -23,6 +23,10 @@
   function = "googlebot-handler"
 
 [[edge_functions]]
+  path = "/health"
+  function = "health-check"
+
+[[edge_functions]]
   path = "/api/chat"
   function = "langflow-proxy-edge"
 
