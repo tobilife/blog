@@ -1,7 +1,7 @@
 // Optimized Chat Service with Astra DB integration
 export class OptimizedChatService {
 	constructor() {
-		this.LANGFLOW_API_URL = "/api/chat"; // Edge Function 사용 (60초 타임아웃)
+		this.LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy-astra"; // Astra DB 통합 함수
 		this.CHECK_STATUS_URL = "/.netlify/functions/check-task-status";
 		this.pollingIntervals = new Map(); // 진행 중인 폴링 관리
 	}
@@ -206,7 +206,8 @@ export class OptimizedChatService {
 		const messages = {
 			simple: "빠르게 답변 드리겠습니다! ⚡",
 			moderate: "답변을 준비하고 있습니다... 🤔",
-			complex: "복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠",
+			complex:
+				"복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠",
 		};
 		return messages[complexity] || messages.moderate;
 	}

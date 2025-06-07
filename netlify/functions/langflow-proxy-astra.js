@@ -24,7 +24,8 @@ function analyzeQueryComplexity(query) {
 		hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
 		requiresReasoning: /왜|어떻게|분석|비교|설명|차이|장단점|평가/i.test(query),
 		requiresLatestInfo: /최신|현재|오늘|요즘|최근|실시간/i.test(query),
-		isSimpleFactCheck: /무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
+		isSimpleFactCheck:
+			/무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
 		hasComplexTerms: /github|프로그래밍|개발|AI|기술|경제|정치/i.test(query),
 	};
 
@@ -60,42 +61,42 @@ function analyzeQueryComplexity(query) {
 
 // 질문의 주제를 분석하는 함수 (기존 코드 재사용)
 function analyzeQueryIntent(query) {
- const lowerQuery = query.toLowerCase();
+	const lowerQuery = query.toLowerCase();
 
- // 블로그 관련 패턴 추가
- const blogPatterns = [
-  /이\s*블로그/,
-  /여기서/,
-  /여기에/,
-  /토비라이프/,
-  /tobilife/,
-  /포스트/,
-  /작성한/,
-  /쓴/,
-  /올린/,
-  /블로그\s*주인/,
-  /블로그에서/,
-  /여기\s*있는/,
-  /토비라이프가/,
-  /토비라이프의/,
-  /목록/,
-  // AI 관련 키워드도 블로그 내용으로 간주
-  /rag/i,
-  /langchain/i,
-  /chromadb/i,
-  /ollama/i,
-  /docker/i,
-  /sim\s*studio/i,
-  /ai\s*agent/i,
-  /워크플로우/,
-  /자동화/,
-  /지식베이스/,
- ];
+	// 블로그 관련 패턴 추가
+	const blogPatterns = [
+		/이\s*블로그/,
+		/여기서/,
+		/여기에/,
+		/토비라이프/,
+		/tobilife/,
+		/포스트/,
+		/작성한/,
+		/쓴/,
+		/올린/,
+		/블로그\s*주인/,
+		/블로그에서/,
+		/여기\s*있는/,
+		/토비라이프가/,
+		/토비라이프의/,
+		/목록/,
+		// AI 관련 키워드도 블로그 내용으로 간주
+		/rag/i,
+		/langchain/i,
+		/chromadb/i,
+		/ollama/i,
+		/docker/i,
+		/sim\s*studio/i,
+		/ai\s*agent/i,
+		/워크플로우/,
+		/자동화/,
+		/지식베이스/,
+	];
 
- // 날짜/시간 전용 패턴
- const dateTimePatterns = [
-  /오늘.*날짜/,
-  /오늘.*몇.*일/,
+	// 날짜/시간 전용 패턴
+	const dateTimePatterns = [
+		/오늘.*날짜/,
+		/오늘.*몇.*일/,
 		/현재.*시간/,
 		/지금.*몇.*시/,
 		/오늘이.*며칠/,
@@ -183,32 +184,35 @@ function analyzeQueryIntent(query) {
 	];
 
 	// 블로그 관련 질문 확인
-	const isBlogRelated = blogPatterns.some((pattern) => pattern.test(lowerQuery));
-	
+	const isBlogRelated = blogPatterns.some((pattern) =>
+		pattern.test(lowerQuery),
+	);
+
 	// 날짜/시간 질문 확인
-	const isDateTime = dateTimePatterns.some((pattern) => pattern.test(lowerQuery));
-	
+	const isDateTime = dateTimePatterns.some((pattern) =>
+		pattern.test(lowerQuery),
+	);
+
 	// 날씨 질문 확인
 	const isWeather = weatherPatterns.some((pattern) => pattern.test(lowerQuery));
-	
+
 	// 일반 검색 필요 확인 (블로그 관련 질문이면 웹 검색 제외)
 	const needsSearch =
-	 !isBlogRelated && (
-	  searchPatterns.some((pattern) => pattern.test(lowerQuery)) ||
-	  ((lowerQuery.includes("최신") ||
-	   lowerQuery.includes("현재") ||
-	   lowerQuery.includes("오늘") ||
-	   lowerQuery.includes("요즘")) &&
-	   !isDateTime &&
-	   !isWeather)
-	 );
+		!isBlogRelated &&
+		(searchPatterns.some((pattern) => pattern.test(lowerQuery)) ||
+			((lowerQuery.includes("최신") ||
+				lowerQuery.includes("현재") ||
+				lowerQuery.includes("오늘") ||
+				lowerQuery.includes("요즘")) &&
+				!isDateTime &&
+				!isWeather));
 
 	return {
-	 isDateTime,
-	 isWeather,
-	 isBlogRelated,
-	 needsSearch,
-	 originalQuery: query,
+		isDateTime,
+		isWeather,
+		isBlogRelated,
+		needsSearch,
+		originalQuery: query,
 	};
 }
 
@@ -254,7 +258,11 @@ function extractCity(query) {
 	];
 
 	// 고양시의 구를 포함한 경우 고양시로 통일
-	if (query.includes("덕양구") || query.includes("일산동구") || query.includes("일산서구")) {
+	if (
+		query.includes("덕양구") ||
+		query.includes("일산동구") ||
+		query.includes("일산서구")
+	) {
 		return "고양시";
 	}
 
@@ -307,7 +315,11 @@ async function getWeather(city, apiKey) {
 		);
 
 		if (!response.ok) {
-			console.error("Weather API error:", response.status, await response.text());
+			console.error(
+				"Weather API error:",
+				response.status,
+				await response.text(),
+			);
 			return null;
 		}
 
@@ -337,7 +349,9 @@ function getCurrentDateInfo() {
 	const year = koreaTime.getUTCFullYear();
 	const month = koreaTime.getUTCMonth() + 1;
 	const day = koreaTime.getUTCDate();
-	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][koreaTime.getUTCDay()];
+	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
+		koreaTime.getUTCDay()
+	];
 	const monthNames = [
 		"January",
 		"February",
@@ -378,7 +392,11 @@ function optimizeSearchQuery(query) {
 	let optimizedQuery = query;
 
 	// GitHub 관련 질문 처리
-	if (query.includes("github") || query.includes("깃허브") || query.includes("깃헙")) {
+	if (
+		query.includes("github") ||
+		query.includes("깃허브") ||
+		query.includes("깃헙")
+	) {
 		// GitHub 관련 키워드를 영어로 변환
 		optimizedQuery = query
 			.replace(/깃허브|깃헙/g, "GitHub")
@@ -500,7 +518,10 @@ async function searchGoogle(query, apiKey, searchEngineId) {
 			console.error("Google Search API error:", response.status, errorData);
 
 			// 할당량 초과 에러 체크
-			if (response.status === 429 || errorData.error?.message?.includes("quota")) {
+			if (
+				response.status === 429 ||
+				errorData.error?.message?.includes("quota")
+			) {
 				return { quotaExceeded: true };
 			}
 			return null;
@@ -714,7 +735,11 @@ async function performEnhancedSearch(
 		);
 
 		// Google 검색 성공 시 카운트 증가
-		if (googleResults && !googleResults.quotaExceeded && googleResults.length > 0) {
+		if (
+			googleResults &&
+			!googleResults.quotaExceeded &&
+			googleResults.length > 0
+		) {
 			await incrementGoogleSearchCount(googleUsage.dateKey);
 			// Google 결과가 충분한 경우 (3개 이상) 다른 API 호출 생략
 			if (googleResults.length >= 3) {
@@ -725,8 +750,12 @@ async function performEnhancedSearch(
 
 	// Google 결과가 부족하거나 사용 불가시 Brave/Tavily 병렬 호출
 	const [braveRes, tavilyRes] = await Promise.all([
-		braveApiKey ? searchWithTimeout(searchBrave, query, braveApiKey) : Promise.resolve(null),
-		tavilyApiKey ? searchWithTimeout(searchTavily, query, tavilyApiKey) : Promise.resolve(null),
+		braveApiKey
+			? searchWithTimeout(searchBrave, query, braveApiKey)
+			: Promise.resolve(null),
+		tavilyApiKey
+			? searchWithTimeout(searchTavily, query, tavilyApiKey)
+			: Promise.resolve(null),
 	]);
 
 	braveResults = braveRes;
@@ -756,7 +785,9 @@ function enhancePromptWithSearchResults(
 		for (const msg of recentHistory) {
 			// 메시지 길이 제한 (100자)
 			const content =
-				msg.content.length > 100 ? `${msg.content.substring(0, 100)}...` : msg.content;
+				msg.content.length > 100
+					? `${msg.content.substring(0, 100)}...`
+					: msg.content;
 			enhancedPrompt += `${msg.role === "user" ? "U" : "A"}: ${content}\n`;
 		}
 		enhancedPrompt += "\n";
@@ -838,7 +869,9 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
 		const responseText = await response.text();
 
 		if (!response.ok) {
-			throw new Error(`Langflow API error: ${response.status} - ${responseText}`);
+			throw new Error(
+				`Langflow API error: ${response.status} - ${responseText}`,
+			);
 		}
 
 		// 작업 완료 처리
@@ -850,14 +883,18 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
 			const parsedResponse = JSON.parse(responseText);
 			// requestBody에서 필요한 컨텍스트 정보 추출
 			const complexity = requestBody.complexity || { score: 0 };
-			await cacheService.set(requestBody.input_value, JSON.stringify(parsedResponse), {
-				conversationLength: requestBody.conversation_history
-					? requestBody.conversation_history.length
-					: 0,
-				hasSearchResults: requestBody.hasSearchResults || false,
-				complexity: complexity.score || 0,
-				responseTime: 0, // 비동기 처리이므로 정확한 시간 계산 어려움
-			});
+			await cacheService.set(
+				requestBody.input_value,
+				JSON.stringify(parsedResponse),
+				{
+					conversationLength: requestBody.conversation_history
+						? requestBody.conversation_history.length
+						: 0,
+					hasSearchResults: requestBody.hasSearchResults || false,
+					complexity: complexity.score || 0,
+					responseTime: 0, // 비동기 처리이므로 정확한 시간 계산 어려움
+				},
+			);
 		}
 	} catch (error) {
 		console.error("Async task processing error:", error);
@@ -1036,13 +1073,13 @@ exports.handler = async (event, context) => {
 
 		// 사용자가 웹 검색을 활성화한 경우에만 웹 검색 수행
 		if (
-		 enableWebSearch &&
-		 (GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY) &&
-		 intent.needsSearch &&
-		 !intent.isWeather &&
-		 !intent.isDateTime &&
-		 !intent.isBlogRelated &&
-		 (hasExplicitSearchRequest || effectiveSearchLimit > 0)
+			enableWebSearch &&
+			(GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY) &&
+			intent.needsSearch &&
+			!intent.isWeather &&
+			!intent.isDateTime &&
+			!intent.isBlogRelated &&
+			(hasExplicitSearchRequest || effectiveSearchLimit > 0)
 		) {
 			searchResults = await performEnhancedSearch(
 				userQuery,
@@ -1079,7 +1116,10 @@ exports.handler = async (event, context) => {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${API_TOKEN}`,
 					Accept: "application/json",
-					"X-Forwarded-For": event.headers["x-forwarded-for"] || event.headers["client-ip"] || "",
+					"X-Forwarded-For":
+						event.headers["x-forwarded-for"] ||
+						event.headers["client-ip"] ||
+						"",
 				},
 				body: JSON.stringify(requestBody),
 				signal: controller.signal,
@@ -1202,7 +1242,8 @@ exports.handler = async (event, context) => {
 					},
 					body: JSON.stringify({
 						error: "Gateway timeout",
-						message: "요청 처리 시간이 초과되었습니다. 더 간단한 질문을 해보세요.",
+						message:
+							"요청 처리 시간이 초과되었습니다. 더 간단한 질문을 해보세요.",
 						timeout: true,
 						timeoutDuration: dynamicTimeout,
 						complexityLevel: complexity.level,
@@ -1242,7 +1283,8 @@ exports.handler = async (event, context) => {
 			body: JSON.stringify({
 				error: "Internal server error",
 				message: error.message,
-				details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+				details:
+					process.env.NODE_ENV === "development" ? error.stack : undefined,
 			}),
 		};
 	}

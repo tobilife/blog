@@ -65,7 +65,11 @@ class ResponseQualityEvaluator {
 	};
 	private minQualityScore = 0.7;
 
-	evaluateResponse(response: string, query: string, hasSearchResults = false): EvaluationResult {
+	evaluateResponse(
+		response: string,
+		query: string,
+		hasSearchResults = false,
+	): EvaluationResult {
 		const scores = {
 			completeness: this.evaluateCompleteness(response, query),
 			relevance: this.evaluateRelevance(response, query),
@@ -82,7 +86,8 @@ class ResponseQualityEvaluator {
 			totalScore: Math.round(totalScore * 100) / 100,
 			scores,
 			shouldCache: totalScore >= this.minQualityScore,
-			confidence: totalScore >= 0.8 ? "high" : totalScore >= 0.6 ? "medium" : "low",
+			confidence:
+				totalScore >= 0.8 ? "high" : totalScore >= 0.6 ? "medium" : "low",
 		};
 	}
 
@@ -98,7 +103,9 @@ class ResponseQualityEvaluator {
 		let score = 0.5;
 		const queryWords = query.toLowerCase().split(/\s+/);
 		const responseWords = response.toLowerCase().split(/\s+/);
-		const matchCount = queryWords.filter((word) => responseWords.includes(word)).length;
+		const matchCount = queryWords.filter((word) =>
+			responseWords.includes(word),
+		).length;
 		score += (matchCount / queryWords.length) * 0.5;
 		return Math.min(score, 1);
 	}
@@ -157,8 +164,10 @@ class AstraDBCache {
 			}
 
 			const result = await response.json();
-			if (result.data && result.data.length > 0) {
-				const entry = result.data[0];
+			// Astra DB 응답 형식 처리
+			const data = result.data || [result];
+			if (data && data.length > 0) {
+				const entry = data[0];
 				const expiresAt = new Date(entry.expires_at);
 				if (expiresAt > new Date()) {
 					return {
@@ -180,7 +189,6 @@ class AstraDBCache {
 			return null;
 		}
 	}
-
 	async setCacheEntry(
 		question: string,
 		answer: string,
@@ -225,7 +233,11 @@ class AstraDBCache {
 				return true;
 			}
 
-			console.error("Cache save error:", response.status, await response.text());
+			console.error(
+				"Cache save error:",
+				response.status,
+				await response.text(),
+			);
 			return false;
 		} catch (error) {
 			console.error("Cache set error:", error);
@@ -286,8 +298,10 @@ class ApiUsageTracker {
 			}
 
 			const result = await response.json();
-			if (result.data && result.data.length > 0) {
-				return result.data[0];
+			// Astra DB 응답 형식 처리
+			const data = result.data || [result];
+			if (data && data.length > 0) {
+				return data[0];
 			}
 
 			// 데이터가 없으면 새로 생성
@@ -314,17 +328,22 @@ class ApiUsageTracker {
 	}
 
 	// API 사용량 업데이트
-	async updateUsageStats(apiType: "google" | "brave" | "tavily"): Promise<boolean> {
+	async updateUsageStats(
+		apiType: "google" | "brave" | "tavily",
+	): Promise<boolean> {
 		const dateKey = this.getKoreaDateKey();
 		const currentStats = await this.getUsageStats();
 
 		// 카운트 증가
 		if (apiType === "google") {
-			currentStats.google_search_count = (currentStats.google_search_count || 0) + 1;
+			currentStats.google_search_count =
+				(currentStats.google_search_count || 0) + 1;
 		} else if (apiType === "brave") {
-			currentStats.brave_search_count = (currentStats.brave_search_count || 0) + 1;
+			currentStats.brave_search_count =
+				(currentStats.brave_search_count || 0) + 1;
 		} else if (apiType === "tavily") {
-			currentStats.tavily_search_count = (currentStats.tavily_search_count || 0) + 1;
+			currentStats.tavily_search_count =
+				(currentStats.tavily_search_count || 0) + 1;
 		}
 
 		// PUT 요청을 위한 데이터 준비 - date_key는 URL에 포함되므로 body에서 제외
@@ -351,7 +370,11 @@ class ApiUsageTracker {
 				return true;
 			}
 
-			console.error("Usage stats update error:", response.status, await response.text());
+			console.error(
+				"Usage stats update error:",
+				response.status,
+				await response.text(),
+			);
 			return false;
 		} catch (error) {
 			console.error("Update usage stats error:", error);
@@ -386,8 +409,10 @@ class ApiUsageTracker {
 
 				if (response.ok) {
 					const result = await response.json();
-					if (result.data && result.data.length > 0) {
-						const stats = result.data[0];
+					// Astra DB 응답 형식 처리
+					const data = result.data || [result];
+					if (data && data.length > 0) {
+						const stats = data[0];
 						if (apiType === "brave") {
 							totalUsage += stats.brave_search_count || 0;
 						} else if (apiType === "tavily") {
@@ -414,7 +439,10 @@ class ApiUsageTracker {
 		const braveMonthly = await this.getMonthlyUsage("brave");
 		const tavilyMonthly = await this.getMonthlyUsage("tavily");
 
-		const googleRemaining = Math.max(0, 99 - (dailyStats.google_search_count || 0));
+		const googleRemaining = Math.max(
+			0,
+			99 - (dailyStats.google_search_count || 0),
+		);
 		const braveRemaining = Math.max(0, 1000 - braveMonthly);
 		const tavilyRemaining = Math.max(0, 1000 - tavilyMonthly);
 
@@ -436,7 +464,8 @@ function analyzeQueryComplexity(query: string) {
 		hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
 		requiresReasoning: /왜|어떻게|분석|비교|설명|차이|장단점|평가/i.test(query),
 		requiresLatestInfo: /최신|현재|오늘|요즘|최근|실시간/i.test(query),
-		isSimpleFactCheck: /무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
+		isSimpleFactCheck:
+			/무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
 		hasComplexTerms: /github|프로그래밍|개발|AI|기술|경제|정치/i.test(query),
 	};
 
@@ -526,7 +555,9 @@ function analyzeQueryIntent(query: string) {
 		/요금/,
 	];
 
-	const needsSearch = searchPatterns.some((pattern) => pattern.test(lowerQuery));
+	const needsSearch = searchPatterns.some((pattern) =>
+		pattern.test(lowerQuery),
+	);
 
 	return {
 		needsSearch,
@@ -538,28 +569,31 @@ function analyzeQueryIntent(query: string) {
 function removeChinese(text: string): string {
 	let result = text;
 	result = result.replace(/集中/g, "집중");
-	result = result.replace(/([\uAC00-\uD7AF\s]+)([\u4E00-\u9FFF]+)([\uAC00-\uD7AF\s]+)/g, "$1 $3");
+	result = result.replace(
+		/([\uAC00-\uD7AF\s]+)([\u4E00-\u9FFF]+)([\uAC00-\uD7AF\s]+)/g,
+		"$1 $3",
+	);
 	return result.trim();
 }
 
 // 재귀적으로 중국어 제거
 function deepRemoveChinese<T>(obj: T): T {
- if (typeof obj === "string") {
-  return removeChinese(obj) as T;
- }
- if (Array.isArray(obj)) {
-  return obj.map((item) => deepRemoveChinese(item)) as T;
- }
- if (obj !== null && typeof obj === "object") {
-  const newObj: Record<string, unknown> = {};
-  for (const key in obj) {
-   if (Object.hasOwn(obj, key)) {
-    newObj[key] = deepRemoveChinese((obj as Record<string, unknown>)[key]);
-   }
-  }
-  return newObj as T;
- }
- return obj;
+	if (typeof obj === "string") {
+		return removeChinese(obj) as T;
+	}
+	if (Array.isArray(obj)) {
+		return obj.map((item) => deepRemoveChinese(item)) as T;
+	}
+	if (obj !== null && typeof obj === "object") {
+		const newObj: Record<string, unknown> = {};
+		for (const key in obj) {
+			if (Object.hasOwn(obj, key)) {
+				newObj[key] = deepRemoveChinese((obj as Record<string, unknown>)[key]);
+			}
+		}
+		return newObj as T;
+	}
+	return obj;
 }
 
 // Brave Search API 호출
@@ -694,7 +728,9 @@ function enhancePromptWithSearchResults(
 	const year = koreaTime.getUTCFullYear();
 	const month = koreaTime.getUTCMonth() + 1;
 	const day = koreaTime.getUTCDate();
-	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][koreaTime.getUTCDay()];
+	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
+		koreaTime.getUTCDay()
+	];
 
 	let enhancedPrompt = "";
 
@@ -710,7 +746,9 @@ function enhancePromptWithSearchResults(
 		const recentHistory = conversationHistory.slice(-3);
 		for (const msg of recentHistory) {
 			const content =
-				msg.content.length > 100 ? `${msg.content.substring(0, 100)}...` : msg.content;
+				msg.content.length > 100
+					? `${msg.content.substring(0, 100)}...`
+					: msg.content;
 			enhancedPrompt += `${msg.role === "user" ? "U" : "A"}: ${content}\n`;
 		}
 		enhancedPrompt += "\n";
@@ -733,14 +771,16 @@ function enhancePromptWithSearchResults(
 
 		enhancedPrompt += "### 필수 답변 규칙 ###\n";
 		enhancedPrompt += "1. 반드시 위의 검색 결과를 사용하여 답변하세요.\n";
-		enhancedPrompt += "2. 검색 결과가 당신의 기존 지식과 다르다면, 검색 결과가 최신 정보입니다.\n";
+		enhancedPrompt +=
+			"2. 검색 결과가 당신의 기존 지식과 다르다면, 검색 결과가 최신 정보입니다.\n";
 		enhancedPrompt += `3. "제 지식으로는" 또는 "2025년 1월 기준" 같은 표현을 사용하지 마세요.\n`;
 		enhancedPrompt += "4. 검색 결과를 바탕으로 현재 상황을 설명하세요.\n";
 		enhancedPrompt += "5. 답변에 출처를 포함할 때는 위의 URL을 참고하세요.\n\n";
 	} else {
 		enhancedPrompt += "### 답변 지침 ###\n";
 		enhancedPrompt += "- 친절하고 도움이 되는 답변을 제공하세요.\n";
-		enhancedPrompt += "- 정확한 정보를 제공하되, 불확실한 경우 그렇게 말씀드리세요.\n";
+		enhancedPrompt +=
+			"- 정확한 정보를 제공하되, 불확실한 경우 그렇게 말씀드리세요.\n";
 	}
 
 	return enhancedPrompt;
@@ -774,7 +814,9 @@ export default async (request: Request, context: Context) => {
 		const LANGFLOW_API_TOKEN = Deno.env.get("LANGFLOW_API_TOKEN");
 		const BRAVE_API_KEY = Deno.env.get("BRAVE_SEARCH_API_KEY");
 		const ASTRA_DB_REST_URL = Deno.env.get("ASTRA_DB_REST_URL");
-		const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get("ASTRA_DB_APPLICATION_TOKEN");
+		const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get(
+			"ASTRA_DB_APPLICATION_TOKEN",
+		);
 		const ASTRA_DB_KEYSPACE = Deno.env.get("ASTRA_DB_KEYSPACE");
 		const GOOGLE_API_KEY = Deno.env.get("GOOGLE_SEARCH_API_KEY");
 		const GOOGLE_CX = Deno.env.get("GOOGLE_SEARCH_CX");
@@ -875,7 +917,11 @@ export default async (request: Request, context: Context) => {
 
 			// Google Search API 우선 사용
 			if (GOOGLE_API_KEY && GOOGLE_CX && apiAvailability.canUseGoogle) {
-				searchResults = await searchGoogle(userQuery, GOOGLE_API_KEY, GOOGLE_CX);
+				searchResults = await searchGoogle(
+					userQuery,
+					GOOGLE_API_KEY,
+					GOOGLE_CX,
+				);
 				if (searchResults) {
 					searchApiUsed = "google";
 				}
@@ -965,7 +1011,11 @@ export default async (request: Request, context: Context) => {
 					if (sortedResults.length > 0) {
 						searchResults = sortedResults;
 						searchApiUsed =
-							braveResults && tavilyResults ? "brave+tavily" : braveResults ? "brave" : "tavily";
+							braveResults && tavilyResults
+								? "brave+tavily"
+								: braveResults
+									? "brave"
+									: "tavily";
 
 						// 결과 품질 로그
 						for (const result of searchResults) {
@@ -1000,7 +1050,11 @@ export default async (request: Request, context: Context) => {
 
 		// 프롬프트 향상
 		if (searchResults || conversationHistory.length > 0) {
-			enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, conversationHistory);
+			enhancedQuery = enhancePromptWithSearchResults(
+				userQuery,
+				searchResults,
+				conversationHistory,
+			);
 			requestBody.hasSearchResults = !!searchResults;
 		}
 
@@ -1012,7 +1066,11 @@ export default async (request: Request, context: Context) => {
 		}
 		requestBody.tweaks.ChatOutput = {
 			max_tokens:
-				complexity.level === "simple" ? 800 : complexity.level === "moderate" ? 1500 : 2500,
+				complexity.level === "simple"
+					? 800
+					: complexity.level === "moderate"
+						? 1500
+						: 2500,
 		};
 
 		// Langflow API 호출 (스트리밍 지원)
@@ -1063,7 +1121,8 @@ export default async (request: Request, context: Context) => {
 				// 응답 텍스트 추출 (JSON에서 실제 응답 텍스트 찾기)
 				let responseText = JSON.stringify(parsedResponse);
 				if (parsedResponse.outputs?.[0]?.outputs?.[0]?.results?.message?.text) {
-					responseText = parsedResponse.outputs[0].outputs[0].results.message.text;
+					responseText =
+						parsedResponse.outputs[0].outputs[0].results.message.text;
 				} else if (parsedResponse.result) {
 					responseText = parsedResponse.result;
 				} else if (parsedResponse.message) {
@@ -1079,14 +1138,18 @@ export default async (request: Request, context: Context) => {
 
 				// 품질 기준을 통과한 경우에만 캐싱
 				if (evaluation.shouldCache) {
-					await cacheService.setCacheEntry(userQuery, JSON.stringify(parsedResponse), {
-						complexity: complexity.score,
-						hasSearchResults: requestBody.hasSearchResults,
-						responseTime: Date.now() - startTime,
-						qualityScore: evaluation.totalScore,
-						confidence: evaluation.confidence,
-						qualityDetails: evaluation.scores, // 품질 평가 세부 점수 추가
-					});
+					await cacheService.setCacheEntry(
+						userQuery,
+						JSON.stringify(parsedResponse),
+						{
+							complexity: complexity.score,
+							hasSearchResults: requestBody.hasSearchResults,
+							responseTime: Date.now() - startTime,
+							qualityScore: evaluation.totalScore,
+							confidence: evaluation.confidence,
+							qualityDetails: evaluation.scores, // 품질 평가 세부 점수 추가
+						},
+					);
 				} else {
 				}
 
