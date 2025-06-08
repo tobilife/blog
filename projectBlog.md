@@ -482,15 +482,9 @@ pnpm type-check # TypeScript 타입 체크
 - Pull Request 미리보기 배포
 - 롤백 지원
 
+## Astra DB
+- USE chat_data;
+- TRUNCATE TABLE chat_cache;
+- SELECT * FROM chat_cache;
+- SELECT * FROM api_usage_stats;
 ---
-
-이 문서는 프로젝트의 현재 상태를 반영하며, 구조나 기술 스택 변경 시 업데이트되어야 합니다.
-
--- USE chat_data;
-
---삭제
-TRUNCATE TABLE chat_cache;
---조회
-SELECT * FROM chat_cache;
---조회
-SELECT * FROM api_usage_stats;
