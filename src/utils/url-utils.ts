@@ -9,7 +9,9 @@ export function pathsEqual(path1: string, path2: string) {
 }
 
 function joinUrl(...parts: string[]): string {
-	const joined = parts.join("/");
+	const joined = parts
+		.filter((part) => part !== undefined && part !== null && part !== "")
+		.join("/");
 	return joined.replace(/\/+/g, "/");
 }
 
@@ -18,10 +20,10 @@ export function getPostUrlBySlug(slug: string): string {
 }
 
 export function getTagUrl(tag: string): string {
-	if (!tag) return url("/archive/tag/");
+	if (!tag || !tag.trim()) return url("/archive/tag/");
 
 	// use common encoding function
-	const encodedTag = encodePathSegment(tag);
+	const encodedTag = encodePathSegment(tag.trim());
 	const tagUrl = `/archive/tag/${encodedTag}/`;
 	return url(tagUrl);
 }

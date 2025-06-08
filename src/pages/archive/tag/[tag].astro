@@ -21,15 +21,20 @@ export async function getStaticPaths() {
 			});
 		} else if (post.data.tags && typeof post.data.tags === "string") {
 			// biome-ignore lint/complexity/noForEach: <explanation>
-			(post.data.tags as string).split(",").forEach((tag) => acc.add(tag.trim()));
+			(post.data.tags as string)
+				.split(",")
+				.forEach((tag) => acc.add(tag.trim()));
 		}
 		return acc;
 	}, new Set());
 
-	const allTagsArray = Array.from(allTags);
+	const allTagsArray = Array.from(allTags).filter(
+		(tag) => tag && tag.trim() !== "",
+	);
 
 	// judge if the string is CJK
-	const isCJK = (str: string) => /[\u3000-\u9fff\uac00-\ud7af\u4e00-\u9faf]/.test(str);
+	const isCJK = (str: string) =>
+		/[\u3000-\u9fff\uac00-\ud7af\u4e00-\u9faf]/.test(str);
 
 	const standardPaths = allTagsArray.map((tag) => ({
 		params: {
