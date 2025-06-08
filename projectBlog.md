@@ -488,11 +488,9 @@ pnpm type-check # TypeScript 타입 체크
 
 -- USE chat_data;
 
---전체 삭제함
+--삭제
 TRUNCATE TABLE chat_cache;
-
 --조회
 SELECT * FROM chat_cache;
-
 --조회
 SELECT * FROM api_usage_stats;
