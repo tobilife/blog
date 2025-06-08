@@ -1,0 +1,35 @@
+name: Cache Invalidation on Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/content/posts/**'
+      - 'public/posts-metadata.json'
+  workflow_dispatch:
+
+jobs:
+  trigger-cache-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Netlify deployment
+        run: sleep 60  # 배포가 완료되기를 기다림 (1분)
+        
+      - name: Trigger cache check
+        run: |
+          response=$(curl -s -X POST https://blog.tobimind.com/api/cache/check)
+          echo "Cache check response: $response"
+          
+          # 버전 정보 출력
+          current_version=$(echo $response | jq -r '.currentVersion')
+          cached_version=$(echo $response | jq -r '.cachedVersion')
+          needs_invalidation=$(echo $response | jq -r '.needsInvalidation')
+          
+          echo "Current version: $current_version"
+          echo "Cached version: $cached_version"
+          echo "Needs invalidation: $needs_invalidation"
+          
+      - name: Notify on failure
+        if: failure()
+        run: echo "Cache check failed!"

@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 
 const postsDir = "./src/content/posts";
 const outputPath = "./public/posts-metadata.json";
@@ -143,14 +144,27 @@ for (const file of files) {
 	}
 }
 
+// Generate version hash based on all metadata
+const metadataString = JSON.stringify(metadata);
+const versionHash = createHash('sha256').update(metadataString).digest('hex').substring(0, 12);
+
+// Add version info to metadata
+const metadataWithVersion = {
+ version: versionHash,
+ lastUpdated: new Date().toISOString(),
+ totalPosts: totalPosts,
+ posts: metadata
+};
+
 // Write metadata to JSON file
-writeFileSync(outputPath, JSON.stringify(metadata, null, 2));
+writeFileSync(outputPath, JSON.stringify(metadataWithVersion, null, 2));
 
 // Print summary
 console.log("\n=== Build Summary ===");
 console.log(`Total posts processed: ${totalPosts}`);
 console.log(`Draft posts skipped: ${draftPosts}`);
 console.log(`Metadata file: ${outputPath}`);
+console.log(`Version hash: ${versionHash}`);
 
 // Print validation errors if any
 if (allErrors.length > 0) {

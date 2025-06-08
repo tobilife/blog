@@ -29,6 +29,10 @@
 [[edge_functions]]
   path = "/api/chat"
   function = "langflow-proxy-edge"
+  
+  [[edge_functions]]
+  path = "/api/cache/check"
+  function = "cache-invalidator"
 
 [[headers]]
   for = "/*"

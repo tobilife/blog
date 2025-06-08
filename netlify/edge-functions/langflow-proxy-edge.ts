@@ -129,18 +129,26 @@ class ResponseQualityEvaluator {
 
 // Astra DB 캐시 클래스
 class AstraDBCache {
-	private baseUrl: string;
-	private token: string;
-	private keyspace: string;
+ private baseUrl: string;
+ private token: string;
+ private keyspace: string;
+ private metadataVersion: string | null = null;
 
 	constructor(baseUrl: string, token: string, keyspace: string) {
 		this.baseUrl = baseUrl;
 		this.token = token;
 		this.keyspace = keyspace;
 	}
-
+	
+	// 메타데이터 버전 설정
+	setMetadataVersion(version: string) {
+	 this.metadataVersion = version;
+	}
+	
 	private generateCacheKey(question: string): string {
-		return question.toLowerCase().trim().replace(/\s+/g, " ");
+	 // 버전이 있으면 캐시 키에 포함
+	 const baseKey = question.toLowerCase().trim().replace(/\s+/g, " ");
+	 return this.metadataVersion ? `${this.metadataVersion}:${baseKey}` : baseKey;
 	}
 
 	async getCacheEntry(question: string): Promise<CacheEntry | null> {
@@ -717,6 +725,31 @@ async function searchTavily(query: string, apiKey: string) {
 	}
 }
 
+// 메타데이터 가져오기
+async function fetchBlogMetadata(): Promise<{ version: string; lastUpdated: string; totalPosts: number } | null> {
+ try {
+  // waitUntil을 사용해 비동기로 처리
+  const response = await fetch("https://blog.tobimind.com/posts-metadata.json", {
+   signal: AbortSignal.timeout(3000), // 3초 타임아웃
+  });
+  
+  if (!response.ok) {
+   console.error("Failed to fetch metadata:", response.status);
+   return null;
+  }
+  
+  const data = await response.json();
+  return {
+   version: data.version || "unknown",
+   lastUpdated: data.lastUpdated || new Date().toISOString(),
+   totalPosts: data.totalPosts || 0,
+  };
+ } catch (error) {
+  console.error("Error fetching metadata:", error);
+  return null;
+ }
+}
+
 // 프롬프트 향상 함수
 function enhancePromptWithSearchResults(
 	originalQuery: string,
@@ -851,20 +884,40 @@ export default async (request: Request, context: Context) => {
 
 		// 복잡도 분석
 		const complexity = analyzeQueryComplexity(userQuery);
-
+		
+		// 메타데이터 버전 체크 (비동기 처리)
+		let metadataVersion = "unknown";
+		const metadataPromise = fetchBlogMetadata().then(metadata => {
+		 if (metadata) {
+		  metadataVersion = metadata.version;
+		  console.log(`Metadata version: ${metadataVersion}, Total posts: ${metadata.totalPosts}`);
+		 }
+		});
+		
 		// Astra DB 캐시 초기화 및 확인 (웹 검색이 비활성화된 경우에만)
 		let cacheService: AstraDBCache | null = null;
 		let cachedResult = null;
 		
 		if (!enableWebSearch && ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
 		 try {
+		  // 메타데이터 버전을 기다림 (최대 1초)
+		  await Promise.race([
+		   metadataPromise,
+		   new Promise(resolve => setTimeout(resolve, 1000))
+		  ]);
+		  
 		  cacheService = new AstraDBCache(
 		   ASTRA_DB_REST_URL,
 		   ASTRA_DB_APPLICATION_TOKEN,
 		   ASTRA_DB_KEYSPACE,
 		  );
+		  
+		  // 메타데이터 버전 설정
+		  if (metadataVersion !== "unknown") {
+		   cacheService.setMetadataVersion(metadataVersion);
+		  }
+		  
 		  cachedResult = await cacheService.getCacheEntry(userQuery);
-		
 		  if (cachedResult?.hit) {
 		   return new Response(cachedResult.answer, {
 		    status: 200,
@@ -1169,6 +1222,7 @@ export default async (request: Request, context: Context) => {
 				// cacheKey 추가 (피드백용) - generateCacheKey를 public으로 만들어야 함
 				const cacheKey = userQuery.toLowerCase().trim().replace(/\s+/g, " ");
 				parsedResponse.cacheKey = cacheKey;
+				parsedResponse.metadataVersion = metadataVersion;
 			} catch (cacheError) {
 				console.error("Cache evaluation/save error:", cacheError);
 				// 품질 평가 또는 캐시 저장 실패는 무시
