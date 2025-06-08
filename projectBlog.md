@@ -486,7 +486,7 @@ pnpm type-check # TypeScript 타입 체크
 
 이 문서는 프로젝트의 현재 상태를 반영하며, 구조나 기술 스택 변경 시 업데이트되어야 합니다.
 
-USE chat_data;
+-- USE chat_data;
 
 --전체 삭제함
 TRUNCATE TABLE chat_cache;
