@@ -1,66 +1,71 @@
 {
-  "sim-studio-complete-guide": {
-    "title": "Sim Studio: 코딩 없이 만드는 AI 에이전트 워크플로우",
-    "description": "Sim Studio로 개발 자동화와 API 연동을 구현하는 초보자도 따라할 수 있는 상세 가이드입니다.",
-    "category": "AI",
-    "tags": [
-      "Sim Studio",
-      "AI Agent",
-      "워크플로우",
-      "자동화",
-      "LLM",
-      "Docker",
-      "Ollama"
-    ],
-    "image": "/images/uploads/simstudio.png",
-    "published": "2025-05-27T10:01:00.000Z",
-    "updated": null
-  },
-  "git-github-guide": {
-    "title": "Git/GitHub 명령어 가이드",
-    "description": "Git과 GitHub를 사용하여 프로젝트를 효율적으로 관리하고 협업하는 데 필요한 핵심 명령어들을 초보자의 눈높이에 맞춰 설명합니다.",
-    "category": "Git&GitHub",
-    "tags": [
-      "Git",
-      "GitHub",
-      "명령어",
-      "가이드",
-      "초보"
-    ],
-    "image": "/images/uploads/github-6980894_640.webp",
-    "published": "2024-02-18",
-    "updated": null
-  },
-  "rag-blog-post": {
-    "title": "30분 만에 만드는 우리 회사 전용 AI 검색 시스템 - 무료로 구축하는 RAG 지식베이스",
-    "description": "Ollama와 오픈소스 도구를 활용해 완전 무료로 사내 문서 검색 AI 시스템을 구축하는 초보자 가이드",
-    "category": "AI",
-    "tags": [
-      "RAG",
-      "LangChain",
-      "Ollama",
-      "ChromaDB",
-      "Python",
-      "AI",
-      "지식베이스"
-    ],
-    "image": "/images/uploads/img.png",
-    "published": "2025-04-13",
-    "updated": null
-  },
-  "tobilife-portfolio": {
-    "title": "보험 IT 15년, 토비라이프의 여정",
-    "description": "손해보험사 IT 개발자 경력 Overview",
-    "category": "Portfolio",
-    "tags": [
-      "Portfolio",
-      "Insurance-IT",
-      "Java",
-      "Oracle",
-      "xPlatform"
-    ],
-    "image": "/images/uploads/preview-tobi-career-mindmap.png",
-    "published": "2024-01-28",
-    "updated": null
+  "version": "8226d8145b69",
+  "lastUpdated": "2025-06-08T16:10:15.682Z",
+  "totalPosts": 4,
+  "posts": {
+    "sim-studio-complete-guide": {
+      "title": "Sim Studio: 코딩 없이 만드는 AI 에이전트 워크플로우",
+      "description": "Sim Studio로 개발 자동화와 API 연동을 구현하는 초보자도 따라할 수 있는 상세 가이드입니다.",
+      "category": "AI",
+      "tags": [
+        "Sim Studio",
+        "AI Agent",
+        "워크플로우",
+        "자동화",
+        "LLM",
+        "Docker",
+        "Ollama"
+      ],
+      "image": "/images/uploads/simstudio.png",
+      "published": "2025-05-27T10:01:00.000Z",
+      "updated": null
+    },
+    "git-github-guide": {
+      "title": "Git/GitHub 명령어 가이드",
+      "description": "Git과 GitHub를 사용하여 프로젝트를 효율적으로 관리하고 협업하는 데 필요한 핵심 명령어들을 초보자의 눈높이에 맞춰 설명합니다.",
+      "category": "Git&GitHub",
+      "tags": [
+        "Git",
+        "GitHub",
+        "명령어",
+        "가이드",
+        "초보"
+      ],
+      "image": "/images/uploads/github-6980894_640.webp",
+      "published": "2024-02-18",
+      "updated": null
+    },
+    "rag-blog-post": {
+      "title": "30분 만에 만드는 우리 회사 전용 AI 검색 시스템 - 무료로 구축하는 RAG 지식베이스",
+      "description": "Ollama와 오픈소스 도구를 활용해 완전 무료로 사내 문서 검색 AI 시스템을 구축하는 초보자 가이드",
+      "category": "AI",
+      "tags": [
+        "RAG",
+        "LangChain",
+        "Ollama",
+        "ChromaDB",
+        "Python",
+        "AI",
+        "지식베이스"
+      ],
+      "image": "/images/uploads/img.png",
+      "published": "2025-04-13",
+      "updated": null
+    },
+    "tobilife-portfolio": {
+      "title": "보험 IT 15년, 토비라이프의 여정",
+      "description": "손해보험사 IT 개발자 경력 Overview",
+      "category": "Portfolio",
+      "tags": [
+        "Portfolio",
+        "Insurance-IT",
+        "Java",
+        "Oracle",
+        "xPlatform"
+      ],
+      "image": "/images/uploads/preview-tobi-career-mindmap.png",
+      "published": "2024-01-28",
+      "updated": null
+    }
   }
 }
