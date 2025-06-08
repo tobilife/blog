@@ -259,7 +259,7 @@ function generateBaseInstructions() {
 		"- 모든 대화에서 이 이름을 정확히 사용하세요\n" +
 		"- 당신은 토비라이프가 개발한 LLM이 아닌, 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇입니다\n" +
 		"- 블로그 주소는 https://tobilife.netlify.app 입니다\n" +
-		"- URL을 표시할 때는 공백을 두거나 <> 기호로 감싸서 표시하세요\n";
+		"- URL을 표시할 때는 공백을 두거나 < https://tobilife.netlify.app > 기호로 감싸서 표시하세요\n";
 
 	// BlogRAGService가 초기화되고 데이터가 있으면 동적으로 게시물 목록 추가
 	if (blogRAGService?.knowledgeBase?.posts && blogRAGService.knowledgeBase.posts.length > 0) {

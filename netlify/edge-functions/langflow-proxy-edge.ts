@@ -839,6 +839,7 @@ export default async (request: Request, context: Context) => {
 		const requestBody = await request.json();
 		const userQuery = requestBody.input_value || "";
 		const conversationHistory = requestBody.conversation_history || [];
+		const enableWebSearch = requestBody.enableWebSearch !== false; // 기본값 true
 
 		// 빈 쿼리 체크
 		if (!userQuery || !userQuery.trim()) {
@@ -851,34 +852,37 @@ export default async (request: Request, context: Context) => {
 		// 복잡도 분석
 		const complexity = analyzeQueryComplexity(userQuery);
 
-		// Astra DB 캐시 초기화 및 확인
+		// Astra DB 캐시 초기화 및 확인 (웹 검색이 비활성화된 경우에만)
 		let cacheService: AstraDBCache | null = null;
 		let cachedResult = null;
-
-		if (ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
-			try {
-				cacheService = new AstraDBCache(
-					ASTRA_DB_REST_URL,
-					ASTRA_DB_APPLICATION_TOKEN,
-					ASTRA_DB_KEYSPACE,
-				);
-				cachedResult = await cacheService.getCacheEntry(userQuery);
-
-				if (cachedResult?.hit) {
-					return new Response(cachedResult.answer, {
-						status: 200,
-						headers: {
-							...headers,
-							"Content-Type": "application/json",
-							"X-Cache": "HIT",
-							"X-Response-Time": String(Date.now() - startTime),
-						},
-					});
-				}
-			} catch (cacheError) {
-				console.error("Cache service error:", cacheError);
-				// 캐시 오류는 무시하고 계속 진행
-			}
+		
+		if (!enableWebSearch && ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
+		 try {
+		  cacheService = new AstraDBCache(
+		   ASTRA_DB_REST_URL,
+		   ASTRA_DB_APPLICATION_TOKEN,
+		   ASTRA_DB_KEYSPACE,
+		  );
+		  cachedResult = await cacheService.getCacheEntry(userQuery);
+		
+		  if (cachedResult?.hit) {
+		   return new Response(cachedResult.answer, {
+		    status: 200,
+		    headers: {
+		     ...headers,
+		     "Content-Type": "application/json",
+		     "X-Cache": "HIT",
+		     "X-Response-Time": String(Date.now() - startTime),
+		     "X-Web-Search": "DISABLED",
+		    },
+		   });
+		  }
+		 } catch (cacheError) {
+		  console.error("Cache service error:", cacheError);
+		  // 캐시 오류는 무시하고 계속 진행
+		 }
+		} else if (enableWebSearch) {
+		 console.log("Cache skipped - Web search enabled");
 		}
 
 		// API 사용량 추적기 초기화
@@ -898,8 +902,8 @@ export default async (request: Request, context: Context) => {
 		// 의도 분석
 		const intent = analyzeQueryIntent(userQuery);
 
-		// 검색이 필요한 경우
-		if (intent.needsSearch) {
+		// 검색이 필요한 경우 (웹 검색이 활성화된 경우에만)
+		if (enableWebSearch && intent.needsSearch) {
 			// API 사용 가능 여부 확인
 			let apiAvailability = {
 				canUseGoogle: true, // 기본값을 true로 변경
@@ -1046,7 +1050,9 @@ export default async (request: Request, context: Context) => {
 				}
 			} else {
 			}
-		}
+			} else if (!enableWebSearch && intent.needsSearch) {
+			console.log("Web search skipped - Search disabled by user");
+			}
 
 		// 프롬프트 향상
 		if (searchResults || conversationHistory.length > 0) {
@@ -1112,8 +1118,8 @@ export default async (request: Request, context: Context) => {
 			parsedResponse.hasSearchResults = true;
 		}
 
-		// 응답 품질 평가 및 캐싱
-		if (cacheService) {
+		// 응답 품질 평가 및 캐싱 (웹 검색이 비활성화된 경우에만)
+		if (!enableWebSearch && cacheService) {
 			try {
 				// 품질 평가기 생성
 				const evaluator = new ResponseQualityEvaluator();
@@ -1167,7 +1173,9 @@ export default async (request: Request, context: Context) => {
 				console.error("Cache evaluation/save error:", cacheError);
 				// 품질 평가 또는 캐시 저장 실패는 무시
 			}
-		}
+			} else if (enableWebSearch) {
+			console.log("Cache save skipped - Web search enabled");
+			}
 
 		// API 사용량 정보 추가
 		if (usageTracker && searchApiUsed) {
@@ -1200,12 +1208,14 @@ export default async (request: Request, context: Context) => {
 		return new Response(JSON.stringify(parsedResponse), {
 			status: 200,
 			headers: {
-				...headers,
-				"Content-Type": "application/json",
-				"X-Query-Complexity": complexity.level,
-				"X-Response-Time": String(Date.now() - startTime),
-				"X-Cache": "MISS",
-				"X-Search-API-Used": searchApiUsed || "none",
+			 ...headers,
+			 "Content-Type": "application/json",
+			 "X-Query-Complexity": complexity.level,
+			 "X-Response-Time": String(Date.now() - startTime),
+			 "X-Cache": enableWebSearch ? "BYPASS" : "MISS",
+			 "X-Web-Search": enableWebSearch ? "ENABLED" : "DISABLED",
+			 "X-Search-API-Used": searchApiUsed || "none",
+			 "X-Search-Results": searchResults ? "YES" : "NO",
 			},
 		});
 	} catch (error) {

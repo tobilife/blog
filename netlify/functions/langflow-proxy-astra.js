@@ -980,34 +980,40 @@ exports.handler = async (event, context) => {
 		// 복잡도 분석
 		const complexity = analyzeQueryComplexity(userQuery);
 
-		// Astra DB 캐시 확인
+		// Astra DB 캐시 확인 (웹 검색이 비활성화된 경우에만)
 		let cacheService;
 		let cachedResult = { hit: false };
-
-		try {
-			cacheService = getCacheService();
-			if (cacheService) {
-				cachedResult = await cacheService.get(userQuery, {
-					conversationLength: conversationHistory.length,
-				});
-			} else {
-			}
-		} catch (cacheError) {
-			console.error("Cache service error:", cacheError);
-			// 캐시 오류는 무시하고 계속 진행
-		}
-
-		if (cachedResult.hit) {
-			return {
-				statusCode: 200,
-				headers: {
-					...headers,
-					"Content-Type": "application/json",
-					"X-Cache": "HIT",
-					"X-Response-Time": String(Date.now() - startTime),
-				},
-				body: cachedResult.answer,
-			};
+		
+		if (!enableWebSearch) {
+		 try {
+		  cacheService = getCacheService();
+		  if (cacheService) {
+		   cachedResult = await cacheService.get(userQuery, {
+		    conversationLength: conversationHistory.length,
+		   });
+		  } else {
+		   console.log("Cache service not available");
+		  }
+		 } catch (cacheError) {
+		  console.error("Cache service error:", cacheError);
+		  // 캐시 오류는 무시하고 계속 진행
+		 }
+		
+		 if (cachedResult.hit) {
+		  return {
+		   statusCode: 200,
+		   headers: {
+		    ...headers,
+		    "Content-Type": "application/json",
+		    "X-Cache": "HIT",
+		    "X-Response-Time": String(Date.now() - startTime),
+		    "X-Web-Search": "DISABLED",
+		   },
+		   body: cachedResult.answer,
+		  };
+		 }
+		} else {
+		 console.log("Cache skipped - Web search enabled");
 		}
 
 		// 비동기 처리 비활성화 - 모든 요청을 동기적으로 처리
@@ -1188,30 +1194,35 @@ exports.handler = async (event, context) => {
 				};
 			}
 
-			// 응답 캐싱
-			if (cacheService) {
-				try {
-					await cacheService.set(userQuery, responseText, {
-						conversationLength: conversationHistory.length,
-						hasSearchResults: requestBody.hasSearchResults,
-						complexity: complexity.score,
-						responseTime: Date.now() - startTime,
-					});
-				} catch (cacheError) {
-					console.error("Cache set error:", cacheError);
-					// 캐시 저장 실패는 무시
-				}
+			// 응답 캐싱 (웹 검색이 비활성화된 경우에만)
+			if (!enableWebSearch && cacheService) {
+			 try {
+			  await cacheService.set(userQuery, responseText, {
+			   conversationLength: conversationHistory.length,
+			   hasSearchResults: requestBody.hasSearchResults,
+			   complexity: complexity.score,
+			   responseTime: Date.now() - startTime,
+			  });
+			  console.log("Response cached successfully");
+			 } catch (cacheError) {
+			  console.error("Cache set error:", cacheError);
+			  // 캐시 저장 실패는 무시
+			 }
+			} else if (enableWebSearch) {
+			 console.log("Cache save skipped - Web search enabled");
 			}
 
 			return {
 				statusCode: 200,
 				headers: {
-					...headers,
-					"Content-Type": "application/json",
-					"X-Query-Complexity": complexity.level,
-					"X-Query-Score": String(complexity.score),
-					"X-Response-Time": String(Date.now() - startTime),
-					"X-Cache": "MISS",
+				 ...headers,
+				 "Content-Type": "application/json",
+				 "X-Query-Complexity": complexity.level,
+				 "X-Query-Score": String(complexity.score),
+				 "X-Response-Time": String(Date.now() - startTime),
+				 "X-Cache": enableWebSearch ? "BYPASS" : "MISS",
+				 "X-Web-Search": enableWebSearch ? "ENABLED" : "DISABLED",
+				 "X-Search-Results": searchResults ? "YES" : "NO",
 				},
 				body: responseText,
 			};
