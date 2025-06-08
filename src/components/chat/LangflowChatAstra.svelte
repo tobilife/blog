@@ -654,12 +654,16 @@ async function sendMessage() {
           tweaks: {},
          };
 
-			const response = await fetch("/.netlify/functions/langflow-proxy-astra", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(payload),
+			// enableWebSearch에 따른 URL 결정
+			const apiUrl = enableWebSearch ? "/api/chat" : "/.netlify/functions/langflow-proxy-astra";
+			console.log(`🌐 Web Search: ${enableWebSearch ? 'ON' : 'OFF'}, Using: ${apiUrl}`);
+			
+			const response = await fetch(apiUrl, {
+			 method: "POST",
+			 headers: {
+			  "Content-Type": "application/json",
+			 },
+			 body: JSON.stringify(payload),
 			});
 
 			const responseText = await response.text();

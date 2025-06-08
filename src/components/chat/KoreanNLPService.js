@@ -22,7 +22,17 @@ export class KoreanNLPService {
 		};
 
 		// 의미있는 접미사
-		this.suffixes = ["님", "씨", "들", "만", "까지", "부터", "마다", "처럼", "같이"];
+		this.suffixes = [
+			"님",
+			"씨",
+			"들",
+			"만",
+			"까지",
+			"부터",
+			"마다",
+			"처럼",
+			"같이",
+		];
 
 		// 복합 명사를 인식하기 위한 패턴
 		this.compoundNounPatterns = [
@@ -255,7 +265,10 @@ export class KoreanNLPService {
 					const josaInfo = this.separateJosa(nextToken.text);
 
 					if (josaInfo.josa) {
-						if (josaInfo.josaType === "subject" || josaInfo.josaType === "topic") {
+						if (
+							josaInfo.josaType === "subject" ||
+							josaInfo.josaType === "topic"
+						) {
 							analysis.subjects.push({
 								text: token.text,
 								josaType: josaInfo.josaType,
@@ -306,13 +319,17 @@ export class KoreanNLPService {
 		// 1. 주격/보조사가 붙은 명사 우선
 		if (analysis.subjects.length > 0) {
 			// 가장 구체적인 주어 선택 (복합 명사 우선)
-			const sortedSubjects = analysis.subjects.sort((a, b) => b.text.length - a.text.length);
+			const sortedSubjects = analysis.subjects.sort(
+				(a, b) => b.text.length - a.text.length,
+			);
 			return sortedSubjects[0].text;
 		}
 
 		// 2. 목적어가 있는 경우
 		if (analysis.objects.length > 0) {
-			const sortedObjects = analysis.objects.sort((a, b) => b.text.length - a.text.length);
+			const sortedObjects = analysis.objects.sort(
+				(a, b) => b.text.length - a.text.length,
+			);
 			return sortedObjects[0].text;
 		}
 
@@ -331,7 +348,9 @@ export class KoreanNLPService {
 
 		// 4. 가장 긴 명사 (복합 명사일 가능성이 높음)
 		if (analysis.mainNouns.length > 0) {
-			const sortedNouns = analysis.mainNouns.sort((a, b) => b.length - a.length);
+			const sortedNouns = analysis.mainNouns.sort(
+				(a, b) => b.length - a.length,
+			);
 			return sortedNouns[0];
 		}
 

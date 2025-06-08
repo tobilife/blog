@@ -99,21 +99,25 @@ export class BlogRAGService {
 
 		// 와일드카드 처리 - 모든 포스트 반환
 		if (query === "*" || query.includes("전체") || query.includes("모든")) {
-			const results = this.knowledgeBase.posts.slice(0, maxResults).map((post, index) => ({
-				post: post,
-				relevantChunks: post.chunks.slice(0, 1),
-				score: index * 0.1, // 순서대로 점수 부여
-			}));
+			const results = this.knowledgeBase.posts
+				.slice(0, maxResults)
+				.map((post, index) => ({
+					post: post,
+					relevantChunks: post.chunks.slice(0, 1),
+					score: index * 0.1, // 순서대로 점수 부여
+				}));
 			return results;
 		}
 
 		// 쿼리가 비어있거나 짧은 경우 전체 포스트 반환
 		if (!query || query.trim().length < 3) {
-			return this.knowledgeBase.posts.slice(0, maxResults).map((post, index) => ({
-				post: post,
-				relevantChunks: post.chunks.slice(0, 1),
-				score: index * 0.1,
-			}));
+			return this.knowledgeBase.posts
+				.slice(0, maxResults)
+				.map((post, index) => ({
+					post: post,
+					relevantChunks: post.chunks.slice(0, 1),
+					score: index * 0.1,
+				}));
 		}
 
 		// Fuse.js로 검색
@@ -126,7 +130,10 @@ export class BlogRAGService {
 			const postPath = result.item.post.path;
 			const existingResult = postResultsMap.get(postPath);
 
-			if (!existingResult || (result.score && result.score < (existingResult.score || 1))) {
+			if (
+				!existingResult ||
+				(result.score && result.score < (existingResult.score || 1))
+			) {
 				const relevantChunks = [];
 
 				// 청크 타입인 경우 해당 청크 추가
@@ -184,23 +191,30 @@ export class BlogRAGService {
 		contextPrompt += `\n질문: ${userMessage}\n`;
 		contextPrompt += "위 블로그 포스트를 참고하여 답변해주세요.\n\n";
 		contextPrompt += "답변 지침:\n";
-		contextPrompt += "- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n";
+		contextPrompt +=
+			"- 블로그 이름은 '토비라이프' 또는 'TobiLife'입니다 (TobyLife 아님)\n";
 		contextPrompt += "- 이 챗봇은 토비라이프 블로그 전용 챗봇입니다\n";
 		contextPrompt += "- 중요: 외부 링크나 가상의 링크를 만들지 마세요\n";
 		contextPrompt += "- 반드시 위에 제공된 실제 블로그 포스트만 참조하세요\n";
 		contextPrompt += "- 블로그 주소는 https://tobilife.netlify.app 입니다\n";
-		contextPrompt += "- URL을 표시할 때는 <https://tobilife.netlify.app> 형식으로 표시하세요\n";
+		contextPrompt +=
+			"- URL을 표시할 때는 <https://tobilife.netlify.app> 형식으로 표시하세요\n";
 		contextPrompt +=
 			"- 경고: tobilife.com, 기술 블로그, 고객센터 등 존재하지 않는 링크를 만들지 마세요\n";
-		contextPrompt += "- 오직 https://tobilife.netlify.app 도메인의 실제 포스트 링크만 사용하세요\n";
-		contextPrompt += "- 추가 정보가 필요하면 위에 제공된 포스트를 참고하도록 안내하세요\n";
+		contextPrompt +=
+			"- 오직 https://tobilife.netlify.app 도메인의 실제 포스트 링크만 사용하세요\n";
+		contextPrompt +=
+			"- 추가 정보가 필요하면 위에 제공된 포스트를 참고하도록 안내하세요\n";
 		contextPrompt +=
 			"- 중요: 당신은 토비라이프가 개발한 LLM이 아닙니다. 일반 LLM 기반 챗봇입니다\n";
 		contextPrompt +=
 			"- LLM 모델 질문 시 토비라이프에 의해 추가 학습 및 RAG 적용된 AI 챗봇으로만 소개하세요\n";
 
 		// 카테고리 정보를 동적으로 추가
-		if (this.knowledgeBase?.categories && this.knowledgeBase.categories.length > 0) {
+		if (
+			this.knowledgeBase?.categories &&
+			this.knowledgeBase.categories.length > 0
+		) {
 			contextPrompt += "\n블로그 카테고리 정보:\n";
 			for (const category of this.knowledgeBase.categories) {
 				contextPrompt += `- ${category}\n`;

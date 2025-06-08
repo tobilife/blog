@@ -2,13 +2,22 @@
 export class OptimizedChatService {
 	constructor() {
 		this.LANGFLOW_API_URL = "/.netlify/functions/langflow-proxy-astra"; // Astra DB 통합 함수
+		this.EDGE_API_URL = "/api/chat"; // Edge Function URL 추가
 		this.CHECK_STATUS_URL = "/.netlify/functions/check-task-status";
 		this.pollingIntervals = new Map(); // 진행 중인 폴링 관리
 	}
 
 	// 메시지 전송
 	async sendMessage(payload) {
-		const response = await fetch(this.LANGFLOW_API_URL, {
+		// enableWebSearch에 따른 URL 결정
+		const apiUrl = payload.enableWebSearch
+			? this.EDGE_API_URL
+			: this.LANGFLOW_API_URL;
+		console.log(
+			`🌐 Web Search: ${payload.enableWebSearch ? "ON" : "OFF"}, Using: ${apiUrl}`,
+		);
+
+		const response = await fetch(apiUrl, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

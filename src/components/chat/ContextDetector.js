@@ -71,7 +71,10 @@ export class ContextDetector {
 				const titleWords = post.title
 					.split(/[\s:,\-]/)
 					.filter((word) => word.length >= 3)
-					.filter((word) => !["코딩", "없이", "만드는", "위한", "하는"].includes(word));
+					.filter(
+						(word) =>
+							!["코딩", "없이", "만드는", "위한", "하는"].includes(word),
+					);
 
 				this.blogTopics.push(...titleWords);
 			}
@@ -115,7 +118,9 @@ export class ContextDetector {
 		}
 
 		// 3. 질문 유형 체크 (가중치: 0.2)
-		const isQuestion = this.questionPatterns.some((pattern) => pattern.test(userMessage));
+		const isQuestion = this.questionPatterns.some((pattern) =>
+			pattern.test(userMessage),
+		);
 
 		if (isQuestion && (keywordMatches > 0 || topicMatches > 0)) {
 			score += 0.2;
@@ -196,9 +201,17 @@ export class ContextDetector {
 			.filter((word) => word.length > 2)
 			.filter(
 				(word) =>
-					!["있어", "있나", "알려", "설명", "뭐야", "어떤", "알려줘", "해줘", "보여줘"].includes(
-						word,
-					),
+					![
+						"있어",
+						"있나",
+						"알려",
+						"설명",
+						"뭐야",
+						"어떤",
+						"알려줘",
+						"해줘",
+						"보여줘",
+					].includes(word),
 			);
 
 		keywords.push(...words);
