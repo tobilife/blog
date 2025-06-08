@@ -31,8 +31,7 @@
 		"ignore": [
 			"**/*.md",
 			"**/*.mdx",
-			"**/*.json",
-			"**/*.svelte"
+			"**/*.json"
 		]
 	},
 	"organizeImports": {
@@ -75,7 +74,14 @@
 	},
 	"overrides": [
 		{
-			"include": ["*.svelte", "*.astro", "*.vue"],
+			"include": ["*.svelte"],
+			"formatter": {
+				"enabled": true,
+				"formatWithErrors": true,
+				"lineWidth": 150,
+				"indentStyle": "tab",
+				"indentWidth": 2
+			},
 			"linter": {
 				"rules": {
 					"style": {
@@ -86,15 +92,36 @@
 						"noUnusedVariables": "off"
 					}
 				}
-			},
+			}
+		},
+		{
+			"include": ["*.astro"],
 			"formatter": {
+				"enabled": true,
 				"formatWithErrors": true,
-				"lineWidth": 150
+				"lineWidth": 150,
+				"indentStyle": "tab",
+				"indentWidth": 2
+			},
+			"linter": {
+				"rules": {
+					"style": {
+						"useConst": "off",
+						"useImportType": "off"
+					},
+					"correctness": {
+						"noUnusedVariables": "off"
+					},
+					"complexity": {
+						"noForEach": "off"
+					}
+				}
 			}
 		},
 		{
 			"include": ["**/*.json", "**/*.jsonc"],
 			"formatter": {
+				"enabled": false,
 				"indentStyle": "space",
 				"indentWidth": 2
 			}
@@ -102,7 +129,30 @@
 		{
 			"include": ["**/*.js", "**/*.ts"],
 			"formatter": {
-				"lineWidth": 120
+				"lineWidth": 120,
+				"quoteStyle": "double",
+				"jsxQuoteStyle": "double",
+				"quoteProperties": "asNeeded",
+				"trailingCommas": "all",
+				"semicolons": "always",
+				"arrowParentheses": "always",
+				"bracketSpacing": true,
+				"bracketSameLine": false
+			}
+		},
+		{
+			"include": ["src/components/chat/**/*.js"],
+			"formatter": {
+				"lineWidth": 120,
+				"indentStyle": "tab",
+				"indentWidth": 2
+			},
+			"linter": {
+				"rules": {
+					"complexity": {
+						"noForEach": "off"
+					}
+				}
 			}
 		}
 	]

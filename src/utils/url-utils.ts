@@ -29,15 +29,14 @@ export function getTagUrl(tag: string): string {
 }
 
 export function getCategoryUrl(category: string): string {
-	if (!category) return url("/archive/category/");
+	if (!category || !category.trim()) return url("/archive/category/");
 
 	const trimmedCategory = category.trim();
 	if (trimmedCategory === i18n(i18nKey.uncategorized))
 		return url("/archive/category/uncategorized/");
 
-	return url(
-		`/archive/category/${encodeURIComponent(trimmedCategory).replace(/%20/g, "+")}/`,
-	);
+	// encodeURIComponent를 사용하여 &와 같은 특수문자를 안전하게 인코딩
+	return url(`/archive/category/${encodeURIComponent(trimmedCategory)}/`);
 }
 
 export function getDir(path: string): string {

@@ -380,7 +380,7 @@ async function sendMessage() {
 				{
 					role: "assistant",
 					content:
-						"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🌐 <strong>웹 검색 기능!</strong><br>- 입력창 옆 지구본 아이콘으로 웹 검색 ON/OFF<br>- 비활성화 시: 빠른 AI 답변 (기본값)<br>- 활성화 시: 실시간 정보 검색<br><br>🚀 <strong>AI 기반 지능형 대화 시스템!</strong><br>- 질문 의도를 분석하여 최적의 답변 제공<br>- 블로그 관련 질문은 모든 포스트 참조<br><br>🧠<br><br>무엇이든 물어보세요! 🤖",
+						"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🌐 <strong>웹 검색 기능!</strong><br>- 입력창 옆 지구본 아이콘으로 웹 검색 ON/OFF<br>- 비활성화 시: 빠른 AI 답변 (기본값)<br>- 활성화 시: 실시간 정보 검색<br><br>🚀 <strong>AI 기반 지능형 대화 시스템!</strong><br>- 질문 의도를 분석하여 최적의 답변 제공<br>- 블로그 관련 질문은 모든 포스트 참조<br><br>무엇이든 물어보세요! 🤖",
 				},
 			];
 

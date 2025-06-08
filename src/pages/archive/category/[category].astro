@@ -8,7 +8,12 @@ import { getCategoryList } from "@utils/content-utils";
 export async function getStaticPaths() {
 	const categories = await getCategoryList();
 
-	const standardPaths = categories.map((category) => {
+	// 빈 카테고리 필터링
+	const validCategories = categories.filter(
+		(category) => category.name && category.name.trim() !== "",
+	);
+
+	const standardPaths = validCategories.map((category) => {
 		return {
 			params: {
 				category: encodeURIComponent(category.name.trim()),
@@ -19,8 +24,10 @@ export async function getStaticPaths() {
 		};
 	});
 
-	const nonEncodedCJKPaths = categories
-		.filter((category) => /[\u3000-\u9fff\uac00-\ud7af\u4e00-\u9faf]/.test(category.name))
+	const nonEncodedCJKPaths = validCategories
+		.filter((category) =>
+			/[\u3000-\u9fff\uac00-\ud7af\u4e00-\u9faf]/.test(category.name),
+		)
 		.map((category) => ({
 			params: {
 				category: category.name.trim(), // Do not encode CJK characters
@@ -34,7 +41,8 @@ export async function getStaticPaths() {
 }
 
 const { decodedCategory } = Astro.props;
-const category = decodedCategory || decodeURIComponent(Astro.params.category as string);
+const category =
+	decodedCategory || decodeURIComponent(Astro.params.category as string);
 ---
 
 <MainGridLayout title={i18n(I18nKey.archive)} description={i18n(I18nKey.archive)}>
