@@ -29,22 +29,40 @@ const { Content, headings } = await entry.render();
 
 const { remarkPluginFrontmatter } = await entry.render();
 
+const postUrl = getPostUrlBySlug(entry.slug);
+const fullPostUrl = new URL(postUrl, Astro.site || Astro.url.origin).href;
+
 const jsonLd = {
-	"@context": "https://schema.org",
-	"@type": "BlogPosting",
-	headline: entry.data.title,
-	description: entry.data.description || entry.data.title,
-	keywords: entry.data.tags,
-	author: {
-		"@type": "Person",
-		name: profileConfig.name,
-		url: Astro.site,
-	},
-	datePublished: formatDateToYYYYMMDD(entry.data.published),
-	inLanguage: entry.data.lang
-		? entry.data.lang.replace("_", "-")
-		: siteConfig.lang.replace("_", "-"),
-	// TODO include cover image here
+ "@context": "https://schema.org",
+ "@type": "BlogPosting",
+ headline: entry.data.title,
+ description: entry.data.description || entry.data.title,
+ keywords: entry.data.tags ? entry.data.tags.join(", ") : "",
+ author: {
+  "@type": "Person",
+  name: profileConfig.name,
+  url: Astro.site ? Astro.site.href : "",
+ },
+ publisher: {
+  "@type": "Organization",
+  name: siteConfig.title,
+  logo: {
+   "@type": "ImageObject",
+   url: new URL("/images/logo.png", Astro.site || Astro.url.origin).href,
+  },
+ },
+ datePublished: entry.data.published.toISOString(),
+ dateModified: entry.data.updated ? entry.data.updated.toISOString() : entry.data.published.toISOString(),
+ url: fullPostUrl,
+ mainEntityOfPage: {
+  "@type": "WebPage",
+  "@id": fullPostUrl,
+ },
+ inLanguage: entry.data.lang
+  ? entry.data.lang.replace("_", "-")
+  : siteConfig.lang.replace("_", "-"),
+ wordCount: remarkPluginFrontmatter.words,
+ image: entry.data.image ? new URL(entry.data.image, Astro.site || Astro.url.origin).href : null,
 };
 ---
 <MainGridLayout banner={entry.data.image} title={entry.data.title} description={entry.data.description} lang={entry.data.lang} setOGTypeArticle={true} headings={headings}>

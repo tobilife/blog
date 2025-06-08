@@ -115,6 +115,8 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
     <meta name="twitter:description" content={description || siteConfig.subtitle} />
     {banner && <meta name="twitter:image" content={new URL(banner.startsWith('/') ? banner : url(banner), Astro.site || Astro.url.origin).href} />}
 
+    <!-- Canonical URL -->
+    <link rel="canonical" href={Astro.url.href} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="google-site-verification" content="sXx03iWxJpMRg7shZbcEQowAmDr_jm8Z0rvZH59alOg" />

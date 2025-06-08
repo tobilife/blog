@@ -7,14 +7,33 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": [".astro/**/*", "src/**/*.css", "src/public/**/*", "dist/**/*", "node_modules/**/*"]
+		"ignore": [
+			".astro/**/*",
+			"src/**/*.css",
+			"src/public/**/*",
+			"dist/**/*",
+			"node_modules/**/*",
+			"**/*.min.js",
+			"**/*.min.css",
+			"**/vendor/**/*",
+			"**/*.generated.*",
+			"**/*.md",
+			"**/*.mdx"
+		]
 	},
 	"formatter": {
 		"enabled": true,
+		"formatWithErrors": true,
 		"indentStyle": "tab",
 		"indentWidth": 2,
-		"lineWidth": 100,
-		"lineEnding": "lf"
+		"lineWidth": 120,
+		"lineEnding": "lf",
+		"ignore": [
+			"**/*.md",
+			"**/*.mdx",
+			"**/*.json",
+			"**/*.svelte"
+		]
 	},
 	"organizeImports": {
 		"enabled": true
@@ -67,6 +86,23 @@
 						"noUnusedVariables": "off"
 					}
 				}
+			},
+			"formatter": {
+				"formatWithErrors": true,
+				"lineWidth": 150
+			}
+		},
+		{
+			"include": ["**/*.json", "**/*.jsonc"],
+			"formatter": {
+				"indentStyle": "space",
+				"indentWidth": 2
+			}
+		},
+		{
+			"include": ["**/*.js", "**/*.ts"],
+			"formatter": {
+				"lineWidth": 120
 			}
 		}
 	]
