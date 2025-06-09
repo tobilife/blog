@@ -43,19 +43,19 @@ export default async (request, context) => {
 	
 	// Check if it's Naver crawler for sharing
 	const isNaverBot = userAgent.toLowerCase().includes("naverbot-scrap") || // Naver sharing bot
-	 userAgent.toLowerCase().includes("naver") ||
-	 userAgent.toLowerCase().includes("yeti"); // Naver search bot
+		userAgent.toLowerCase().includes("naver") ||
+		userAgent.toLowerCase().includes("yeti"); // Naver search bot
 	
 	// Check if it's Kakao crawler - Kakao uses various user agents
 	const isKakaoCrawler = userAgent.toLowerCase().includes("kakaotalk") || 
-	 userAgent.toLowerCase().includes("kakaostory") ||
-	 userAgent.toLowerCase().includes("kakao") ||
-	 userAgent.toLowerCase().includes("daum"); // Daum is owned by Kakao
+		userAgent.toLowerCase().includes("kakaostory") ||
+		userAgent.toLowerCase().includes("kakao") ||
+		userAgent.toLowerCase().includes("daum"); // Daum is owned by Kakao
 	
 	// Check if it's Facebook crawler or other social media crawlers
 	const isFacebookCrawler = userAgent.toLowerCase().includes("facebookexternalhit") || 
-	 userAgent.toLowerCase().includes("facebookcatalog") ||
-	 userAgent.toLowerCase().includes("facebookbot");
+		userAgent.toLowerCase().includes("facebookcatalog") ||
+		userAgent.toLowerCase().includes("facebookbot");
 	
 	const isTwitterBot = userAgent.toLowerCase().includes("twitterbot");
 	const isLinkedInBot = userAgent.toLowerCase().includes("linkedinbot");
@@ -65,7 +65,7 @@ export default async (request, context) => {
 	const isWhatsAppBot = userAgent.toLowerCase().includes("whatsapp");
 	
 	const isSocialCrawler = isNaverBot || isKakaoCrawler || isFacebookCrawler || isTwitterBot || 
-	 isLinkedInBot || isSlackBot || isDiscordBot || isTelegramBot || isWhatsAppBot;
+		isLinkedInBot || isSlackBot || isDiscordBot || isTelegramBot || isWhatsAppBot;
 
 	// Log social crawler requests for debugging
 	if (isSocialCrawler) {
@@ -74,15 +74,15 @@ export default async (request, context) => {
 			userAgent: userAgent,
 			method: request.method,
 			crawler: {
-			 naver: isNaverBot,
-			 kakao: isKakaoCrawler,
-			 facebook: isFacebookCrawler,
-			 twitter: isTwitterBot,
-			 linkedin: isLinkedInBot,
-			 slack: isSlackBot,
-			 discord: isDiscordBot,
-			 telegram: isTelegramBot,
-			 whatsapp: isWhatsAppBot
+				naver: isNaverBot,
+				kakao: isKakaoCrawler,
+				facebook: isFacebookCrawler,
+				twitter: isTwitterBot,
+				linkedin: isLinkedInBot,
+				slack: isSlackBot,
+				discord: isDiscordBot,
+				telegram: isTelegramBot,
+				whatsapp: isWhatsAppBot
 			},
 			timestamp: new Date().toISOString()
 		});
@@ -91,51 +91,6 @@ export default async (request, context) => {
 	// Handle social crawler requests with special care
 	if (isSocialCrawler && request.method === "GET") {
 		try {
-			// For Kakao and Naver crawlers, use a shorter timeout as they're more sensitive
-			const timeoutDuration = (isKakaoCrawler || isNaverBot) ? 5000 : 8000;
-			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
-			
-			try {
-				// Clone the request and add timeout signal
-				const clonedRequest = new Request(request, {
-					signal: controller.signal,
-				});
-				
-				// Get the original response with timeout
-				const response = await context.next(clonedRequest);
-				clearTimeout(timeoutId);
-
-				// Log response time
-				const responseTime = Date.now() - startTime;
-				console.log(`Response time for ${isKakaoCrawler ? 'Kakao' : 'social'} crawler: ${responseTime}ms, status: ${response.status}`);
-
-				// If response is OK, return it with optimized headers
-				if (response.ok) {
-					const newHeaders = new Headers(response.headers);
-					newHeaders.set("cache-control", "public, max-age=3600");
-					newHeaders.set("x-robots-tag", "index, follow");
-					newHeaders.set("x-response-time", `${responseTime}ms`);
-					
-					// For Kakao, ensure proper content-type
-					if (isKakaoCrawler) {
-						newHeaders.set("content-type", "text/html; charset=UTF-8");
-					}
-					
-					return new Response(response.body, {
-						status: response.status,
-						statusText: response.statusText,
-						headers: newHeaders,
-					});
-				}
-				
-				// If response is not OK, fall through to fallback
-				console.log(`${isKakaoCrawler ? 'Kakao' : 'Social'} crawler got error response:`, response.status);
-			} catch (timeoutError) {
-				clearTimeout(timeoutId);
-				console.log(`${isKakaoCrawler ? 'Kakao' : 'Social'} crawler request timed out after ${Date.now() - startTime}ms`);
-			}
-			
 			// Extract post information from URL
 			const pathParts = url.pathname.split("/").filter(Boolean);
 			const isPostPage = url.pathname.startsWith("/posts/");
@@ -143,7 +98,14 @@ export default async (request, context) => {
 			
 			// Get all posts metadata
 			const postsMetadata = await getPostsMetadata();
-			const metadata = postsMetadata && postSlug ? postsMetadata[postSlug] : null;
+			console.log(`Posts metadata loaded. Version: ${postsMetadata?.version}, Total posts: ${postsMetadata && postsMetadata.posts ? Object.keys(postsMetadata.posts).length : 0}`);
+			if (postSlug) {
+				console.log(`Looking for post slug: '${postSlug}'`);
+				if (postsMetadata && postsMetadata.posts) {
+					console.log(`Available slugs: ${Object.keys(postsMetadata.posts).join(', ')}`);
+				}
+			}
+			const metadata = postsMetadata && postsMetadata.posts && postSlug ? postsMetadata.posts[postSlug] : null;
 			
 			if (postSlug && !metadata) {
 				console.warn(`No metadata found for post: ${postSlug}`);
@@ -175,6 +137,67 @@ export default async (request, context) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pageTitle}${metadata ? " - TobiLife 블로그" : ""}</title>
     <meta name="description" content="${pageDescription}">
+    
+    <!-- Basic CSS for social media crawlers -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2 {
+            color: #1a202c;
+            margin-bottom: 16px;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        p {
+            margin-bottom: 12px;
+            color: #4a5568;
+        }
+        nav {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        nav a {
+            display: inline-block;
+            margin-right: 20px;
+            color: #3182ce;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        article {
+            margin: 30px 0;
+        }
+        article div {
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+        article span {
+            margin-right: 10px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
     
     <!-- Essential Open Graph Tags -->
     <meta property="og:type" content="${isPostPage ? "article" : "website"}">
@@ -271,7 +294,7 @@ export default async (request, context) => {
 </body>
 </html>`;
 
-			console.log(`Generated fallback HTML for ${isKakaoCrawler ? 'Kakao' : 'social'} crawler in ${responseTime}ms`);
+			console.log(`Generated HTML for ${isKakaoCrawler ? 'Kakao' : 'social'} crawler in ${responseTime}ms`);
 			
 			return new Response(html, {
 				status: 200,
@@ -280,7 +303,7 @@ export default async (request, context) => {
 					"cache-control": "public, max-age=3600",
 					"x-robots-tag": "index, follow",
 					"x-response-time": `${responseTime}ms`,
-					"x-served-by": "edge-function-fallback"
+					"x-served-by": "edge-function-social-crawler"
 				},
 			});
 		} catch (error) {
@@ -299,6 +322,23 @@ export default async (request, context) => {
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://tobilife.netlify.app/images/banner.png">
     <meta name="twitter:card" content="summary_large_image">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1 {
+            color: #1a202c;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+    </style>
 </head>
 <body>
     <h1>TobiLife</h1>
