@@ -67,7 +67,6 @@
 			"quoteProperties": "asNeeded",
 			"trailingCommas": "all",
 			"semicolons": "always",
-			"arrowParentheses": "always",
 			"bracketSpacing": true
 		}
 	},
@@ -134,7 +133,6 @@
 				"quoteProperties": "asNeeded",
 				"trailingCommas": "all",
 				"semicolons": "always",
-				"arrowParentheses": "always",
 				"bracketSpacing": true
 			}
 		},
