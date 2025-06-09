@@ -253,12 +253,7 @@ export class WebSearchService {
 	 * @returns {string} 마크다운 형식의 검색 결과
 	 */
 	formatResultsAsMarkdown(searchResult, query) {
-		if (
-			!searchResult ||
-			!searchResult.success ||
-			!searchResult.results ||
-			searchResult.results.length === 0
-		) {
+		if (!searchResult || !searchResult.success || !searchResult.results || searchResult.results.length === 0) {
 			return "검색 결과가 없습니다.";
 		}
 

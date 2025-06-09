@@ -103,18 +103,9 @@ export class IntentClassifier {
 			/요금/,
 		];
 		this.factCheckPatterns = {
-			verification: [
-				/맞아?|맞나?|진짜?|정말?|사실|확인|검증|팩트/,
-				/실제로|진실|거짓|루머|가짜뉴스/,
-			],
-			comparison: [
-				/비교|차이|vs|대|어느|뭐가\s*더|낫|좋|나쁜/,
-				/장단점|특징|차이점|공통점/,
-			],
-			statistics: [
-				/통계|수치|데이터|퍼센트|확률|비율|순위/,
-				/얼마나|몇|평균|최고|최저|최대|최소/,
-			],
+			verification: [/맞아?|맞나?|진짜?|정말?|사실|확인|검증|팩트/, /실제로|진실|거짓|루머|가짜뉴스/],
+			comparison: [/비교|차이|vs|대|어느|뭐가\s*더|낫|좋|나쁜/, /장단점|특징|차이점|공통점/],
+			statistics: [/통계|수치|데이터|퍼센트|확률|비율|순위/, /얼마나|몇|평균|최고|최저|최대|최소/],
 		};
 
 		// 3. 특정 도메인 지식이 필요한 패턴
@@ -165,10 +156,7 @@ export class IntentClassifier {
 		];
 
 		// 5. 블로그 관련 패턴 (검색 불필요)
-		this.blogPatterns = [
-			/블로그|토비라이프|tobilife|포스트|글|게시|카테고리/,
-			/쓴\s*글|작성한|올린|포스팅|블로깅/,
-		];
+		this.blogPatterns = [/블로그|토비라이프|tobilife|포스트|글|게시|카테고리/, /쓴\s*글|작성한|올린|포스팅|블로깅/];
 	}
 
 	/**
@@ -195,9 +183,7 @@ export class IntentClassifier {
 		}
 
 		// 2. Edge Function과 동일한 패턴으로 검색 필요성 체크
-		const needsSearch = this.searchPatterns.some((pattern) =>
-			pattern.test(normalizedQuery),
-		);
+		const needsSearch = this.searchPatterns.some((pattern) => pattern.test(normalizedQuery));
 
 		if (needsSearch) {
 			result.intent = "search";
@@ -205,11 +191,7 @@ export class IntentClassifier {
 			result.searchRequired = true;
 
 			// 도메인 분석
-			if (
-				/순위|프로야구|축구|야구|경기|스포츠|리그|시즌|우승|1위|등수|성적/.test(
-					normalizedQuery,
-				)
-			) {
+			if (/순위|프로야구|축구|야구|경기|스포츠|리그|시즌|우승|1위|등수|성적/.test(normalizedQuery)) {
 				result.domains.push("sports");
 				result.reasons.push("sports 관련 실시간 정보 필요");
 			}
@@ -288,9 +270,7 @@ export class IntentClassifier {
 	}
 
 	checkExplicitSearch(query) {
-		const matched = this.searchActionPatterns.some((pattern) =>
-			pattern.test(query),
-		);
+		const matched = this.searchActionPatterns.some((pattern) => pattern.test(query));
 		const keywords = [];
 		const reasons = [];
 
@@ -450,8 +430,7 @@ export class IntentClassifier {
 	}
 
 	hasTemporalIndicator(query) {
-		const temporalWords =
-			/최신|최근|현재|오늘|올해|이번|요즘|근래|새로운|업데이트/;
+		const temporalWords = /최신|최근|현재|오늘|올해|이번|요즘|근래|새로운|업데이트/;
 		return temporalWords.test(query);
 	}
 
@@ -506,10 +485,7 @@ export class IntentClassifier {
 			};
 
 			for (const domain of classification.domains) {
-				if (
-					domainKeywords[domain] &&
-					!optimizedQuery.includes(domainKeywords[domain])
-				) {
+				if (domainKeywords[domain] && !optimizedQuery.includes(domainKeywords[domain])) {
 					optimizedQuery = `${domainKeywords[domain]} ${optimizedQuery}`;
 				}
 			}
@@ -518,10 +494,7 @@ export class IntentClassifier {
 		// 시간 관련 키워드 추가
 		if (classification.reasons.some((r) => r.includes("실시간"))) {
 			const today = new Date().toLocaleDateString("ko-KR");
-			if (
-				!optimizedQuery.includes("2024") &&
-				!optimizedQuery.includes("2025")
-			) {
+			if (!optimizedQuery.includes("2024") && !optimizedQuery.includes("2025")) {
 				optimizedQuery = `${optimizedQuery} ${today}`;
 			}
 		}

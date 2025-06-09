@@ -1,7 +1,7 @@
 {
-  "version": "fbbec9f688db",
-  "lastUpdated": "2025-06-09T01:37:34.618Z",
-  "totalPosts": 5,
+  "version": "8226d8145b69",
+  "lastUpdated": "2025-06-09T03:10:50.352Z",
+  "totalPosts": 4,
   "posts": {
     "sim-studio-complete-guide": {
       "title": "Sim Studio: 코딩 없이 만드는 AI 에이전트 워크플로우",
@@ -18,15 +18,6 @@
       ],
       "image": "/images/uploads/simstudio.png",
       "published": "2025-05-27T10:01:00.000Z",
-      "updated": null
-    },
-    "2025-06-09-blog-rag-test": {
-      "title": "BLOG RAG TEST",
-      "description": "BLOG RAG TEST",
-      "category": "AI",
-      "tags": [],
-      "image": null,
-      "published": "2025-06-09",
       "updated": null
     },
     "git-github-guide": {

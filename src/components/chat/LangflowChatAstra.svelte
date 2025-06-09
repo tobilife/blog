@@ -26,10 +26,10 @@ let enableWebSearch = false;
 
 // 로컬 스토리지에서 사용자 설정 불러오기
 if (typeof window !== "undefined") {
- const savedWebSearchPref = localStorage.getItem("enableWebSearch");
- if (savedWebSearchPref !== null) {
-  enableWebSearch = savedWebSearchPref === "true";
- }
+	const savedWebSearchPref = localStorage.getItem("enableWebSearch");
+	if (savedWebSearchPref !== null) {
+		enableWebSearch = savedWebSearchPref === "true";
+	}
 }
 
 // Astra DB 최적화 서비스
@@ -158,8 +158,7 @@ function copyCode(codeId) {
 			.writeText(code)
 			.then(() => {
 				// 복사 성공 피드백
-				const button =
-					codeElement.parentElement.previousElementSibling.querySelector(".copy-button");
+				const button = codeElement.parentElement.previousElementSibling.querySelector(".copy-button");
 				const copyText = button.querySelector(".copy-text");
 				copyText.textContent = "복사됨!";
 				setTimeout(() => {
@@ -174,16 +173,16 @@ function copyCode(codeId) {
 
 // 전역 함수로 등록
 if (typeof window !== "undefined") {
- window.copyCode = copyCode;
+	window.copyCode = copyCode;
 }
 
 // 웹 검색 토글 함수
 function toggleWebSearch() {
- enableWebSearch = !enableWebSearch;
- // 로컬 스토리지에 저장
- if (typeof window !== "undefined") {
-  localStorage.setItem("enableWebSearch", enableWebSearch.toString());
- }
+	enableWebSearch = !enableWebSearch;
+	// 로컬 스토리지에 저장
+	if (typeof window !== "undefined") {
+		localStorage.setItem("enableWebSearch", enableWebSearch.toString());
+	}
 }
 
 // 피드백 처리 함수들
@@ -266,9 +265,7 @@ function generateBaseInstructions() {
 		instructions += "- 블로그의 실제 게시물:\n";
 
 		// 최신순으로 정렬
-		const sortedPosts = [...blogRAGService.knowledgeBase.posts].sort(
-			(a, b) => new Date(b.published) - new Date(a.published),
-		);
+		const sortedPosts = [...blogRAGService.knowledgeBase.posts].sort((a, b) => new Date(b.published) - new Date(a.published));
 
 		for (const [index, post] of sortedPosts.entries()) {
 			const date = new Date(post.published).toLocaleDateString("ko-KR");
@@ -484,10 +481,7 @@ async function sendMessage() {
 			}
 
 			// 답변 종합
-			const synthesis = chainOfThoughtService.synthesizeAnswers(
-				cotDecomposition.originalQuery,
-				subAnswers,
-			);
+			const synthesis = chainOfThoughtService.synthesizeAnswers(cotDecomposition.originalQuery, subAnswers);
 
 			// 종합된 답변을 컨텍스트에 추가
 			contextualMessage = chainOfThoughtService.formatSynthesizedAnswer(synthesis);
@@ -510,9 +504,7 @@ async function sendMessage() {
 			if (BlogListHelper.isBlogListRequest(userMessage)) {
 				// 모든 포스트 가져오기
 				if (blogRAGService.knowledgeBase?.posts) {
-					const blogListResponse = BlogListHelper.formatBlogList(
-						blogRAGService.knowledgeBase.posts,
-					);
+					const blogListResponse = BlogListHelper.formatBlogList(blogRAGService.knowledgeBase.posts);
 
 					// 직접 응답 표시
 					await typeMessage(blogListResponse, messageIndex);
@@ -579,22 +571,19 @@ async function sendMessage() {
 			.slice(-MAX_HISTORY_MESSAGES)
 			.map((m) => ({
 				role: m.role,
-				content:
-					m.content.length > MAX_MESSAGE_LENGTH
-						? `${m.content.substring(0, MAX_MESSAGE_LENGTH)}...`
-						: m.content,
+				content: m.content.length > MAX_MESSAGE_LENGTH ? `${m.content.substring(0, MAX_MESSAGE_LENGTH)}...` : m.content,
 			}));
 
 		// Astra DB 최적화 항상 사용
 		if (optimizedChatService) {
-		 console.log("🔍 웹검색 토글 상태:", enableWebSearch);
-		 const response = await optimizedChatService.sendMessage({
-		  input_value: contextualMessage,
-		  session_id: sessionId,
-		  conversation_history: recentMessages,
-		  enableWebSearch: enableWebSearch, // 웹 검색 플래그 추가
-		  tweaks: {},
-		 });
+			console.log("🔍 웹검색 토글 상태:", enableWebSearch);
+			const response = await optimizedChatService.sendMessage({
+				input_value: contextualMessage,
+				session_id: sessionId,
+				conversation_history: recentMessages,
+				enableWebSearch: enableWebSearch, // 웹 검색 플래그 추가
+				tweaks: {},
+			});
 
 			// 모든 응답을 동기 처리로 간주
 			if (response.type === "sync" || response.type === "async") {
@@ -642,28 +631,28 @@ async function sendMessage() {
           pollTaskStatus(activeTaskId, messageIndex);
           }
           */
-          } else {
-         const payload = {
-          input_value: contextualMessage,
-          output_type: "chat",
-          input_type: "chat",
-          stream: false,
-          session_id: sessionId,
-          conversation_history: recentMessages,
-          enableWebSearch: enableWebSearch, // 웹 검색 플래그 추가
-          tweaks: {},
-         };
+		} else {
+			const payload = {
+				input_value: contextualMessage,
+				output_type: "chat",
+				input_type: "chat",
+				stream: false,
+				session_id: sessionId,
+				conversation_history: recentMessages,
+				enableWebSearch: enableWebSearch, // 웹 검색 플래그 추가
+				tweaks: {},
+			};
 
 			// enableWebSearch에 따른 URL 결정
 			const apiUrl = enableWebSearch ? "/api/chat" : "/.netlify/functions/langflow-proxy-astra";
-			console.log(`🌐 Web Search: ${enableWebSearch ? 'ON' : 'OFF'}, Using: ${apiUrl}`);
-			
+			console.log(`🌐 Web Search: ${enableWebSearch ? "ON" : "OFF"}, Using: ${apiUrl}`);
+
 			const response = await fetch(apiUrl, {
-			 method: "POST",
-			 headers: {
-			  "Content-Type": "application/json",
-			 },
-			 body: JSON.stringify(payload),
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(payload),
 			});
 
 			const responseText = await response.text();
@@ -789,7 +778,7 @@ onMount(async () => {
 		{
 			role: "assistant",
 			content:
-			 "안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🌐 <strong>웹 검색 기능!</strong><br>- 입력창 옆 지구본 아이콘으로 웹 검색 ON/OFF<br>- 비활성화 시: 빠른 AI 답변 (기본값)<br>- 활성화 시: 실시간 정보 검색<br><br>🚀 <strong>AI 기반 지능형 대화 시스템!</strong><br>- 질문 의도를 분석하여 최적의 답변 제공<br>- 블로그 관련 질문은 모든 포스트 참조<br><br>무엇이든 물어보세요! 🤖",
+				"안녕하세요!<br>저는 토비라이프 블로그 챗봇입니다.<br><br>🌐 <strong>웹 검색 기능!</strong><br>- 입력창 옆 지구본 아이콘으로 웹 검색 ON/OFF<br>- 비활성화 시: 빠른 AI 답변 (기본값)<br>- 활성화 시: 실시간 정보 검색<br><br>🚀 <strong>AI 기반 지능형 대화 시스템!</strong><br>- 질문 의도를 분석하여 최적의 답변 제공<br>- 블로그 관련 질문은 모든 포스트 참조<br><br>무엇이든 물어보세요! 🤖",
 		},
 	];
 

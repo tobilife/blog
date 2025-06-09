@@ -6,37 +6,33 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
 
 export async function getStaticPaths() {
- const posts = await getSortedPosts();
+	const posts = await getSortedPosts();
 
- const allTags = posts.reduce<Set<string>>((acc, post) => {
-  if (Array.isArray(post.data.tags)) {
-   // biome-ignore lint/complexity/noForEach: <explanation>
-   post.data.tags.forEach((tag) => {
-    if (typeof tag === "string") {
-     acc.add(tag.trim());
-    } else {
-     acc.add(String(tag).trim());
-    }
-   });
-  } else if (post.data.tags && typeof post.data.tags === "string") {
-   // biome-ignore lint/complexity/noForEach: <explanation>
-   (post.data.tags as string)
-    .split(",")
-    .forEach((tag) => acc.add(tag.trim()));
-  }
-  return acc;
- }, new Set());
+	const allTags = posts.reduce<Set<string>>((acc, post) => {
+		if (Array.isArray(post.data.tags)) {
+			// biome-ignore lint/complexity/noForEach: <explanation>
+			post.data.tags.forEach((tag) => {
+				if (typeof tag === "string") {
+					acc.add(tag.trim());
+				} else {
+					acc.add(String(tag).trim());
+				}
+			});
+		} else if (post.data.tags && typeof post.data.tags === "string") {
+			// biome-ignore lint/complexity/noForEach: <explanation>
+			(post.data.tags as string).split(",").forEach((tag) => acc.add(tag.trim()));
+		}
+		return acc;
+	}, new Set());
 
- const allTagsArray = Array.from(allTags).filter(
-  (tag) => tag && tag.trim() !== "",
- );
+	const allTagsArray = Array.from(allTags).filter((tag) => tag && tag.trim() !== "");
 
- // Simply return all tags - Astro handles URL encoding automatically
- return allTagsArray.map((tag) => ({
-  params: {
-   tag: tag,
-  },
- }));
+	// Simply return all tags - Astro handles URL encoding automatically
+	return allTagsArray.map((tag) => ({
+		params: {
+			tag: tag,
+		},
+	}));
 }
 
 const tag = Astro.params.tag;

@@ -27,9 +27,7 @@ export function formatBlogList(posts) {
 	for (const category of sortedCategories) {
 		response += `### ${category}\n\n`;
 
-		const sortedPosts = postsByCategory[category].sort(
-			(a, b) => new Date(b.published) - new Date(a.published),
-		);
+		const sortedPosts = postsByCategory[category].sort((a, b) => new Date(b.published) - new Date(a.published));
 
 		for (const [index, post] of sortedPosts.entries()) {
 			// slug가 있으면 slug 사용, 없으면 path에서 .md 제거
@@ -55,16 +53,7 @@ export function formatBlogList(posts) {
  * 사용자 질문이 블로그 목록 요청인지 확인
  */
 export function isBlogListRequest(query) {
-	const listKeywords = [
-		"목록",
-		"리스트",
-		"list",
-		"글 목록",
-		"포스트 목록",
-		"모든 글",
-		"전체 글",
-		"어떤 글",
-	];
+	const listKeywords = ["목록", "리스트", "list", "글 목록", "포스트 목록", "모든 글", "전체 글", "어떤 글"];
 
 	const normalizedQuery = query.toLowerCase();
 	return listKeywords.some((keyword) => normalizedQuery.includes(keyword));

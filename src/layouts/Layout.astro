@@ -49,9 +49,7 @@ if (!banner || typeof banner !== "string" || banner.trim() === "") {
 const enableBanner = siteConfig.banner.enable;
 
 // Page title configuration
-const pageTitle = title
-	? `${title} - ${siteConfig.subtitle}`
-	: `${siteConfig.title} - ${siteConfig.subtitle}`;
+const pageTitle = title ? `${title} - ${siteConfig.subtitle}` : `${siteConfig.title} - ${siteConfig.subtitle}`;
 
 // Favicons configuration
 const favicons: Favicon[] = siteConfig.favicon.length > 0 ? siteConfig.favicon : defaultFavicons;

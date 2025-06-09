@@ -33,22 +33,6 @@
       "summary": "들어가며: 또 다른 AI 도구? 아니, 이번엔 다르다\n\n솔직히 말해서, 처음엔 저도 \"아, 또 AI 도구 하나 나왔구나\" 했습니다.&#x20;\r\nLangChain, AutoGPT, CrewAI...\r\n\r\n이미 시장에는 AI 에이전트 프레임워크가 넘쳐나죠.&#x20;\r\n그런데 Sim Studio를 써보고 나서 생각이 완전히 바뀌었어요.\n\n제가 평소에 개발하면..."
     },
     {
-      "title": "BLOG RAG TEST",
-      "description": "BLOG RAG TEST",
-      "published": "2025-06-09T00:00:00.000Z",
-      "tags": [],
-      "category": "AI",
-      "path": "2025-06-09-blog-rag-test.md",
-      "slug": "2025-06-09-blog-rag-test",
-      "chunks": [
-        {
-          "content": "BLOG RAG TEST 입니다 ",
-          "wordCount": 5
-        }
-      ],
-      "summary": "BLOG RAG TEST 입니다\n..."
-    },
-    {
       "title": "Git/GitHub 명령어 가이드",
       "description": "Git과 GitHub를 사용하여 프로젝트를 효율적으로 관리하고 협업하는 데 필요한 핵심 명령어들을 초보자의 눈높이에 맞춰 설명합니다.",
       "published": "2024-02-18T00:00:00.000Z",
@@ -163,6 +147,6 @@
     "Git&GitHub",
     "Portfolio"
   ],
-  "totalPosts": 5,
-  "indexedAt": "2025-06-09T01:37:34.374Z"
+  "totalPosts": 4,
+  "indexedAt": "2025-06-09T03:10:50.108Z"
 }

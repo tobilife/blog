@@ -120,8 +120,7 @@ function copyCode(codeId) {
 			.writeText(code)
 			.then(() => {
 				// 복사 성공 피드백
-				const button =
-					codeElement.parentElement.previousElementSibling.querySelector(".copy-button");
+				const button = codeElement.parentElement.previousElementSibling.querySelector(".copy-button");
 				const copyText = button.querySelector(".copy-text");
 				copyText.textContent = "복사됨!";
 				setTimeout(() => {
@@ -246,10 +245,7 @@ async function sendMessage() {
 			.slice(-MAX_HISTORY_MESSAGES) // 최근 4개만
 			.map((m) => ({
 				role: m.role,
-				content:
-					m.content.length > MAX_MESSAGE_LENGTH
-						? `${m.content.substring(0, MAX_MESSAGE_LENGTH)}...`
-						: m.content,
+				content: m.content.length > MAX_MESSAGE_LENGTH ? `${m.content.substring(0, MAX_MESSAGE_LENGTH)}...` : m.content,
 			}));
 
 		const payload = {
@@ -384,8 +380,7 @@ async function sendMessage() {
 				},
 			];
 
-			errorMessage =
-				"⚠️ 타임아웃이 발생하여 대화 기록을 초기화했습니다.<br><br>더 간단한 질문으로 다시 시작해주세요! 😊";
+			errorMessage = "⚠️ 타임아웃이 발생하여 대화 기록을 초기화했습니다.<br><br>더 간단한 질문으로 다시 시작해주세요! 😊";
 
 			// 타임아웃 메시지 추가
 			messages = [...messages, { role: "assistant", content: errorMessage, isTyping: false }];

@@ -54,8 +54,6 @@
 			"style": {
 				"noNegationElse": "warn",
 				"noUselessElse": "error",
-				"useForOf": "error",
-				"useTemplate": "warn",
 				"useConst": "error",
 				"useExportType": "warn",
 				"useImportType": "warn",
@@ -68,7 +66,8 @@
 				"useEnumInitializers": "warn",
 				"useExponentiationOperator": "warn",
 				"useNumericLiterals": "warn",
-				"useDefaultParameterLast": "warn"
+				"useDefaultParameterLast": "warn",
+				"useTemplate": "warn"
 			},
 			"suspicious": {
 				"noAssignInExpressions": "error",
@@ -81,7 +80,6 @@
 				"noClassAssign": "error",
 				"noCompareNegZero": "error",
 				"noConfusingLabels": "error",
-				"noConstAssign": "error",
 				"noControlCharactersInRegex": "error",
 				"noDuplicateCase": "error",
 				"noDuplicateClassMembers": "error",
@@ -98,7 +96,6 @@
 				"noMisleadingInstantiator": "error",
 				"noPrototypeBuiltins": "error",
 				"noRedeclare": "error",
-				"noSelfAssign": "error",
 				"noShadowRestrictedNames": "error",
 				"noUnsafeNegation": "error",
 				"useGetterReturn": "error",
@@ -116,7 +113,6 @@
 				"noNewSymbol": "error",
 				"noNonoctalDecimalEscape": "error",
 				"noPrecisionLoss": "error",
-				"noSelfAssign": "error",
 				"noSetterReturn": "error",
 				"noSwitchDeclarations": "error",
 				"noUndeclaredVariables": "error",
@@ -172,19 +168,12 @@
 	},
 	"javascript": {
 		"formatter": {
-			"jsxQuoteStyle": "double",
-			"quoteProperties": "asNeeded",
-			"trailingCommas": "all",
-			"semicolons": "always",
-			"arrowParentheses": "always",
-			"bracketSpacing": true,
-			"bracketSameLine": false,
 			"quoteStyle": "double",
+			"bracketSpacing": true,
 			"indentStyle": "tab",
 			"indentWidth": 2,
 			"lineEnding": "lf",
-			"lineWidth": 120,
-			"attributePosition": "auto"
+			"lineWidth": 120
 		},
 		"globals": [
 			"document",
@@ -206,8 +195,7 @@
 			"indentStyle": "space",
 			"indentWidth": 2,
 			"lineEnding": "lf",
-			"lineWidth": 120,
-			"trailingCommas": "none"
+			"lineWidth": 120
 		}
 	},
 	"overrides": [
@@ -261,8 +249,7 @@
 			"formatter": {
 				"enabled": true,
 				"indentStyle": "space",
-				"indentWidth": 2,
-				"trailingCommas": "none"
+				"indentWidth": 2
 			}
 		},
 		{
@@ -272,18 +259,6 @@
 				"lineWidth": 120,
 				"indentStyle": "tab",
 				"indentWidth": 2
-			},
-			"javascript": {
-				"formatter": {
-					"jsxQuoteStyle": "double",
-					"quoteProperties": "asNeeded",
-					"trailingCommas": "all",
-					"semicolons": "always",
-					"arrowParentheses": "always",
-					"bracketSpacing": true,
-					"bracketSameLine": false,
-					"quoteStyle": "double"
-				}
 			}
 		},
 		{

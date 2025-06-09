@@ -71,10 +71,7 @@ export class ContextDetector {
 				const titleWords = post.title
 					.split(/[\s:,\-]/)
 					.filter((word) => word.length >= 3)
-					.filter(
-						(word) =>
-							!["코딩", "없이", "만드는", "위한", "하는"].includes(word),
-					);
+					.filter((word) => !["코딩", "없이", "만드는", "위한", "하는"].includes(word));
 
 				this.blogTopics.push(...titleWords);
 			}
@@ -100,27 +97,21 @@ export class ContextDetector {
 		let score = 0;
 
 		// 1. 블로그 키워드 체크 (가중치: 0.6)
-		const keywordMatches = this.blogKeywords.filter((keyword) =>
-			lowerMessage.includes(keyword.toLowerCase()),
-		).length;
+		const keywordMatches = this.blogKeywords.filter((keyword) => lowerMessage.includes(keyword.toLowerCase())).length;
 
 		if (keywordMatches > 0) {
 			score += Math.min(keywordMatches * 0.3, 0.6);
 		}
 
 		// 2. 블로그 주제 언급 체크 (가중치: 0.3)
-		const topicMatches = this.blogTopics.filter((topic) =>
-			lowerMessage.includes(topic.toLowerCase()),
-		).length;
+		const topicMatches = this.blogTopics.filter((topic) => lowerMessage.includes(topic.toLowerCase())).length;
 
 		if (topicMatches > 0) {
 			score += Math.min(topicMatches * 0.15, 0.3);
 		}
 
 		// 3. 질문 유형 체크 (가중치: 0.2)
-		const isQuestion = this.questionPatterns.some((pattern) =>
-			pattern.test(userMessage),
-		);
+		const isQuestion = this.questionPatterns.some((pattern) => pattern.test(userMessage));
 
 		if (isQuestion && (keywordMatches > 0 || topicMatches > 0)) {
 			score += 0.2;
@@ -199,20 +190,7 @@ export class ContextDetector {
 		const words = cleanedMessage
 			.split(/\s+/)
 			.filter((word) => word.length > 2)
-			.filter(
-				(word) =>
-					![
-						"있어",
-						"있나",
-						"알려",
-						"설명",
-						"뭐야",
-						"어떤",
-						"알려줘",
-						"해줘",
-						"보여줘",
-					].includes(word),
-			);
+			.filter((word) => !["있어", "있나", "알려", "설명", "뭐야", "어떤", "알려줘", "해줘", "보여줘"].includes(word));
 
 		keywords.push(...words);
 

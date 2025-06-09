@@ -10,12 +10,8 @@ export class OptimizedChatService {
 	// 메시지 전송
 	async sendMessage(payload) {
 		// enableWebSearch에 따른 URL 결정
-		const apiUrl = payload.enableWebSearch
-			? this.EDGE_API_URL
-			: this.LANGFLOW_API_URL;
-		console.log(
-			`🌐 Web Search: ${payload.enableWebSearch ? "ON" : "OFF"}, Using: ${apiUrl}`,
-		);
+		const apiUrl = payload.enableWebSearch ? this.EDGE_API_URL : this.LANGFLOW_API_URL;
+		console.log(`🌐 Web Search: ${payload.enableWebSearch ? "ON" : "OFF"}, Using: ${apiUrl}`);
 
 		const response = await fetch(apiUrl, {
 			method: "POST",
@@ -215,8 +211,7 @@ export class OptimizedChatService {
 		const messages = {
 			simple: "빠르게 답변 드리겠습니다! ⚡",
 			moderate: "답변을 준비하고 있습니다... 🤔",
-			complex:
-				"복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠",
+			complex: "복잡한 질문이네요. 정확한 답변을 위해 잠시만 기다려주세요... 🧠",
 		};
 		return messages[complexity] || messages.moderate;
 	}

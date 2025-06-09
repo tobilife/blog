@@ -6,19 +6,17 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getCategoryList } from "@utils/content-utils";
 
 export async function getStaticPaths() {
- const categories = await getCategoryList();
+	const categories = await getCategoryList();
 
- // 빈 카테고리 필터링
- const validCategories = categories.filter(
-  (category) => category.name && category.name.trim() !== "",
- );
+	// 빈 카테고리 필터링
+	const validCategories = categories.filter((category) => category.name && category.name.trim() !== "");
 
- // Simply return all categories - Astro handles URL encoding automatically
- return validCategories.map((category) => ({
-  params: {
-   category: category.name.trim(),
-  },
- }));
+	// Simply return all categories - Astro handles URL encoding automatically
+	return validCategories.map((category) => ({
+		params: {
+			category: category.name.trim(),
+		},
+	}));
 }
 
 const category = Astro.params.category;
