@@ -63,10 +63,6 @@
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double",
-			"jsxQuoteStyle": "double",
-			"quoteProperties": "asNeeded",
-			"trailingCommas": "all",
-			"semicolons": "always",
 			"bracketSpacing": true
 		}
 	},
@@ -129,10 +125,6 @@
 			"formatter": {
 				"lineWidth": 120,
 				"quoteStyle": "double",
-				"jsxQuoteStyle": "double",
-				"quoteProperties": "asNeeded",
-				"trailingCommas": "all",
-				"semicolons": "always",
 				"bracketSpacing": true
 			}
 		},
