@@ -988,10 +988,7 @@ export default async (request: Request, context: Context) => {
 		let searchResults = null;
 		let enhancedQuery = userQuery;
 		let searchApiUsed: "google" | "brave" | "tavily" | null = null;
-
-		// 의도 분석
-		const intent = analyzeQueryIntent(userQuery);
-
+		
 		// 검색이 필요한 경우 (웹 검색이 활성화된 경우에만)
 		if (enableWebSearch && intent.needsSearch) {
 			// API 사용 가능 여부 확인
