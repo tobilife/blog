@@ -12,10 +12,10 @@
   node_bundler = "esbuild"
 
 # Edge Functions 설정
-# Social media crawler handler should run first (Facebook, Kakao, Twitter, etc.)
-# [[edge_functions]]
-#   path = "/*"
-#   function = "social-crawler-handler"
+# Kakao crawler handler - simplified version
+[[edge_functions]]
+  path = "/*"
+  function = "kakao-simple"
 
 # Googlebot handler runs after Facebook handler
 [[edge_functions]]
