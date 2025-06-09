@@ -186,7 +186,10 @@
 			"FormData",
 			"Headers",
 			"Request",
-			"Response"
+			"Response",
+			"Prism",
+			"OverlayScrollbars",
+			"ImageMetadata"
 		]
 	},
 	"json": {
@@ -215,7 +218,8 @@
 						"useImportType": "off"
 					},
 					"correctness": {
-						"noUnusedVariables": "off"
+						"noUnusedVariables": "off",
+						"noUndeclaredVariables": "off"
 					}
 				}
 			}
@@ -236,7 +240,8 @@
 						"useImportType": "off"
 					},
 					"correctness": {
-						"noUnusedVariables": "off"
+						"noUnusedVariables": "off",
+						"noUndeclaredVariables": "off"
 					},
 					"complexity": {
 						"noForEach": "off"

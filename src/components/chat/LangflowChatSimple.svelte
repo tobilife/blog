@@ -42,7 +42,9 @@ afterUpdate(() => {
 
 // 마크다운을 렌더링하는 함수
 function renderMarkdown(text) {
-	if (!marked) return text;
+	if (!marked) {
+		return text;
+	}
 
 	try {
 		// 먼저 수식을 처리
@@ -176,7 +178,9 @@ function toggleEdgeFunction() {
 }
 
 async function sendMessage() {
-	if (!inputMessage.trim() || isLoading) return;
+	if (!inputMessage.trim() || isLoading) {
+		return;
+	}
 
 	const userMessage = inputMessage;
 	inputMessage = "";

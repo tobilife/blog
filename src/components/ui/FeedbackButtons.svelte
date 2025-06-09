@@ -8,13 +8,17 @@ export let disabled = false;
 const dispatch = createEventDispatcher();
 
 function handleThumbsUp() {
-	if (disabled) return;
+	if (disabled) {
+		return;
+	}
 	const newValue = currentFeedback === 1 ? 0 : 1;
 	dispatch("feedback", { messageId, value: newValue });
 }
 
 function handleThumbsDown() {
-	if (disabled) return;
+	if (disabled) {
+		return;
+	}
 	const newValue = currentFeedback === -1 ? 0 : -1;
 	dispatch("feedback", { messageId, value: newValue });
 }

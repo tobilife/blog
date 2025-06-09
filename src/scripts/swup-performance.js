@@ -1,7 +1,9 @@
 // Performance optimizations for Swup page transitions
 
 export function optimizeSwupTransitions() {
-	if (!window.swup) return;
+	if (!window.swup) {
+		return;
+	}
 
 	// Disable unnecessary plugins during transition
 	window.swup.hooks.on("visit:start", () => {
@@ -13,7 +15,9 @@ export function optimizeSwupTransitions() {
 
 		// Hide non-critical elements during transition
 		const toc = document.getElementById("toc-wrapper");
-		if (toc) toc.style.display = "none";
+		if (toc) {
+			toc.style.display = "none";
+		}
 
 		// Disable scroll events temporarily
 		document.body.style.pointerEvents = "none";
@@ -35,7 +39,9 @@ export function optimizeSwupTransitions() {
 
 			// Show TOC
 			const toc = document.getElementById("toc-wrapper");
-			if (toc) toc.style.display = "";
+			if (toc) {
+				toc.style.display = "";
+			}
 
 			// Reset cursor to default
 			document.body.style.cursor = "";
@@ -47,7 +53,9 @@ export function optimizeSwupTransitions() {
 		"click",
 		(e) => {
 			const link = e.target.closest("a[href]");
-			if (!link || link.origin !== window.location.origin) return;
+			if (!link || link.origin !== window.location.origin) {
+				return;
+			}
 
 			// Add loading state immediately
 			link.style.opacity = "0.7";

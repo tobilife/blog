@@ -80,7 +80,9 @@ afterUpdate(() => {
 
 // 마크다운을 렌더링하는 함수
 function renderMarkdown(text) {
-	if (!marked) return text;
+	if (!marked) {
+		return text;
+	}
 
 	try {
 		// 먼저 수식을 처리
@@ -323,7 +325,9 @@ async function typeMessage(text, messageIndex) {
 
 // 비동기 작업 폴링
 async function pollTaskStatus(taskId, messageIndex) {
-	if (!taskId || isPolling) return;
+	if (!taskId || isPolling) {
+		return;
+	}
 
 	isPolling = true;
 	const maxPollingTime = 30000; // 최대 30초
@@ -392,7 +396,9 @@ async function pollTaskStatus(taskId, messageIndex) {
 }
 
 async function sendMessage() {
-	if (!inputMessage.trim() || isLoading) return;
+	if (!inputMessage.trim() || isLoading) {
+		return;
+	}
 
 	const userMessage = inputMessage;
 	inputMessage = "";
@@ -576,7 +582,6 @@ async function sendMessage() {
 
 		// Astra DB 최적화 항상 사용
 		if (optimizedChatService) {
-			console.log("🔍 웹검색 토글 상태:", enableWebSearch);
 			const response = await optimizedChatService.sendMessage({
 				input_value: contextualMessage,
 				session_id: sessionId,
@@ -645,7 +650,6 @@ async function sendMessage() {
 
 			// enableWebSearch에 따른 URL 결정
 			const apiUrl = enableWebSearch ? "/api/chat" : "/.netlify/functions/langflow-proxy-astra";
-			console.log(`🌐 Web Search: ${enableWebSearch ? "ON" : "OFF"}, Using: ${apiUrl}`);
 
 			const response = await fetch(apiUrl, {
 				method: "POST",

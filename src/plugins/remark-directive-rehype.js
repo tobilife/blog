@@ -2,7 +2,7 @@ import { h } from "hastscript";
 import { visit } from "unist-util-visit";
 
 export function parseDirectiveNode() {
-	return (tree, { data }) => {
+ return (tree) => {
 		visit(tree, (node) => {
 			if (node.type === "containerDirective" || node.type === "leafDirective" || node.type === "textDirective") {
 				// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>

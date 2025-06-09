@@ -134,7 +134,7 @@ function getIntentSpecificInstructions(reasons) {
 	return instructions.join("\n\n");
 }
 
-function getResponseFormatInstruction(query, classification) {
+function getResponseFormatInstruction(query, _classification) {
 	let format = `[답변 형식]
 - 친근하고 자연스러운 한국어로 답변하세요
 - 핵심 정보를 먼저 제공하고 부가 설명을 추가하세요`;

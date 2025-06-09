@@ -139,7 +139,7 @@ export class ResponseQualityEvaluator {
 	// 5. 길이 평가
 	evaluateLength(response) {
 		const length = response.length;
-		const words = response.split(/\s+/).length;
+		const _words = response.split(/\s+/).length;
 
 		// 너무 짧은 답변 (50자 미만)
 		if (length < 50) {
@@ -190,24 +190,44 @@ export class ResponseQualityEvaluator {
 	}
 
 	detectQuestionType(query) {
-		if (/무엇|뭐|what/i.test(query)) return "definition";
-		if (/어떻게|방법|how/i.test(query)) return "howto";
-		if (/왜|이유|why/i.test(query)) return "explanation";
-		if (/언제|when/i.test(query)) return "time";
-		if (/누구|who/i.test(query)) return "person";
+		if (/무엇|뭐|what/i.test(query)) {
+			return "definition";
+		}
+		if (/어떻게|방법|how/i.test(query)) {
+			return "howto";
+		}
+		if (/왜|이유|why/i.test(query)) {
+			return "explanation";
+		}
+		if (/언제|when/i.test(query)) {
+			return "time";
+		}
+		if (/누구|who/i.test(query)) {
+			return "person";
+		}
 		return "general";
 	}
 
 	detectResponseType(response) {
-		if (/정의하면|의미는|이란/i.test(response)) return "definition";
-		if (/단계|먼저|다음|순서/i.test(response)) return "howto";
-		if (/때문|이유는|왜냐하면/i.test(response)) return "explanation";
+		if (/정의하면|의미는|이란/i.test(response)) {
+			return "definition";
+		}
+		if (/단계|먼저|다음|순서/i.test(response)) {
+			return "howto";
+		}
+		if (/때문|이유는|왜냐하면/i.test(response)) {
+			return "explanation";
+		}
 		return "general";
 	}
 
 	isTypeMatch(questionType, responseType) {
-		if (questionType === responseType) return true;
-		if (questionType === "general" || responseType === "general") return true;
+		if (questionType === responseType) {
+			return true;
+		}
+		if (questionType === "general" || responseType === "general") {
+			return true;
+		}
 		return false;
 	}
 
@@ -217,8 +237,12 @@ export class ResponseQualityEvaluator {
 		const minScore = Math.min(...allScores);
 		const avgScore = allScores.reduce((a, b) => a + b) / allScores.length;
 
-		if (minScore >= 0.7 && avgScore >= 0.8) return "high";
-		if (minScore >= 0.5 && avgScore >= 0.6) return "medium";
+		if (minScore >= 0.7 && avgScore >= 0.8) {
+			return "high";
+		}
+		if (minScore >= 0.5 && avgScore >= 0.6) {
+			return "medium";
+		}
 		return "low";
 	}
 

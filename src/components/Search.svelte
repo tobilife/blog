@@ -16,7 +16,9 @@ let pagefindLoaded = false;
 function debounce<T extends (...args: unknown[]) => unknown>(func: T, wait: number): (...args: Parameters<T>) => void {
 	let timeout: ReturnType<typeof setTimeout> | null = null;
 	return (...args: Parameters<T>) => {
-		if (timeout) clearTimeout(timeout);
+		if (timeout) {
+			clearTimeout(timeout);
+		}
 		timeout = setTimeout(() => func(...args), wait);
 	};
 }
@@ -45,7 +47,9 @@ const togglePanel = () => {
 
 const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 	const panel = document.getElementById("search-panel");
-	if (!panel || !isDesktop) return;
+	if (!panel || !isDesktop) {
+		return;
+	}
 
 	if (show) {
 		panel.classList.remove("float-panel-closed");

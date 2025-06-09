@@ -17,7 +17,7 @@ export class WebSearchService {
 	 * @param {Object} options - 검색 옵션 (호환성을 위해 유지)
 	 * @returns {Promise<Object>} 검색 결과
 	 */
-	async search(query, options = {}) {
+	async search(query, _options = {}) {
 		try {
 			// 캐시 확인
 			const cacheKey = `search_${query}`;
@@ -150,7 +150,9 @@ export class WebSearchService {
 	 * @returns {string} 도메인
 	 */
 	extractDomain(url) {
-		if (!url) return "";
+		if (!url) {
+			return "";
+		}
 		try {
 			const urlObj = new URL(url);
 			return urlObj.hostname.replace("www.", "");
@@ -252,7 +254,7 @@ export class WebSearchService {
 	 * @param {string} query - 검색 쿼리
 	 * @returns {string} 마크다운 형식의 검색 결과
 	 */
-	formatResultsAsMarkdown(searchResult, query) {
+	formatResultsAsMarkdown(searchResult, _query) {
 		if (!searchResult || !searchResult.success || !searchResult.results || searchResult.results.length === 0) {
 			return "검색 결과가 없습니다.";
 		}

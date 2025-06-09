@@ -45,7 +45,9 @@ export class ContextDetector {
 	 * 지식베이스에서 토픽 초기화
 	 */
 	async initialize() {
-		if (this.initialized) return;
+		if (this.initialized) {
+			return;
+		}
 
 		try {
 			const response = await fetch("/knowledge-base.json");

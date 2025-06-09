@@ -4,7 +4,9 @@ let scrollbarInitialized = false;
 const scrollbarInstances = new WeakMap();
 
 export function ultraOptimizeSwup() {
-	if (!window.swup) return;
+	if (!window.swup) {
+		return;
+	}
 
 	// Cache DOM queries
 	const cache = {
@@ -16,7 +18,7 @@ export function ultraOptimizeSwup() {
 	};
 
 	// Pre-calculate values
-	let cachedBannerThreshold = 0;
+	let _cachedBannerThreshold = 0;
 
 	function updateCache() {
 		cache.navbar = document.getElementById("navbar-wrapper");
@@ -25,12 +27,14 @@ export function ultraOptimizeSwup() {
 		cache.heightExtend = document.getElementById("page-height-extend");
 
 		const BANNER_HEIGHT = window.BANNER_HEIGHT || 0;
-		cachedBannerThreshold = window.innerHeight * (BANNER_HEIGHT / 100) - 72 - 16;
+		_cachedBannerThreshold = window.innerHeight * (BANNER_HEIGHT / 100) - 72 - 16;
 	}
 
 	// Replace heavy scrollbar initialization
 	function lightweightScrollbarInit() {
-		if (scrollbarInitialized) return;
+		if (scrollbarInitialized) {
+			return;
+		}
 
 		// Only initialize for body once
 		if (window.OverlayScrollbars && !scrollbarInstances.has(cache.body)) {
@@ -64,10 +68,14 @@ export function ultraOptimizeSwup() {
 		cache.body.classList.toggle("lg:is-home", isHome);
 
 		// Hide elements using CSS instead of JS
-		if (cache.heightExtend) cache.heightExtend.style.display = "block";
+		if (cache.heightExtend) {
+			cache.heightExtend.style.display = "block";
+		}
 
 		// Don't hide TOC completely, just add the not-ready class
-		if (cache.toc) cache.toc.classList.add("toc-not-ready");
+		if (cache.toc) {
+			cache.toc.classList.add("toc-not-ready");
+		}
 
 		// Pause all animations
 		document.documentElement.style.setProperty("--animation-play-state", "paused");
@@ -115,7 +123,9 @@ export function ultraOptimizeSwup() {
 	window.swup.hooks.on("page:view", () => {
 		// Use RAF instead of setTimeout
 		requestAnimationFrame(() => {
-			if (cache.heightExtend) cache.heightExtend.style.display = "none";
+			if (cache.heightExtend) {
+				cache.heightExtend.style.display = "none";
+			}
 
 			// Reset navbar styles to ensure it's visible
 			if (cache.navbar) {

@@ -71,7 +71,9 @@ export class FeedbackService {
 	 * @returns {number} 계산된 품질 점수 (0-100)
 	 */
 	calculateQualityScore(userFeedback, feedbackCount) {
-		if (feedbackCount === 0) return 50; // 기본값
+		if (feedbackCount === 0) {
+			return 50; // 기본값
+		}
 
 		// 평균 피드백 점수 (-1 ~ 1 범위)
 		const avgFeedback = userFeedback / feedbackCount;
@@ -93,9 +95,15 @@ export class FeedbackService {
 	 * @returns {string} 신뢰도 레벨
 	 */
 	getConfidenceLevel(qualityScore, feedbackCount) {
-		if (feedbackCount < 3) return "low";
-		if (qualityScore >= 80 && feedbackCount >= 10) return "high";
-		if (qualityScore >= 60 && feedbackCount >= 5) return "medium";
+		if (feedbackCount < 3) {
+			return "low";
+		}
+		if (qualityScore >= 80 && feedbackCount >= 10) {
+			return "high";
+		}
+		if (qualityScore >= 60 && feedbackCount >= 5) {
+			return "medium";
+		}
 		return "low";
 	}
 

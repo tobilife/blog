@@ -23,7 +23,7 @@ function joinUrl(...parts: string[]): string {
 
 	// Ensure single leading slash if the path should be absolute
 	if (joined.length > 0 && !joined.startsWith("http") && !joined.startsWith("/")) {
-		joined = "/" + joined;
+		joined = `/${joined}`;
 	}
 
 	// Ensure trailing slash is handled correctly
@@ -38,7 +38,9 @@ export function getPostUrlBySlug(slug: string): string {
 	return url(`/posts/${slug}`);
 }
 export function getTagUrl(tag: string): string {
-	if (!tag || !tag.trim()) return url("/archive/tag");
+	if (!tag || !tag.trim()) {
+		return url("/archive/tag");
+	}
 
 	// Use encodeURIComponent for URL encoding
 	const encodedTag = encodeURIComponent(tag.trim());
@@ -47,10 +49,14 @@ export function getTagUrl(tag: string): string {
 }
 
 export function getCategoryUrl(category: string): string {
-	if (!category || !category.trim()) return url("/archive/category");
+	if (!category || !category.trim()) {
+		return url("/archive/category");
+	}
 
 	const trimmedCategory = category.trim();
-	if (trimmedCategory === i18n(i18nKey.uncategorized)) return url("/archive/category/uncategorized");
+	if (trimmedCategory === i18n(i18nKey.uncategorized)) {
+		return url("/archive/category/uncategorized");
+	}
 
 	// Use encodeURIComponent for URL encoding
 	return url(`/archive/category/${encodeURIComponent(trimmedCategory)}`);

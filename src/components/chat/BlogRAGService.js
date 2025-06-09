@@ -14,7 +14,9 @@ export class BlogRAGService {
 	 * 지식베이스 초기화
 	 */
 	async initialize() {
-		if (this.initialized) return;
+		if (this.initialized) {
+			return;
+		}
 
 		try {
 			// 지식베이스 로드
@@ -52,7 +54,9 @@ export class BlogRAGService {
 	 * 검색 인덱스 생성
 	 */
 	createSearchIndex() {
-		if (!this.knowledgeBase) return [];
+		if (!this.knowledgeBase) {
+			return [];
+		}
 
 		const searchData = [];
 
@@ -132,11 +136,9 @@ export class BlogRAGService {
 				// 청크 타입인 경우 해당 청크 추가
 				if (result.item.type === "chunk") {
 					relevantChunks.push(result.item.chunk);
-				} else {
+				} else if (result.item.post.chunks.length > 0) {
 					// 포스트 타입인 경우 첫 번째 청크 추가
-					if (result.item.post.chunks.length > 0) {
-						relevantChunks.push(result.item.post.chunks[0]);
-					}
+					relevantChunks.push(result.item.post.chunks[0]);
 				}
 
 				postResultsMap.set(postPath, {
@@ -211,7 +213,9 @@ export class BlogRAGService {
 	 * 참조 링크 포맷
 	 */
 	formatReferences(searchResults) {
-		if (searchResults.length === 0) return "";
+		if (searchResults.length === 0) {
+			return "";
+		}
 
 		let references = "\n\n📚 참조한 포스트:\n";
 

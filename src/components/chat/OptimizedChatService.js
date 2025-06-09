@@ -146,7 +146,7 @@ export class OptimizedChatService {
 
 	// 모든 폴링 중지
 	stopAllPolling() {
-		this.pollingIntervals.forEach((timeoutId, taskId) => {
+		this.pollingIntervals.forEach((timeoutId, _taskId) => {
 			clearTimeout(timeoutId);
 		});
 		this.pollingIntervals.clear();
@@ -222,9 +222,15 @@ export class OptimizedChatService {
 			return "작업이 대기열에 있습니다... ⏳";
 		}
 		if (status === "processing") {
-			if (progress < 30) return "답변을 생성하기 시작했습니다... 🚀";
-			if (progress < 60) return "정보를 분석하고 있습니다... 📊";
-			if (progress < 90) return "거의 완료되었습니다... 🎯";
+			if (progress < 30) {
+				return "답변을 생성하기 시작했습니다... 🚀";
+			}
+			if (progress < 60) {
+				return "정보를 분석하고 있습니다... 📊";
+			}
+			if (progress < 90) {
+				return "거의 완료되었습니다... 🎯";
+			}
 			return "마무리 중입니다... ✨";
 		}
 		if (status === "completed") {

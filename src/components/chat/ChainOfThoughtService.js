@@ -20,8 +20,12 @@ export class ChainOfThoughtService {
 		let complexity = 0;
 
 		// 1. 질문 길이
-		if (query.length > 50) complexity += 20;
-		if (query.length > 100) complexity += 20;
+		if (query.length > 50) {
+			complexity += 20;
+		}
+		if (query.length > 100) {
+			complexity += 20;
+		}
 
 		// 2. 복합 키워드
 		const complexKeywords = [
@@ -33,20 +37,28 @@ export class ChainOfThoughtService {
 		];
 
 		for (const keyword of complexKeywords) {
-			if (keyword.test(query)) complexity += 15;
+			if (keyword.test(query)) {
+				complexity += 15;
+			}
 		}
 
 		// 3. 다중 질문 표시
 		const multiQuestionIndicators = /그리고|또한|아울러|뿐만\s*아니라|동시에/;
-		if (multiQuestionIndicators.test(query)) complexity += 30;
+		if (multiQuestionIndicators.test(query)) {
+			complexity += 30;
+		}
 
 		// 4. 시간적 범위
 		const temporalRange = /과거|현재|미래|역사적|최신|향후|앞으로/;
-		if (temporalRange.test(query)) complexity += 10;
+		if (temporalRange.test(query)) {
+			complexity += 10;
+		}
 
 		// 5. 여러 도메인 교차
 		const domains = this.identifyDomains(query);
-		if (domains.length > 1) complexity += domains.length * 10;
+		if (domains.length > 1) {
+			complexity += domains.length * 10;
+		}
 
 		return complexity;
 	}
@@ -112,13 +124,27 @@ export class ChainOfThoughtService {
 	analyzeQuestionType(query) {
 		const types = [];
 
-		if (/원인|이유|왜/.test(query)) types.push("causal");
-		if (/해결|방안|어떻게/.test(query)) types.push("solution");
-		if (/현황|상황|실태/.test(query)) types.push("status");
-		if (/비교|차이/.test(query)) types.push("comparison");
-		if (/전망|예측|미래/.test(query)) types.push("prediction");
-		if (/평가|분석/.test(query)) types.push("analysis");
-		if (/정의|무엇|개념/.test(query)) types.push("definition");
+		if (/원인|이유|왜/.test(query)) {
+			types.push("causal");
+		}
+		if (/해결|방안|어떻게/.test(query)) {
+			types.push("solution");
+		}
+		if (/현황|상황|실태/.test(query)) {
+			types.push("status");
+		}
+		if (/비교|차이/.test(query)) {
+			types.push("comparison");
+		}
+		if (/전망|예측|미래/.test(query)) {
+			types.push("prediction");
+		}
+		if (/평가|분석/.test(query)) {
+			types.push("analysis");
+		}
+		if (/정의|무엇|개념/.test(query)) {
+			types.push("definition");
+		}
 
 		return types.length > 0 ? types : ["general"];
 	}
@@ -360,14 +386,18 @@ export class ChainOfThoughtService {
 	/**
 	 * 검색 결과 요약
 	 */
-	summarizeSearchResults(results, question) {
-		if (results.length === 0) return "검색 결과가 없습니다.";
+	summarizeSearchResults(results, _question) {
+		if (results.length === 0) {
+			return "검색 결과가 없습니다.";
+		}
 
 		let summary = "";
 
 		// 각 결과에서 핵심 정보 추출
 		results.forEach((result, index) => {
-			if (index > 0) summary += "\n\n";
+			if (index > 0) {
+				summary += "\n\n";
+			}
 			summary += `📌 **${result.title}**\n`;
 			summary += result.snippet;
 			if (result.publishedDate) {
@@ -400,7 +430,7 @@ export class ChainOfThoughtService {
 	/**
 	 * 결론 생성
 	 */
-	generateConclusion(originalQuery, subQuestionsWithAnswers) {
+	generateConclusion(_originalQuery, subQuestionsWithAnswers) {
 		// 주요 포인트 추출
 		const keyPoints = subQuestionsWithAnswers
 			.filter((qa) => qa.type === "solution" || qa.type === "causal")

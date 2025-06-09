@@ -78,7 +78,7 @@ export class KoreanNLPService {
 		let currentToken = "";
 		const chars = [...text]; // 문자열을 배열로 변환
 
-		for (const [i, char] of chars.entries()) {
+		for (const [_i, char] of chars.entries()) {
 			const charCode = char.charCodeAt(0);
 
 			// 한글, 영문, 숫자인 경우
@@ -165,7 +165,9 @@ export class KoreanNLPService {
 						break;
 					}
 				}
-				if (matched) break;
+				if (matched) {
+					break;
+				}
 			}
 
 			// 연속된 명사를 복합 명사로 인식
@@ -213,17 +215,27 @@ export class KoreanNLPService {
 	 */
 	isLikelyNoun(token) {
 		// 한글로만 구성되어 있고, 1글자 이상인 경우
-		if (!/^[가-힣]+$/.test(token)) return false;
-		if (token.length < 1) return false;
+		if (!/^[가-힣]+$/.test(token)) {
+			return false;
+		}
+		if (token.length < 1) {
+			return false;
+		}
 
 		// 조사나 접미사가 아닌 경우
 		const allJosas = Object.values(this.josaPatterns).flat();
-		if (allJosas.includes(token)) return false;
-		if (this.suffixes.includes(token)) return false;
+		if (allJosas.includes(token)) {
+			return false;
+		}
+		if (this.suffixes.includes(token)) {
+			return false;
+		}
 
 		// 의문사가 아닌 경우
 		const allQuestionWords = Object.values(this.questionWords).flat();
-		if (allQuestionWords.includes(token)) return false;
+		if (allQuestionWords.includes(token)) {
+			return false;
+		}
 
 		return true;
 	}
