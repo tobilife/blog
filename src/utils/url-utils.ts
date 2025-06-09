@@ -57,7 +57,6 @@ export function getCategoryUrl(category: string): string {
  // encodeURIComponent를 사용하여 &와 같은 특수문자를 안전하게 인코딩
  return url(`/archive/category/${encodeURIComponent(trimmedCategory)}`);
 }
-}
 
 export function getDir(path: string): string {
 	const lastSlashIndex = path.lastIndexOf("/");
@@ -66,6 +65,7 @@ export function getDir(path: string): string {
 	}
 	return path.substring(0, lastSlashIndex + 1);
 }
+
 export function url(path: string) {
  // BASE_URL이 빈 문자열이거나 "/"일 때를 처리
  const baseUrl = import.meta.env.BASE_URL || "/";
