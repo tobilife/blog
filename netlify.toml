@@ -12,12 +12,12 @@
   node_bundler = "esbuild"
 
 # Edge Functions 설정
-# Kakao crawler handler - simplified version
+# Social media preview handler - MUST run first
 [[edge_functions]]
   path = "/*"
-  function = "kakao-simple"
+  function = "social-preview"
 
-# Googlebot handler runs after Facebook handler
+# Googlebot handler runs after social preview handler
 [[edge_functions]]
   path = "/*"
   function = "googlebot-handler"
