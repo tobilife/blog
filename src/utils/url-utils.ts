@@ -35,27 +35,28 @@ function joinUrl(...parts: string[]): string {
 }
 
 export function getPostUrlBySlug(slug: string): string {
-	return url(`/posts/${slug}/`);
+ return url(`/posts/${slug}`);
 }
 
 export function getTagUrl(tag: string): string {
-	if (!tag || !tag.trim()) return url("/archive/tag/");
+ if (!tag || !tag.trim()) return url("/archive/tag");
 
-	// use common encoding function
-	const encodedTag = encodePathSegment(tag.trim());
-	const tagUrl = `/archive/tag/${encodedTag}/`;
-	return url(tagUrl);
+ // use common encoding function
+ const encodedTag = encodePathSegment(tag.trim());
+ const tagUrl = `/archive/tag/${encodedTag}`;
+ return url(tagUrl);
 }
 
 export function getCategoryUrl(category: string): string {
-	if (!category || !category.trim()) return url("/archive/category/");
+ if (!category || !category.trim()) return url("/archive/category");
 
-	const trimmedCategory = category.trim();
-	if (trimmedCategory === i18n(i18nKey.uncategorized))
-		return url("/archive/category/uncategorized/");
+ const trimmedCategory = category.trim();
+ if (trimmedCategory === i18n(i18nKey.uncategorized))
+  return url("/archive/category/uncategorized");
 
-	// encodeURIComponent를 사용하여 &와 같은 특수문자를 안전하게 인코딩
-	return url(`/archive/category/${encodeURIComponent(trimmedCategory)}/`);
+ // encodeURIComponent를 사용하여 &와 같은 특수문자를 안전하게 인코딩
+ return url(`/archive/category/${encodeURIComponent(trimmedCategory)}`);
+}
 }
 
 export function getDir(path: string): string {
