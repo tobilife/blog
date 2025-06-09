@@ -45,6 +45,11 @@
   from = "/api/langflow/*"
   to = "/.netlify/functions/langflow-proxy-astra"
   status = 200
+  
+  [[redirects]]
+  from = "/api/langflow/cache-invalidation"
+  to = "/.netlify/functions/cache-invalidation"
+  status = 200
 
 # OG 이미지 리다이렉트 - 이전 경로 호환성 유지
 [[redirects]]

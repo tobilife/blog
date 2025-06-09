@@ -6,30 +6,62 @@ on:
       - main
     paths:
       - 'src/content/posts/**'
-      - 'public/posts-metadata.json'
+      - 'scripts/build-posts-metadata.js'
   workflow_dispatch:
 
 jobs:
-  trigger-cache-check:
+  invalidate-cache:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for Netlify deployment
-        run: sleep 60  # 배포가 완료되기를 기다림 (1분)
+      - name: Checkout code
+        uses: actions/checkout@v3
         
-      - name: Trigger cache check
+      - name: Wait for Netlify deployment
         run: |
-          response=$(curl -s -X POST https://blog.tobimind.com/api/cache/check)
-          echo "Cache check response: $response"
+          echo "Waiting for deployment to complete..."
+          sleep 90  # 배포가 완료되기를 기다림 (1.5분)
           
-          # 버전 정보 출력
-          current_version=$(echo $response | jq -r '.currentVersion')
-          cached_version=$(echo $response | jq -r '.cachedVersion')
-          needs_invalidation=$(echo $response | jq -r '.needsInvalidation')
+      - name: Invalidate blog-related cache entries
+        run: |
+          echo "Invalidating blog-related cache entries..."
           
-          echo "Current version: $current_version"
-          echo "Cached version: $cached_version"
-          echo "Needs invalidation: $needs_invalidation"
+          response=$(curl -s -X POST https://blog.tobimind.com/api/langflow/cache-invalidation \
+            -H "Content-Type: application/json")
           
-      - name: Notify on failure
-        if: failure()
-        run: echo "Cache check failed!"
+          echo "Cache invalidation response: $response"
+          
+          # JSON 파싱
+          success=$(echo $response | jq -r '.success // false')
+          invalidated=$(echo $response | jq -r '.invalidatedCount // 0')
+          version=$(echo $response | jq -r '.metadata.version // "unknown"')
+          
+          echo "Success: $success"
+          echo "Invalidated entries: $invalidated"
+          echo "New metadata version: $version"
+          
+          if [ "$success" != "true" ]; then
+            echo "Cache invalidation failed!"
+            exit 1
+          fi
+          
+      - name: Test cache with sample query
+        run: |
+          echo "Testing cache with blog-related query..."
+          
+          test_response=$(curl -s -X POST https://blog.tobimind.com/api/chat \
+            -H "Content-Type: application/json" \
+            -d '{
+              "input_value": "블로그에 어떤 글들이 있나요?",
+              "enableWebSearch": false
+            }')
+          
+          cache_header=$(echo "$test_response" | jq -r '.headers."X-Cache" // "UNKNOWN"')
+          echo "Cache status: $cache_header"
+          
+      - name: Create summary
+        run: |
+          echo "### Cache Invalidation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Invalidated entries**: $invalidated" >> $GITHUB_STEP_SUMMARY
+          echo "- **New version**: $version" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY

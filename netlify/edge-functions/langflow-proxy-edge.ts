@@ -203,10 +203,12 @@ class AstraDBCache {
 		context: Record<string, unknown> = {},
 	): Promise<boolean> {
 		const cacheKey = this.generateCacheKey(question);
-		const ttlSeconds = 3600; // 1시간
-		const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-
-		const data = {
+		 const ttlSeconds = 3600; // 1시간
+		 const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+		
+		 console.log(`Saving to cache with key: ${cacheKey}, version: ${this.metadataVersion}`);
+		
+		 const data = {
 			query: question,
 			response: answer,
 			created_at: new Date().toISOString(),
@@ -223,6 +225,7 @@ class AstraDBCache {
 			feedback_count: 0,
 			last_validated: new Date().toISOString(),
 			version: 1,
+			metadata_version: this.metadataVersion || "unknown",
 		};
 
 		const url = `${this.baseUrl}/api/rest/v2/keyspaces/${this.keyspace}/chat_cache/${encodeURIComponent(cacheKey)}`;
@@ -506,9 +509,33 @@ function analyzeQueryComplexity(query: string) {
 
 // 질문의 주제를 분석하는 함수
 function analyzeQueryIntent(query: string) {
-	const lowerQuery = query.toLowerCase();
+ const lowerQuery = query.toLowerCase();
 
-	// 검색이 필요한 패턴들
+ // 블로그 관련 패턴들
+ const blogPatterns = [
+  /블로그/,
+  /blog/,
+  /포스트/,
+  /post/,
+  /글/,
+  /게시글/,
+  /최신글/,
+  /글목록/,
+  /글 목록/,
+  /어떤 글/,
+  /무슨 글/,
+  /쓴 글/,
+  /작성한/,
+  /article/,
+  /content/,
+  /콘텐츠/,
+  /주제/,
+  /topic/,
+ ];
+
+ const isBlogRelated = blogPatterns.some((pattern) => pattern.test(lowerQuery));
+
+ // 검색이 필요한 패턴들
 	const searchPatterns = [
 		/검색해/,
 		/검색해줘/,
@@ -568,8 +595,9 @@ function analyzeQueryIntent(query: string) {
 	);
 
 	return {
-		needsSearch,
-		originalQuery: query,
+	 needsSearch,
+	 isBlogRelated,
+	 originalQuery: query,
 	};
 }
 
@@ -882,17 +910,23 @@ export default async (request: Request, context: Context) => {
 			});
 		}
 
-		// 복잡도 분석
+		// 복잡도 및 의도 분석
 		const complexity = analyzeQueryComplexity(userQuery);
+		const intent = analyzeQueryIntent(userQuery);
 		
-		// 메타데이터 버전 체크 (비동기 처리)
+		// 블로그 관련 질문일 때만 메타데이터 버전 체크
 		let metadataVersion = "unknown";
-		const metadataPromise = fetchBlogMetadata().then(metadata => {
-		 if (metadata) {
-		  metadataVersion = metadata.version;
-		  console.log(`Metadata version: ${metadataVersion}, Total posts: ${metadata.totalPosts}`);
-		 }
-		});
+		let metadataPromise = null;
+		
+		if (intent.isBlogRelated) {
+		 console.log("Blog-related query detected, checking metadata version...");
+		 metadataPromise = fetchBlogMetadata().then(metadata => {
+		  if (metadata) {
+		   metadataVersion = metadata.version;
+		   console.log(`Metadata version: ${metadataVersion}, Total posts: ${metadata.totalPosts}`);
+		  }
+		 });
+		}
 		
 		// Astra DB 캐시 초기화 및 확인 (웹 검색이 비활성화된 경우에만)
 		let cacheService: AstraDBCache | null = null;
@@ -900,11 +934,13 @@ export default async (request: Request, context: Context) => {
 		
 		if (!enableWebSearch && ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
 		 try {
-		  // 메타데이터 버전을 기다림 (최대 1초)
-		  await Promise.race([
-		   metadataPromise,
-		   new Promise(resolve => setTimeout(resolve, 1000))
-		  ]);
+		  // 블로그 관련 질문이고 메타데이터 프라미스가 있으면 기다림
+		  if (metadataPromise) {
+		   await Promise.race([
+		    metadataPromise,
+		    new Promise(resolve => setTimeout(resolve, 1000))
+		   ]);
+		  }
 		  
 		  cacheService = new AstraDBCache(
 		   ASTRA_DB_REST_URL,
@@ -912,9 +948,10 @@ export default async (request: Request, context: Context) => {
 		   ASTRA_DB_KEYSPACE,
 		  );
 		  
-		  // 메타데이터 버전 설정
-		  if (metadataVersion !== "unknown") {
+		  // 블로그 관련 질문일 때만 메타데이터 버전 설정
+		  if (intent.isBlogRelated && metadataVersion !== "unknown") {
 		   cacheService.setMetadataVersion(metadataVersion);
+		   console.log(`Cache key will include version: ${metadataVersion}`);
 		  }
 		  
 		  cachedResult = await cacheService.getCacheEntry(userQuery);
