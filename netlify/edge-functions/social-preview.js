@@ -5,25 +5,32 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
 // posts-metadata.json 가져오기
 async function getPostsMetadata() {
-	const now = Date.now();
-	
-	// 캐시가 유효하면 반환
-	if (metadataCache && (now - cacheTimestamp) < CACHE_DURATION) {
-		return metadataCache;
-	}
-	
-	try {
-		const response = await fetch('https://tobilife.netlify.app/posts-metadata.json');
-		if (response.ok) {
-			const data = await response.json();
-			metadataCache = data.posts || {};
-			cacheTimestamp = now;
-			console.log('Posts metadata loaded successfully');
-			return metadataCache;
-		}
-	} catch (error) {
-		console.error('Failed to fetch posts metadata:', error);
-	}
+ const now = Date.now();
+ 
+ // 캐시가 유효하면 반환
+ if (metadataCache && (now - cacheTimestamp) < CACHE_DURATION) {
+  console.log('Using cached metadata');
+  return metadataCache;
+ }
+ 
+ try {
+  console.log('Fetching fresh metadata from /posts-metadata.json');
+  const response = await fetch('https://tobilife.netlify.app/posts-metadata.json');
+  console.log(`Fetch response status: ${response.status}`);
+  
+  if (response.ok) {
+   const data = await response.json();
+   metadataCache = data.posts || {};
+   cacheTimestamp = now;
+   console.log('Posts metadata loaded successfully');
+   console.log(`Total posts loaded: ${Object.keys(metadataCache).length}`);
+   return metadataCache;
+  } else {
+   console.error(`Failed to fetch metadata: HTTP ${response.status}`);
+  }
+ } catch (error) {
+  console.error('Failed to fetch posts metadata:', error.message);
+ }
 	
 	// 실패 시 하드코딩된 데이터 반환
 	return {
@@ -66,9 +73,12 @@ export default async (request, context) => {
 	const url = new URL(request.url);
 	const userAgent = request.headers.get("user-agent") || "";
 	
+	// 모든 User-Agent 로깅 (디버깅 용)
+	console.log(`[DEBUG] User-Agent: "${userAgent}" for URL: ${url.pathname}`);
+	
 	// API 경로는 건너뛰기
 	if (url.pathname.startsWith("/api/")) {
-		return context.next();
+	 return context.next();
 	}
 	
 	// 카카오톡 인앱 브라우저는 제외
@@ -103,6 +113,15 @@ export default async (request, context) => {
 	const postsData = await getPostsMetadata();
 	const postData = postSlug ? postsData[postSlug] : null;
 	
+	// 디버깅 로그
+	if (postSlug) {
+	 console.log(`Post slug: ${postSlug}`);
+	 console.log(`Post data found: ${postData ? 'Yes' : 'No'}`);
+	 if (postData) {
+	  console.log(`Title: ${postData.title}`);
+	  console.log(`Image: ${postData.image}`);
+	 }
+	}
 	// 기본값 설정
 	const siteTitle = "TobiLife 블로그";
 	const siteDescription = "AI, RAG, Git/GitHub, 보험IT 등 다양한 개발 경험과 지식을 공유하는 기술 블로그";
@@ -116,29 +135,44 @@ export default async (request, context) => {
 	
 	// 깔끔한 HTML 생성 (카카오톡이 파싱하기 쉽도록)
 	const html = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${title}</title>
-<meta name="description" content="${description}">
-<meta property="og:title" content="${title}">
-<meta property="og:description" content="${description}">
-<meta property="og:image" content="${imageUrl}">
-<meta property="og:url" content="${url.href}">
-<meta property="og:type" content="${isPostPage ? 'article' : 'website'}">
-<meta property="og:site_name" content="${siteTitle}">
-<meta property="og:locale" content="ko_KR">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${title}">
-<meta name="twitter:description" content="${description}">
-<meta name="twitter:image" content="${imageUrl}">
-</head>
-<body>
-<h1>${title}</h1>
-<p>${description}</p>
-</body>
-</html>`;
+	<html lang="ko">
+	<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>${title}</title>
+	<meta name="description" content="${description}">
+	<!-- Open Graph 기본 태그 -->
+	<meta property="og:title" content="${title}">
+	<meta property="og:description" content="${description}">
+	<meta property="og:image" content="${imageUrl}">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:alt" content="${title}">
+	<meta property="og:url" content="${url.href}">
+	<meta property="og:type" content="${isPostPage ? 'article' : 'website'}">
+	<meta property="og:site_name" content="${siteTitle}">
+	<meta property="og:locale" content="ko_KR">
+	<!-- 카카오톡 전용 태그 -->
+	<meta property="kakao:title" content="${title}">
+	<meta property="kakao:description" content="${description}">
+	<meta property="kakao:image" content="${imageUrl}">
+	<!-- Twitter 카드 -->
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="${title}">
+	<meta name="twitter:description" content="${description}">
+	<meta name="twitter:image" content="${imageUrl}">
+	<!-- 추가 포스트 정보 -->
+	${postData ? `<meta property="article:published_time" content="${postData.published}">
+	<meta property="article:author" content="TobiLife">
+	${postData.category ? `<meta property="article:section" content="${postData.category}">` : ''}
+	${postData.tags ? postData.tags.map(tag => `<meta property="article:tag" content="${tag}">`).join('\n') : ''}` : ''}
+	</head>
+	<body>
+	<h1>${title}</h1>
+	<p>${description}</p>
+	${postData?.image ? `<img src="${imageUrl}" alt="${title}" width="1200" height="630">` : ''}
+	</body>
+	</html>`;
 	
 	// 응답 반환
 	return new Response(html, {
