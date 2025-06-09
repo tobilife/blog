@@ -134,45 +134,57 @@ export default async (request, context) => {
 		: defaultImage;
 	
 	// 깔끔한 HTML 생성 (카카오톡이 파싱하기 쉽도록)
-	const html = `<!DOCTYPE html>
-	<html lang="ko">
-	<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>${title}</title>
-	<meta name="description" content="${description}">
-	<!-- Open Graph 기본 태그 -->
-	<meta property="og:title" content="${title}">
-	<meta property="og:description" content="${description}">
-	<meta property="og:image" content="${imageUrl}">
-	<meta property="og:image:width" content="1200">
-	<meta property="og:image:height" content="630">
-	<meta property="og:image:alt" content="${title}">
-	<meta property="og:url" content="${url.href}">
-	<meta property="og:type" content="${isPostPage ? 'article' : 'website'}">
-	<meta property="og:site_name" content="${siteTitle}">
-	<meta property="og:locale" content="ko_KR">
-	<!-- 카카오톡 전용 태그 -->
-	<meta property="kakao:title" content="${title}">
-	<meta property="kakao:description" content="${description}">
-	<meta property="kakao:image" content="${imageUrl}">
-	<!-- Twitter 카드 -->
-	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="${title}">
-	<meta name="twitter:description" content="${description}">
-	<meta name="twitter:image" content="${imageUrl}">
-	<!-- 추가 포스트 정보 -->
-	${postData ? `<meta property="article:published_time" content="${postData.published}">
-	<meta property="article:author" content="TobiLife">
-	${postData.category ? `<meta property="article:section" content="${postData.category}">` : ''}
-	${postData.tags ? postData.tags.map(tag => `<meta property="article:tag" content="${tag}">`).join('\n') : ''}` : ''}
-	</head>
-	<body>
-	<h1>${title}</h1>
-	<p>${description}</p>
-	${postData?.image ? `<img src="${imageUrl}" alt="${title}" width="1200" height="630">` : ''}
-	</body>
-	</html>`;
+	// 카카오톡을 위해 최소한의 HTML만 사용
+	let html;
+	
+	if (userAgent.toLowerCase().includes('kakaotalk')) {
+	 html = '<!DOCTYPE html>' +
+	  '<html>' +
+	  '<head>' +
+	  '<meta charset="UTF-8">' +
+	  `<title>${title}</title>` +
+	  `<meta property="og:title" content="${title}">` +
+	  `<meta property="og:description" content="${description}">` +
+	  `<meta property="og:image" content="${imageUrl}">` +
+	  `<meta property="og:url" content="${url.href}">` +
+	  '</head>' +
+	  '<body></body>' +
+	  '</html>';
+	  } else {
+	   // 다른 크롤러들을 위한 상세 HTML
+	   html = `<!DOCTYPE html>
+	  <html lang="ko">
+	  <head>
+	  <meta charset="UTF-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>${title}</title>
+	  <meta name="description" content="${description}">
+	  <meta property="og:title" content="${title}">
+	  <meta property="og:description" content="${description}">
+	  <meta property="og:image" content="${imageUrl}">
+	  <meta property="og:image:width" content="1200">
+	  <meta property="og:image:height" content="630">
+	  <meta property="og:image:alt" content="${title}">
+	  <meta property="og:url" content="${url.href}">
+	  <meta property="og:type" content="${isPostPage ? 'article' : 'website'}">
+	  <meta property="og:site_name" content="${siteTitle}">
+	  <meta property="og:locale" content="ko_KR">
+	  <meta name="twitter:card" content="summary_large_image">
+	  <meta name="twitter:title" content="${title}">
+	  <meta name="twitter:description" content="${description}">
+	  <meta name="twitter:image" content="${imageUrl}">${postData ? `
+	  <meta property="article:published_time" content="${postData.published}">
+	  <meta property="article:author" content="TobiLife">${postData.category ? `
+	  <meta property="article:section" content="${postData.category}">` : ''}${postData.tags ? postData.tags.map(tag => `
+	  <meta property="article:tag" content="${tag}">`).join('') : ''}` : ''}
+	  </head>
+	  <body>
+	  <h1>${title}</h1>
+	  <p>${description}</p>
+	  </body>
+	  </html>`;
+	  }
+	}
 	
 	// 응답 반환
 	return new Response(html, {
