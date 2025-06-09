@@ -65,9 +65,14 @@ export function getDir(path: string): string {
 	}
 	return path.substring(0, lastSlashIndex + 1);
 }
-
 export function url(path: string) {
  // BASE_URL이 빈 문자열이거나 "/"일 때를 처리
  const baseUrl = import.meta.env.BASE_URL || "/";
+ 
+ // 이미 절대 경로인 경우 그대로 반환
+ if (path.startsWith("/")) {
+  return path;
+ }
+ 
  return joinUrl(baseUrl, path);
 }
