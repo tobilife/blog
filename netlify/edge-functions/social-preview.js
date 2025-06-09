@@ -71,12 +71,17 @@ export default async (request, context) => {
 		return context.next();
 	}
 	
+	// 카카오톡 인앱 브라우저는 제외
+	if (userAgent.toLowerCase().includes("inapp")) {
+	 return context.next();
+	}
+	
 	// 소셜 미디어 크롤러 감지
 	const socialCrawlers = [
-		"kakaotalk", "kakaostory", "kakao", "daum",
-		"facebookexternalhit", "facebookcatalog",
-		"twitterbot", "linkedinbot", "telegrambot", 
-		"whatsapp", "slackbot", "discordbot"
+	 "kakaotalk-scrap", "kakaostory", "daum",
+	 "facebookexternalhit", "facebookcatalog",
+	 "twitterbot", "linkedinbot", "telegrambot", 
+	 "whatsapp", "slackbot", "discordbot"
 	];
 	
 	const lowerUserAgent = userAgent.toLowerCase();
