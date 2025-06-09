@@ -488,3 +488,95 @@ pnpm type-check # TypeScript 타입 체크
 - SELECT * FROM chat_cache;
 - SELECT * FROM api_usage_stats;
 ---
+
+
+
+## 개선 사항
+INP 성능 개선을 위한 리팩토링 전략
+문제 분석
+
+Processing duration 425ms - JavaScript 실행이 메인 스레드를 과도하게 블로킹
+다수의 포인터 이벤트 - 네비게이션 바의 여러 인터랙티브 요소들이 성능 병목
+모바일에서 더 심각 - 리소스가 제한된 환경에서 문제 증폭
+
+주요 병목 지점
+
+Search 컴포넌트 - Pagefind 검색 시 동기적 처리
+LightDarkSwitch - DOM 조작과 클래스 토글
+NavMenuPanel - 애니메이션과 DOM 접근
+DisplaySettings - 실시간 색상 변경
+
+리팩토링 전략
+1. 이벤트 핸들러 최적화
+
+Passive 이벤트 리스너 사용
+이벤트 위임(Event Delegation) 적용
+requestAnimationFrame을 통한 DOM 업데이트 배치 처리
+
+2. 검색 기능 최적화
+
+Web Worker로 검색 로직 분리
+Virtual scrolling으로 대량 결과 처리
+더 긴 debounce 시간 적용
+
+3. 애니메이션 최적화
+
+CSS transform/opacity만 사용
+will-change 속성 적절히 활용
+GPU 가속 활용
+
+4. 코드 분할 및 지연 로딩
+
+무거운 컴포넌트 동적 임포트
+Intersection Observer로 필요시 로드
+
+5. 상태 관리 최적화
+
+불필요한 리렌더링 방지
+메모이제이션 적용
+
+Swup 자동 프리로드 비활성화
+
+window.swup.options.preload = false로 모든 링크의 자동 프리로드 차단
+태그, 카테고리, 홈 등 불필요한 페이지 프리페치 방지
+
+
+포스트 전용 프리로드
+
+/posts/로 시작하는 링크만 프리로드
+150ms 디바운스로 실수로 호버한 경우 방지
+중복 프리페치 방지 로직
+
+
+data-swup-preload 속성 제거
+
+PostCard와 Navbar에서 모든 data-swup-preload 속성 제거
+수동으로 제어하여 정확한 프리로드 관리
+
+
+
+성능 개선 효과:
+
+네트워크 트래픽 감소
+
+태그/카테고리 페이지 불필요한 프리페치 제거
+포스트 페이지만 선택적으로 프리로드
+
+
+메모리 사용량 감소
+
+불필요한 페이지 캐싱 방지
+캐시 크기 50개로 제한
+
+
+더 나은 사용자 경험
+
+정말 필요한 페이지만 미리 로드
+더 빠른 포스트 페이지 전환
+리소스 낭비 없음
+
+
+마우스 호버 시:
+포스트 링크: 프리페치 수행 (사용자가 클릭할 가능성 높음)
+태그/카테고리 링크: 프리페치 안함 (불필요한 리소스 절약)
+301 리다이렉트 제거: trailing slash 처리로 직접 접근
