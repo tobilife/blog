@@ -41,6 +41,17 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
 
+# 이중 슬래시 정규화
+[[redirects]]
+  from = "/*//"
+  to = "/:splat/"
+  status = 301
+
+[[redirects]]
+  from = "/*//*"
+  to = "/:splat1/:splat2"
+  status = 301
+
 [[redirects]]
   from = "/api/langflow/*"
   to = "/.netlify/functions/langflow-proxy-astra"

@@ -9,10 +9,29 @@ export function pathsEqual(path1: string, path2: string) {
 }
 
 function joinUrl(...parts: string[]): string {
-	const joined = parts
-		.filter((part) => part !== undefined && part !== null && part !== "")
-		.join("/");
-	return joined.replace(/\/+/g, "/");
+ // Filter out empty parts and trim each part
+ const cleanParts = parts
+  .filter((part) => part !== undefined && part !== null)
+  .map((part) => part.toString().trim())
+  .filter((part) => part !== "");
+ 
+ // Join parts and clean up multiple slashes
+ let joined = cleanParts.join("/");
+ 
+ // Replace multiple slashes with single slash, but preserve protocol (https://)
+ joined = joined.replace(/([^:]\/)\/+/g, "$1");
+ 
+ // Ensure single leading slash if the path should be absolute
+ if (joined.length > 0 && !joined.startsWith("http") && !joined.startsWith("/")) {
+  joined = "/" + joined;
+ }
+ 
+ // Ensure trailing slash is handled correctly
+ if (joined.length > 1 && joined.endsWith("//")) {
+  joined = joined.slice(0, -1);
+ }
+ 
+ return joined;
 }
 
 export function getPostUrlBySlug(slug: string): string {
@@ -48,5 +67,7 @@ export function getDir(path: string): string {
 }
 
 export function url(path: string) {
-	return joinUrl("", import.meta.env.BASE_URL, path);
+ // BASE_URL이 빈 문자열이거나 "/"일 때를 처리
+ const baseUrl = import.meta.env.BASE_URL || "/";
+ return joinUrl(baseUrl, path);
 }
