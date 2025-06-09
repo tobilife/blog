@@ -121,7 +121,7 @@ for (const file of files) {
 				title: frontmatter.title || "",
 				description: frontmatter.description || "",
 				category: frontmatter.category || "",
-				tags: frontmatter.tags || [],
+				tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : [],
 				image: frontmatter.image || null,
 				published: frontmatter.published || null,
 				updated: frontmatter.updated || null,
@@ -169,7 +169,9 @@ console.log(`Version hash: ${versionHash}`);
 // Print validation errors if any
 if (allErrors.length > 0) {
 	console.log("\n=== Validation Errors ===");
-	allErrors.forEach(error => console.error(`❌ ${error}`));
+	for (const error of allErrors) {
+	 console.error(`❌ ${error}`);
+	}
 } else {
 	console.log("\n✅ All posts validated successfully!");
 }
@@ -179,25 +181,31 @@ console.log("\n=== Post Statistics ===");
 const categories = {};
 const allTags = {};
 
-Object.values(metadata).forEach(post => {
-	// Count categories
-	if (post.category) {
-		categories[post.category] = (categories[post.category] || 0) + 1;
-	}
-	
-	// Count tags
-	post.tags.forEach(tag => {
-		allTags[tag] = (allTags[tag] || 0) + 1;
-	});
-});
+for (const post of Object.values(metadata)) {
+ // Count categories
+ if (post.category) {
+  categories[post.category] = (categories[post.category] || 0) + 1;
+ }
+ 
+ // Count tags
+ if (Array.isArray(post.tags)) {
+  for (const tag of post.tags) {
+   allTags[tag] = (allTags[tag] || 0) + 1;
+  }
+ }
+}
 
 console.log("\nCategories:");
-Object.entries(categories)
-	.sort((a, b) => b[1] - a[1])
-	.forEach(([cat, count]) => console.log(`  - ${cat}: ${count} posts`));
+const sortedCategories = Object.entries(categories)
+ .sort((a, b) => b[1] - a[1]);
+for (const [cat, count] of sortedCategories) {
+ console.log(`  - ${cat}: ${count} posts`);
+}
 
 console.log("\nTop Tags:");
-Object.entries(allTags)
-	.sort((a, b) => b[1] - a[1])
-	.slice(0, 10)
-	.forEach(([tag, count]) => console.log(`  - ${tag}: ${count} posts`));
+const topTags = Object.entries(allTags)
+ .sort((a, b) => b[1] - a[1])
+ .slice(0, 10);
+for (const [tag, count] of topTags) {
+ console.log(`  - ${tag}: ${count} posts`);
+}
