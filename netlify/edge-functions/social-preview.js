@@ -184,7 +184,6 @@ export default async (request, context) => {
 	  </body>
 	  </html>`;
 	  }
-	}
 	
 	// 응답 반환
 	return new Response(html, {
