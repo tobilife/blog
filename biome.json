@@ -68,8 +68,7 @@
 			"trailingCommas": "all",
 			"semicolons": "always",
 			"arrowParentheses": "always",
-			"bracketSpacing": true,
-			"bracketSameLine": false
+			"bracketSpacing": true
 		}
 	},
 	"overrides": [
@@ -136,8 +135,7 @@
 				"trailingCommas": "all",
 				"semicolons": "always",
 				"arrowParentheses": "always",
-				"bracketSpacing": true,
-				"bracketSameLine": false
+				"bracketSpacing": true
 			}
 		},
 		{
