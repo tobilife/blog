@@ -40,6 +40,26 @@ export default async (request, context) => {
 	}
 
 	const userAgent = request.headers.get("user-agent") || "";
+	
+	// Check if it's a social media crawler - these should be handled by social-crawler-handler
+	const isSocialCrawler = userAgent.toLowerCase().includes("kakaotalk") || 
+	 userAgent.toLowerCase().includes("kakaostory") ||
+	 userAgent.toLowerCase().includes("kakao") ||
+	 userAgent.toLowerCase().includes("daum") ||
+	 userAgent.toLowerCase().includes("facebookexternalhit") ||
+	 userAgent.toLowerCase().includes("twitterbot") ||
+	 userAgent.toLowerCase().includes("linkedinbot") ||
+	 userAgent.toLowerCase().includes("slackbot") ||
+	 userAgent.toLowerCase().includes("discordbot") ||
+	 userAgent.toLowerCase().includes("telegrambot") ||
+	 userAgent.toLowerCase().includes("whatsapp") ||
+	 userAgent.toLowerCase().includes("naverbot-scrap");
+	
+	// If it's a social crawler, let the social-crawler-handler handle it
+	if (isSocialCrawler) {
+	 return context.next();
+	}
+	
 	const isGooglebot = userAgent.toLowerCase().includes("googlebot");
 	
 	// Also support other search engine bots including Naver
@@ -115,7 +135,7 @@ export default async (request, context) => {
 			
 			// Get all posts metadata
 			const postsMetadata = await getPostsMetadata();
-			const metadata = postsMetadata && postSlug ? postsMetadata[postSlug] : null;
+			const metadata = postsMetadata && postsMetadata.posts && postSlug ? postsMetadata.posts[postSlug] : null;
 			
 			if (postSlug && !metadata) {
 				console.warn(`No metadata found for post: ${postSlug}`);
@@ -226,7 +246,7 @@ export default async (request, context) => {
 			};
 			
 			// Generate article list for home page
-			const articleList = postsMetadata && !isPostPage ? Object.entries(postsMetadata)
+			const articleList = postsMetadata && postsMetadata.posts && !isPostPage ? Object.entries(postsMetadata.posts)
 				.sort((a, b) => new Date(b[1].published) - new Date(a[1].published))
 				.slice(0, 10) // Show latest 10 posts
 				.map(([slug, post]) => `
