@@ -20,9 +20,19 @@ import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://tobilife.netlify.app/",
-	base: "/",
-	trailingSlash: "always",
+ site: "https://tobilife.netlify.app/",
+ base: "/",
+ trailingSlash: "always",
+ image: {
+  service: {
+   entrypoint: 'astro/assets/services/sharp',
+   config: {
+    limitInputPixels: false,
+   },
+  },
+  domains: [],
+  remotePatterns: [{ protocol: "https" }],
+ },
 	integrations: [
 		tailwind({
 			nesting: true,

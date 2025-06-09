@@ -1,0 +1,105 @@
+/* Performance optimizations for Core Web Vitals */
+
+/* Optimize paint and layout for images */
+img {
+  content-visibility: auto;
+  contain-intrinsic-size: 512px;
+}
+
+/* Reduce INP (Interaction to Next Paint) delays */
+.btn-regular,
+.card-base a,
+button,
+[role="button"] {
+  /* Optimize touch responsiveness */
+  touch-action: manipulation;
+  /* Reduce click delay on mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Optimize hover states */
+@media (hover: hover) {
+  .hover\:bg-\[var\(--enter-btn-bg-hover\)\]:hover,
+  .hover\:text-\[var\(--primary\)\]:hover {
+    will-change: background-color, color;
+  }
+}
+
+/* Optimize animations */
+.transition,
+.transition-all {
+  /* Use transform and opacity for better performance */
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Reduce animation overhead */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Font loading optimization */
+.font-loaded body {
+  /* Prevent layout shift after font loads */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+/* Critical CSS for above-the-fold content */
+.above-the-fold {
+  /* Prioritize rendering */
+  content-visibility: visible;
+}
+
+/* Optimize large content paint (LCP) */
+.lcp-element {
+  /* Hint browser about importance */
+  contain: layout style paint;
+}
+
+/* Reduce layout thrashing */
+.layout-stable {
+  contain: layout;
+  isolation: isolate;
+}
+
+/* Image placeholder to prevent layout shift */
+.image-placeholder {
+  background: linear-gradient(
+    to right,
+    rgba(var(--card-bg-rgb), 0.8) 0%,
+    rgba(var(--card-bg-rgb), 0.6) 50%,
+    rgba(var(--card-bg-rgb), 0.8) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Optimize scrolling performance */
+.scroll-container {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Reduce reflows for dynamic content */
+.dynamic-content {
+  contain: style layout;
+  transform: translateZ(0);
+}
