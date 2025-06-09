@@ -31,8 +31,8 @@
   function = "langflow-proxy-edge"
   
   [[edge_functions]]
-  path = "/api/cache/check"
-  function = "cache-invalidator"
+    path = "/api/cache/check"
+    function = "cache-invalidator"
 
 [[headers]]
   for = "/*"

@@ -5,57 +5,91 @@ import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
 import { decodePathSegment, encodePathSegment } from "@utils/encoding-utils";
-
 export async function getStaticPaths() {
-	const posts = await getSortedPosts();
+ const posts = await getSortedPosts();
 
-	const allTags = posts.reduce<Set<string>>((acc, post) => {
-		if (Array.isArray(post.data.tags)) {
-			// biome-ignore lint/complexity/noForEach: <explanation>
-			post.data.tags.forEach((tag) => {
-				if (typeof tag === "string") {
-					acc.add(tag.trim());
-				} else {
-					acc.add(String(tag).trim());
-				}
-			});
-		} else if (post.data.tags && typeof post.data.tags === "string") {
-			// biome-ignore lint/complexity/noForEach: <explanation>
-			(post.data.tags as string)
-				.split(",")
-				.forEach((tag) => acc.add(tag.trim()));
-		}
-		return acc;
-	}, new Set());
+ const allTags = posts.reduce<Set<string>>((acc, post) => {
+  if (Array.isArray(post.data.tags)) {
+   // biome-ignore lint/complexity/noForEach: <explanation>
+   post.data.tags.forEach((tag) => {
+    if (typeof tag === "string") {
+     acc.add(tag.trim());
+    } else {
+     acc.add(String(tag).trim());
+    }
+   });
+  } else if (post.data.tags && typeof post.data.tags === "string") {
+   // biome-ignore lint/complexity/noForEach: <explanation>
+   (post.data.tags as string)
+    .split(",")
+    .forEach((tag) => acc.add(tag.trim()));
+  }
+  return acc;
+ }, new Set());
 
-	const allTagsArray = Array.from(allTags).filter(
-		(tag) => tag && tag.trim() !== "",
-	);
+ const allTagsArray = Array.from(allTags).filter(
+  (tag) => tag && tag.trim() !== "",
+ );
 
-	// judge if the string is CJK
-	const isCJK = (str: string) =>
-		/[\u3000-\u9fff\uac00-\ud7af\u4e00-\u9faf]/.test(str);
+ // judge if the string is CJK
+ const isCJK = (str: string) =>
+  /[\u3000-\u9fff\uac00-\ud7af\u4e00-\u9faf]/.test(str);
 
-	const standardPaths = allTagsArray.map((tag) => ({
-		params: {
-			tag: encodePathSegment(tag),
-		},
-		props: {
-			decodedTag: tag,
-		},
-	}));
+ // judge if the tag needs encoding (contains spaces or special characters)
+ const needsEncoding = (str: string) => {
+  // Always encode if contains spaces or special URL characters
+  return /[\s%#?&/]/.test(str);
+ };
 
-	const nonEncodedCJKPaths = allTagsArray.filter(isCJK).map((tag) => ({
-		params: {
-			tag: tag, // keep CJK characters unencoded
-		},
-		props: {
-			decodedTag: tag,
-		},
-	}));
+ const paths = allTagsArray.flatMap((tag) => {
+  // For tags that need encoding (like "AI Agent")
+  if (needsEncoding(tag)) {
+   return [{
+    params: {
+     tag: encodePathSegment(tag),
+    },
+    props: {
+     decodedTag: tag,
+    },
+   }];
+  }
+  
+  // For CJK tags, provide both encoded and non-encoded versions
+  if (isCJK(tag)) {
+   return [
+    {
+     params: {
+      tag: encodePathSegment(tag),
+     },
+     props: {
+      decodedTag: tag,
+     },
+    },
+    {
+     params: {
+      tag: tag, // keep CJK characters unencoded
+     },
+     props: {
+      decodedTag: tag,
+     },
+    },
+   ];
+  }
+  
+  // For regular tags without spaces or special characters
+  return [{
+   params: {
+    tag: tag,
+   },
+   props: {
+    decodedTag: tag,
+   },
+  }];
+ });
 
-	return [...standardPaths, ...nonEncodedCJKPaths];
+ return paths;
 }
+
 
 const { decodedTag } = Astro.props;
 const tag = decodedTag || decodePathSegment(Astro.params.tag as string);
