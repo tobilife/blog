@@ -4,7 +4,6 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getCategoryList } from "@utils/content-utils";
-import { decodePathSegment, encodePathSegment } from "@utils/encoding-utils";
 
 export async function getStaticPaths() {
  const categories = await getCategoryList();
@@ -14,70 +13,15 @@ export async function getStaticPaths() {
   (category) => category.name && category.name.trim() !== "",
  );
 
- // judge if the string is CJK
- const isCJK = (str: string) =>
-  /[\u3000-\u9fff\uac00-\ud7af\u4e00-\u9faf]/.test(str);
-
- // judge if the category needs encoding (contains spaces or special characters)
- const needsEncoding = (str: string) => {
-  // Always encode if contains spaces or special URL characters
-  return /[\s%#?&/]/.test(str);
- };
-
- const paths = validCategories.flatMap((category) => {
-  const categoryName = category.name.trim();
-  
-  // For categories that need encoding (like "Git&GitHub")
-  if (needsEncoding(categoryName)) {
-   return [{
-    params: {
-     category: encodePathSegment(categoryName),
-    },
-    props: {
-     decodedCategory: categoryName,
-    },
-   }];
-  }
-  
-  // For CJK categories, provide both encoded and non-encoded versions
-  if (isCJK(categoryName)) {
-   return [
-    {
-     params: {
-      category: encodePathSegment(categoryName),
-     },
-     props: {
-      decodedCategory: categoryName,
-     },
-    },
-    {
-     params: {
-      category: categoryName, // keep CJK characters unencoded
-     },
-     props: {
-      decodedCategory: categoryName,
-     },
-    },
-   ];
-  }
-  
-  // For regular categories without spaces or special characters
-  return [{
-   params: {
-    category: categoryName,
-   },
-   props: {
-    decodedCategory: categoryName,
-   },
-  }];
- });
-
- return paths;
+ // Simply return all categories - Astro handles URL encoding automatically
+ return validCategories.map((category) => ({
+  params: {
+   category: category.name.trim(),
+  },
+ }));
 }
 
-const { decodedCategory } = Astro.props;
-const category =
- decodedCategory || decodePathSegment(Astro.params.category as string);
+const category = Astro.params.category;
 ---
 
 <MainGridLayout title={i18n(I18nKey.archive)} description={i18n(I18nKey.archive)}>
