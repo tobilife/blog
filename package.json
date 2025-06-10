@@ -15,8 +15,11 @@
 		"new-post": "node scripts/new-post.js",
 		"cache:check": "node scripts/check-cache-status.js",
 		"metadata:build": "node scripts/build-posts-metadata.js",
-		"format": "biome format --write ./src",
-		"lint": "biome check --write ./src",
+		"lint": "pnpm biome check .",
+		"lint:fix": "pnpm biome check --write .",
+		"lint:unsafe": "pnpm biome check --write --unsafe .",
+		"format": "pnpm biome format --write .",
+		"format:check": "pnpm biome format .",
 		"preinstall": "npx only-allow pnpm"
 	},
 	"dependencies": {
