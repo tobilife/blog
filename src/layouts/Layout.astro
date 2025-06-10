@@ -159,6 +159,31 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
       document.documentElement.style.setProperty('--banner-height-extend', `${offset}px`);
     </script>
     
+    <!-- Console logger for development only -->
+    <script is:inline>
+      // IIFE로 감싸서 변수 스코프 격리
+      (function() {
+        // 개발 환경에서만 console 메시지 표시
+        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        if (!isDev) {
+          // 프로덕션 환경에서는 console 메시지 비활성화
+          const noop = () => {};
+          
+          // console.info 비활성화
+          console.info = noop;
+          
+          // 필요하면 다른 console 메서드도 비활성화
+          console.log = noop;
+          console.debug = noop;
+          
+          // warn과 error는 유지 (중요한 정보이므로)
+          // console.warn = noop;
+          // console.error = noop;
+        }
+      })();
+    </script>
+    
     <style define:vars={{
       configHue,
       'page-width': `${PAGE_WIDTH}rem`,
@@ -186,7 +211,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       
       <!-- Structured Data for SEO -->
-      <script type="application/ld+json">
+      <script is:inline type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -454,6 +479,8 @@ const setupSwup = (): void => {
   window.swup.hooks.on('content:replace', () => {
     // Only initialize scrollbars for new content, not the entire page
     initContentScrollbars();
+    // Update element references after content is replaced
+    updateElementReferences();
   });
   
   window.swup.hooks.on('visit:start', (visit: { to: { url: string } }) => {
@@ -495,9 +522,16 @@ if (window?.swup?.hooks) {
 }
 
 // Scroll handling with throttle for better performance
-const backToTopBtn = document.getElementById('back-to-top-btn');
-const toc = document.getElementById('toc-wrapper');
-const navbar = document.getElementById('navbar-wrapper');
+let backToTopBtn: HTMLElement | null = document.getElementById('back-to-top-btn');
+let toc: HTMLElement | null = document.getElementById('toc-wrapper');
+let navbar: HTMLElement | null = document.getElementById('navbar-wrapper');
+
+// Update element references after page transitions
+function updateElementReferences(): void {
+  backToTopBtn = document.getElementById('back-to-top-btn');
+  toc = document.getElementById('toc-wrapper');
+  navbar = document.getElementById('navbar-wrapper');
+}
 
 // Throttle function to limit scroll event frequency
 function throttle<T extends (...args: any[]) => any>(
@@ -597,7 +631,7 @@ import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
 // Optimized Swup bundle V2 for better mobile performance
 import { initSwupOptimizations } from '../scripts/optimized/swup-bundle-v2.js';
-// import { initLightweightScrollbar, initContentScrollbars } from '../scripts/scrollbar-optimize.js'; // Moved inline to fix import issue
+import { initMobilePageTransitions } from '../scripts/mobile-page-transition.js';
 
 let lightbox: PhotoSwipeLightbox | null = null;
 const pswp = import('photoswipe');
@@ -651,14 +685,16 @@ const setupPhotoSwipe = (): void => {
 if (window.swup) {
   setupPhotoSwipe();
   initSwupOptimizations(); // Use optimized Swup bundle
+  initMobilePageTransitions(); // Initialize mobile-specific optimizations
 } else {
   document.addEventListener('swup:enable', () => {
     setupPhotoSwipe();
     initSwupOptimizations(); // Use optimized Swup bundle
+    initMobilePageTransitions(); // Initialize mobile-specific optimizations
   });
 }
 </script>
 
 <!-- Service Worker Integration -->
-<script src="/scripts/optimized/sw-manager.js" defer></script>
-<script src="/scripts/optimized/swup-sw-integration.js" defer></script>
+<script is:inline src="/scripts/optimized/sw-manager.js" defer></script>
+<script is:inline src="/scripts/optimized/swup-sw-integration.js" defer></script>

@@ -25,7 +25,7 @@ export function initSelectivePreload() {
 			const urlObj = new URL(url, window.location.origin);
 			// trailing slash가 있거나 없는 경우 모두 처리
 			return urlObj.pathname.startsWith("/posts/") || urlObj.pathname.match(/^\/posts\/[^/]+\/?$/);
-		} catch (e) {
+		} catch (_e) {
 			return false;
 		}
 	}
@@ -80,7 +80,9 @@ export function initSelectivePreload() {
 	// 마우스 호버 핸들러
 	function handleMouseEnter(event) {
 		const link = findLinkElement(event.target);
-		if (!link) return;
+		if (!link) {
+			return;
+		}
 
 		const url = link.href;
 
@@ -111,7 +113,9 @@ export function initSelectivePreload() {
 	// 마우스 리브 핸들러
 	function handleMouseLeave(event) {
 		const link = findLinkElement(event.target);
-		if (!link) return;
+		if (!link) {
+			return;
+		}
 
 		const url = link.href;
 
@@ -125,7 +129,9 @@ export function initSelectivePreload() {
 	// 터치 디바이스를 위한 핸들러
 	function handleTouchStart(event) {
 		const link = findLinkElement(event.target);
-		if (!link) return;
+		if (!link) {
+			return;
+		}
 
 		const url = link.href;
 
@@ -206,7 +212,7 @@ export function initSelectivePreload() {
 		prefetchedUrls.clear();
 
 		// 전역 객체 제거
-		delete window.selectivePreload;
-		delete window.cleanupSelectivePreload;
+		window.selectivePreload = undefined;
+		window.cleanupSelectivePreload = undefined;
 	};
 }

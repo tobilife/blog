@@ -7,7 +7,7 @@ const { class: className } = Astro.props;
 ---
 
 <div class={`giscus-container ${className || ''}`}>
-  <script
+  <script is:inline
     src="https://giscus.app/client.js"
     data-repo="tobilife/blog"
     data-repo-id="R_kgDOOwjHjg"

@@ -80,7 +80,7 @@ class DOMCacheManager {
 
 	observeElement(id, element) {
 		// Use MutationObserver to detect if element is removed
-		const observer = new MutationObserver((mutations) => {
+		const observer = new MutationObserver((_mutations) => {
 			if (!document.contains(element)) {
 				this.cache.delete(id);
 				observer.disconnect();
@@ -98,17 +98,19 @@ class DOMCacheManager {
 
 	clear() {
 		this.cache.clear();
-		this.observers.forEach((observer) => observer.disconnect());
+		for (const observer of this.observers) {
+			observer.disconnect();
+		}
 		this.observers.clear();
 	}
 
 	update() {
 		// Only update elements that might have changed
 		const idsToUpdate = ["navbar-wrapper", "toc-wrapper", "page-height-extend"];
-		idsToUpdate.forEach((id) => {
+		for (const id of idsToUpdate) {
 			this.cache.delete(id);
 			this.get(id);
-		});
+		}
 	}
 }
 
@@ -194,7 +196,9 @@ class TransitionManager {
 
 	updateNavbar() {
 		const navbar = this.domCache.get("navbar-wrapper");
-		if (!navbar) return;
+		if (!navbar) {
+			return;
+		}
 
 		const threshold = window.innerHeight * (CONFIG.BANNER_HEIGHT / 100) - 72 - 16;
 		if (this.scrollPosition >= threshold && document.body.classList.contains(CSS_CLASSES.home)) {
@@ -251,7 +255,9 @@ class TransitionManager {
 	}
 
 	initializeScrollbars() {
-		if (!window.OverlayScrollbars || state.isMobile) return;
+		if (!window.OverlayScrollbars || state.isMobile) {
+			return;
+		}
 
 		const tocInner = this.domCache.get("toc-inner-wrapper");
 		if (tocInner && !tocInner.hasAttribute("data-scrollbar")) {
@@ -267,7 +273,7 @@ class TransitionManager {
 
 		// Initialize pre elements
 		const preElements = document.querySelectorAll("pre:not([data-scrollbar])");
-		preElements.forEach((el) => {
+		for (const el of preElements) {
 			el.setAttribute("data-scrollbar", "true");
 			window.OverlayScrollbars(el, {
 				scrollbars: {
@@ -276,11 +282,11 @@ class TransitionManager {
 					autoHideDelay: 500,
 				},
 			});
-		});
+		}
 	}
 
 	cleanup() {
-		if (this.transitionStyles && this.transitionStyles.parentNode) {
+		if (this.transitionStyles?.parentNode) {
 			this.transitionStyles.parentNode.removeChild(this.transitionStyles);
 		}
 		this.domCache.clear();
@@ -306,18 +312,20 @@ class OptimizedPreloader {
 	}
 
 	setupIntersectionObserver() {
-		if (!("IntersectionObserver" in window)) return;
+		if (!("IntersectionObserver" in window)) {
+			return;
+		}
 
 		this.observer = new IntersectionObserver(
 			(entries) => {
-				entries.forEach((entry) => {
+				for (const entry of entries) {
 					if (entry.isIntersecting) {
 						const link = entry.target;
 						if (this.shouldPrefetch(link)) {
 							this.schedulePrefetch(link.href);
 						}
 					}
-				});
+				}
 			},
 			{
 				rootMargin: "50px",
@@ -331,15 +339,17 @@ class OptimizedPreloader {
 
 	observeLinks() {
 		const links = document.querySelectorAll('a[href*="/posts/"]');
-		links.forEach((link) => {
+		for (const link of links) {
 			if (this.shouldPrefetch(link)) {
 				this.observer.observe(link);
 			}
-		});
+		}
 	}
 
 	shouldPrefetch(link) {
-		if (!link || !link.href) return false;
+		if (!link || !link.href) {
+			return false;
+		}
 
 		try {
 			const url = new URL(link.href);
@@ -356,7 +366,9 @@ class OptimizedPreloader {
 	}
 
 	schedulePrefetch(url, priority = "low") {
-		if (this.cache.has(url) || this.pending.has(url)) return;
+		if (this.cache.has(url) || this.pending.has(url)) {
+			return;
+		}
 
 		this.pending.add(url);
 
@@ -386,14 +398,18 @@ class OptimizedPreloader {
 	}
 
 	cleanCache() {
-		if (this.cache.size <= CONFIG.MAX_CACHE_SIZE) return;
+		if (this.cache.size <= CONFIG.MAX_CACHE_SIZE) {
+			return;
+		}
 
 		// Remove oldest entries
 		const entries = Array.from(this.cache.entries());
 		entries.sort((a, b) => a[1] - b[1]);
 
 		const toRemove = entries.slice(0, entries.length - CONFIG.MAX_CACHE_SIZE);
-		toRemove.forEach(([url]) => this.cache.delete(url));
+		for (const [url] of toRemove) {
+			this.cache.delete(url);
+		}
 	}
 
 	setupEventListeners() {
@@ -421,7 +437,9 @@ class OptimizedPreloader {
 	}, CONFIG.PREFETCH_DELAY);
 
 	setupSwupHooks() {
-		if (!window.swup) return;
+		if (!window.swup) {
+			return;
+		}
 
 		window.swup.hooks.on("page:view", () => {
 			// Re-observe new links

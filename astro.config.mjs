@@ -22,10 +22,10 @@ import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 export default defineConfig({
 	site: "https://tobilife.netlify.app/",
 	base: "/",
-	trailingSlash: "always",
+	
 	image: {
 		service: {
-			entrypoint: 'astro/assets/services/sharp',
+			entrypoint: "astro/assets/services/sharp",
 			config: {
 				limitInputPixels: false,
 			},
@@ -160,26 +160,21 @@ export default defineConfig({
 	vite: {
 		optimizeDeps: {
 			// Pre-bundle heavy dependencies
-			include: [
-				'swup',
-				'@swup/head-plugin',
-				'@swup/scroll-plugin',
-				'@swup/a11y-plugin',
-			],
+			include: ["swup", "@swup/head-plugin", "@swup/scroll-plugin", "@swup/a11y-plugin"],
 		},
 		build: {
-		 // Optimize for mobile
-		 target: 'es2018',
-		 // Split chunks for better caching
-		 rollupOptions: {
-		  external: (id) => {
-		   // Exclude dynamic imports from bundle
-		   if (id.includes('swup-loader')) {
-		    return true;
-		   }
-		   return false;
-		  },
-		  onwarn(warning, warn) {
+			// Optimize for mobile
+			target: "es2018",
+			// Split chunks for better caching
+			rollupOptions: {
+				external: (id) => {
+					// Exclude dynamic imports from bundle
+					if (id.includes("swup-loader")) {
+						return true;
+					}
+					return false;
+				},
+				onwarn(warning, warn) {
 					if (
 						warning.message.includes("is dynamically imported by") &&
 						warning.message.includes("but also statically imported by")
@@ -191,12 +186,8 @@ export default defineConfig({
 				output: {
 					// Manual chunk splitting for Swup
 					manualChunks: {
-						'swup-core': ['swup'],
-						'swup-plugins': [
-							'@swup/head-plugin',
-							'@swup/scroll-plugin',
-							'@swup/a11y-plugin',
-						],
+						"swup-core": ["swup"],
+						"swup-plugins": ["@swup/head-plugin", "@swup/scroll-plugin", "@swup/a11y-plugin"],
 					},
 				},
 			},

@@ -35,7 +35,9 @@
 
 		// Process prefetch queue
 		async function processPrefetchQueue() {
-			if (isProcessing || prefetchQueue.size === 0) return;
+			if (isProcessing || prefetchQueue.size === 0) {
+				return;
+			}
 
 			isProcessing = true;
 
@@ -67,7 +69,9 @@
 
 		// Add URL to prefetch queue
 		function queuePrefetch(url) {
-			if (!url || prefetchQueue.has(url)) return;
+			if (!url || prefetchQueue.has(url)) {
+				return;
+			}
 
 			const priority = getResourcePriority(url);
 			prefetchQueue.set(url, priority);
@@ -121,14 +125,14 @@
 
 			linkObserver = new IntersectionObserver(
 				(entries) => {
-					entries.forEach((entry) => {
+					for (const entry of entries) {
 						if (entry.isIntersecting) {
 							const link = entry.target;
-							if (link.href && link.href.includes("/posts/")) {
+							if (link.href?.includes("/posts/")) {
 								queuePrefetch(link.href);
 							}
 						}
-					});
+					}
 				},
 				{
 					rootMargin: "50px",
@@ -138,7 +142,9 @@
 
 			// Observe post links
 			const links = document.querySelectorAll('a[href*="/posts/"]');
-			links.forEach((link) => linkObserver.observe(link));
+			for (const link of links) {
+				linkObserver.observe(link);
+			}
 		}
 
 		// Re-setup observers after Swup navigation
@@ -193,26 +199,26 @@
 		// Resource hints optimization
 		function optimizeResourceHints() {
 			// Remove existing prefetch links to avoid duplication
-			document.querySelectorAll('link[rel="prefetch"]').forEach((link) => {
+			for (const link of document.querySelectorAll('link[rel="prefetch"]')) {
 				link.remove();
-			});
+			}
 
 			// Add preconnect for external resources
 			const preconnects = ["https://fonts.googleapis.com", "https://fonts.gstatic.com"];
 
-			preconnects.forEach((url) => {
+			for (const url of preconnects) {
 				const link = document.createElement("link");
 				link.rel = "preconnect";
 				link.href = url;
 				link.crossOrigin = "anonymous";
 				document.head.appendChild(link);
-			});
+			}
 		}
 
 		// Image lazy loading with SW cache
 		function setupImageOptimization() {
 			// Native lazy loading
-			document.querySelectorAll('img[loading="lazy"]').forEach((img) => {
+			for (const img of document.querySelectorAll('img[loading="lazy"]')) {
 				// SW will cache these when loaded
 				if (img.complete) {
 					window.swManager.cacheUrls([img.src]);
@@ -221,7 +227,7 @@
 						window.swManager.cacheUrls([img.src]);
 					});
 				}
-			});
+			}
 		}
 
 		// Performance monitoring
@@ -242,7 +248,7 @@
 
 				try {
 					navObserver.observe({ entryTypes: ["navigation"] });
-				} catch (e) {
+				} catch (_e) {
 					// Navigation timing might not be available
 				}
 
@@ -262,7 +268,7 @@
 
 				try {
 					resObserver.observe({ entryTypes: ["resource"] });
-				} catch (e) {
+				} catch (_e) {
 					// Resource timing might not be available
 				}
 			}

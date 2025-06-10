@@ -29,13 +29,7 @@ exports.handler = async (event, context) => {
 	}
 
 	try {
-		const {
-			query,
-			maxResults = 5,
-			searchEngine = "mock",
-			language = "ko",
-			region = "KR",
-		} = JSON.parse(event.body);
+		const { query, maxResults = 5, searchEngine = "mock", language = "ko", region = "KR" } = JSON.parse(event.body);
 
 		if (!query) {
 			return {
@@ -99,8 +93,7 @@ function getMockResults(query, source) {
 			{
 				title: "이재명 대표, 국회 본회의 주요 발언",
 				url: "https://news.example.com/politics/1",
-				snippet:
-					"이재명 더불어민주당 대표가 오늘 국회 본회의에서 정부의 경제정책에 대해 강하게 비판했다. 이 대표는...",
+				snippet: "이재명 더불어민주당 대표가 오늘 국회 본회의에서 정부의 경제정책에 대해 강하게 비판했다. 이 대표는...",
 				displayUrl: "news.example.com",
 				publishedDate: new Date(baseDate.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2시간 전
 				source: source,
@@ -108,8 +101,7 @@ function getMockResults(query, source) {
 			{
 				title: "이재명, 민생경제 현장 방문 일정",
 				url: "https://news.example.com/politics/2",
-				snippet:
-					"더불어민주당 이재명 대표가 내일 서울 시내 전통시장을 방문해 소상공인들과 간담회를 가질 예정이다...",
+				snippet: "더불어민주당 이재명 대표가 내일 서울 시내 전통시장을 방문해 소상공인들과 간담회를 가질 예정이다...",
 				displayUrl: "news.example.com",
 				publishedDate: new Date(baseDate.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5시간 전
 				source: source,
@@ -131,8 +123,7 @@ function getMockResults(query, source) {
 			{
 				title: "주말 날씨 전망 - 토요일 전국 비 소식",
 				url: "https://weather.example.com/weekend",
-				snippet:
-					"이번 주말 토요일은 전국에 비가 내릴 것으로 예상됩니다. 특히 중부지방은 많은 비가...",
+				snippet: "이번 주말 토요일은 전국에 비가 내릴 것으로 예상됩니다. 특히 중부지방은 많은 비가...",
 				displayUrl: "weather.example.com",
 				publishedDate: new Date(baseDate.getTime() - 3 * 60 * 60 * 1000).toISOString(), // 3시간 전
 				source: source,

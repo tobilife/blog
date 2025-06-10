@@ -136,7 +136,7 @@
 		}
 
 		skipWaiting() {
-			if (this.registration && this.registration.waiting) {
+			if (this.registration?.waiting) {
 				this.registration.waiting.postMessage({ type: "SKIP_WAITING" });
 			}
 		}
@@ -156,7 +156,9 @@
 
 		// Public methods for cache management
 		async cacheUrls(urls) {
-			if (!this.registration || !this.registration.active) return;
+			if (!this.registration || !this.registration.active) {
+				return;
+			}
 
 			this.registration.active.postMessage({
 				type: "CACHE_URLS",
@@ -165,7 +167,9 @@
 		}
 
 		async clearCache(cacheName) {
-			if (!this.registration || !this.registration.active) return;
+			if (!this.registration || !this.registration.active) {
+				return;
+			}
 
 			this.registration.active.postMessage({
 				type: "CLEAR_CACHE",
@@ -175,7 +179,9 @@
 
 		// Prefetch management for Swup integration
 		async prefetchForSwup(url) {
-			if (!this.registration || !this.registration.active) return;
+			if (!this.registration || !this.registration.active) {
+				return;
+			}
 
 			// Use SW to cache the page
 			this.cacheUrls([url]);

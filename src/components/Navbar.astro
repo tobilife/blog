@@ -60,8 +60,8 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
 
 <script>
 // Cache DOM references
-let navMenuPanel = null;
-let displaySettingPanel = null;
+let navMenuPanel: HTMLElement | null = null;
+let displaySettingPanel: HTMLElement | null = null;
 
 function switchTheme() {
     requestAnimationFrame(() => {
@@ -75,7 +75,7 @@ function switchTheme() {
     });
 }
 
-function togglePanel(panel) {
+function togglePanel(panel: HTMLElement | null) {
     if (!panel) return;
     requestAnimationFrame(() => {
         panel.classList.toggle("float-panel-closed");
@@ -91,8 +91,8 @@ function loadButtonScript() {
     const navbar = document.getElementById("navbar");
     if (!navbar) return;
 
-    navbar.addEventListener("click", (e) => {
-        const target = e.target.closest("button");
+    navbar.addEventListener("click", (e: MouseEvent) => {
+        const target = (e.target as HTMLElement)?.closest("button");
         if (!target) return;
 
         if (target.id === "scheme-switch") {

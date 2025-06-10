@@ -14,7 +14,7 @@ let panelRef: HTMLElement | null = null;
 onMount(() => {
 	mode = getStoredTheme();
 	panelRef = document.querySelector("#light-dark-panel");
-	
+
 	const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
 	const changeThemeWhenSchemeChanged: Parameters<typeof darkModePreference.addEventListener<"change">>[1] = (e) => {
 		requestAnimationFrame(() => {
@@ -45,14 +45,18 @@ function toggleScheme() {
 }
 
 function showPanel() {
-	if (!panelRef) return;
+	if (!panelRef) {
+		return;
+	}
 	requestAnimationFrame(() => {
 		panelRef?.classList.remove("float-panel-closed");
 	});
 }
 
 function hidePanel() {
-	if (!panelRef) return;
+	if (!panelRef) {
+		return;
+	}
 	requestAnimationFrame(() => {
 		panelRef?.classList.add("float-panel-closed");
 	});

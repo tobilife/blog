@@ -253,7 +253,7 @@ class SwupOptimizer {
 
 	cleanup() {
 		// Clean up scrollbar instances
-		for (const [element, instance] of this.scrollbarInstances) {
+		for (const [_element, instance] of this.scrollbarInstances) {
 			if (instance && typeof instance.destroy === "function") {
 				instance.destroy();
 			}
@@ -280,7 +280,7 @@ class SelectivePreloader {
 		try {
 			const urlObj = new URL(url, window.location.origin);
 			return urlObj.pathname.startsWith("/posts/") || urlObj.pathname.match(/^\/posts\/[^/]+\/?$/);
-		} catch (e) {
+		} catch (_e) {
 			return false;
 		}
 	}
@@ -330,7 +330,9 @@ class SelectivePreloader {
 
 	handleMouseEnter = (event) => {
 		const link = this.findLinkElement(event.target);
-		if (!link || !this.shouldPrefetch(link)) return;
+		if (!link || !this.shouldPrefetch(link)) {
+			return;
+		}
 
 		const url = link.href;
 
@@ -350,7 +352,9 @@ class SelectivePreloader {
 
 	handleMouseLeave = (event) => {
 		const link = this.findLinkElement(event.target);
-		if (!link) return;
+		if (!link) {
+			return;
+		}
 
 		const url = link.href;
 		if (this.hoverTimers.has(url)) {
@@ -362,7 +366,9 @@ class SelectivePreloader {
 	handleTouchStart = (event) => {
 		this.touchStartTime = Date.now();
 		const link = this.findLinkElement(event.target);
-		if (!link || !this.shouldPrefetch(link)) return;
+		if (!link || !this.shouldPrefetch(link)) {
+			return;
+		}
 
 		// For mobile, prefetch immediately on touch
 		this.prefetchUrl(link.href);

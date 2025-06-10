@@ -100,8 +100,7 @@ exports.handler = async (event, context) => {
 				body: JSON.stringify({
 					totalEntries: "N/A",
 					entries: [],
-					message:
-						"Astra DB 캐시 관리 시스템이 활성화되어 있습니다. 개별 캐시 삭제 기능을 사용할 수 있습니다.",
+					message: "Astra DB 캐시 관리 시스템이 활성화되어 있습니다. 개별 캐시 삭제 기능을 사용할 수 있습니다.",
 					features: {
 						deleteByQuery: true,
 						deleteByPattern: false, // 현재 전체 조회가 불가능하므로 비활성화
