@@ -8,7 +8,7 @@
 		"clean": "rimraf node_modules/.vite .astro dist",
 		"dev:clean": "pnpm clean && astro dev",
 		"start": "astro dev",
-		"build": "node scripts/build-knowledge-base.js && node scripts/build-posts-metadata.js && astro build && pagefind --site dist && node scripts/postbuild.js && node scripts/generate-sw-manifest.js",
+		"build": "node scripts/build-knowledge-base.js && node scripts/build-posts-metadata.js && node scripts/build-site-config.js && astro build && pagefind --site dist && node scripts/postbuild.js && node scripts/generate-sw-manifest.js",
 		"preview": "astro preview",
 		"astro": "astro",
 		"type-check": "tsc --noEmit --isolatedDeclarations",

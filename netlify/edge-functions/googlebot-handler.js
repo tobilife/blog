@@ -1,6 +1,7 @@
 // Simplified Googlebot handler - focus on stability
 // Metadata cache
 let metadataCache = null;
+let siteConfigCache = null;
 let cacheTimestamp = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -25,6 +26,32 @@ async function getPostsMetadata() {
 	}
 	
 	return metadataCache || {};
+}
+
+// Fetch site config
+async function getSiteConfig() {
+	if (siteConfigCache) {
+		return siteConfigCache;
+	}
+	
+	try {
+		const response = await fetch("https://tobilife.netlify.app/site-config.json");
+		if (response.ok) {
+			siteConfigCache = await response.json();
+			return siteConfigCache;
+		}
+	} catch (error) {
+		console.error("Failed to fetch site config:", error);
+	}
+	
+	// Fallback config
+	return {
+		title: "토비라이프",
+		subtitle: "70살까지 꿈꾸고 개발하며 성장하고싶은 개발자입니다.✨",
+		description: "70살까지 꿈꾸고 개발하며 성장하고싶은 개발자입니다.✨",
+		keywords: ["AI", "RAG", "Git", "GitHub", "보험IT", "개발", "프로그래밍", "기술블로그"],
+		defaultImage: "/images/banner.png"
+	};
 }
 
 export default async (request, context) => {
@@ -75,8 +102,11 @@ export default async (request, context) => {
 		// If server error, return a dynamic fallback
 		if (!response || response.status >= 500) {
 			console.error(`Server error for Googlebot: ${response ? response.status : 'No response'}`);
-			const metadata = await getPostsMetadata();
-			return createDynamicFallbackResponse(url, metadata);
+			const [metadata, siteConfig] = await Promise.all([
+				getPostsMetadata(),
+				getSiteConfig()
+			]);
+			return createDynamicFallbackResponse(url, metadata, siteConfig);
 		}
 		
 		return response;
@@ -84,20 +114,24 @@ export default async (request, context) => {
 	} catch (error) {
 		console.error(`Error handling Googlebot: ${error.message}`);
 		// Return a dynamic fallback on any error
-		const metadata = await getPostsMetadata();
-		return createDynamicFallbackResponse(url, metadata);
+		const [metadata, siteConfig] = await Promise.all([
+			getPostsMetadata(),
+			getSiteConfig()
+		]);
+		return createDynamicFallbackResponse(url, metadata, siteConfig);
 	}
 };
 
 // Dynamic fallback response
-function createDynamicFallbackResponse(url, metadata) {
+function createDynamicFallbackResponse(url, metadata, siteConfig) {
 	const isHomePage = url.pathname === "/" || url.pathname === "";
 	const isPostPage = url.pathname.startsWith("/posts/");
 	
-	let title = "TobiLife 블로그";
-	let description = "AI, RAG, Git/GitHub, 보험IT 등 다양한 개발 경험과 지식을 공유하는 기술 블로그";
-	let image = "/images/banner.png";
-	let keywords = "AI, RAG, Git, GitHub, 보험IT, 개발, 프로그래밍, 기술블로그";
+	// Use dynamic site config values
+	let title = siteConfig.title || "토비라이프";
+	let description = siteConfig.description || siteConfig.subtitle;
+	let image = siteConfig.defaultImage || "/images/banner.png";
+	let keywords = Array.isArray(siteConfig.keywords) ? siteConfig.keywords.join(", ") : "AI, RAG, Git, GitHub, 보험IT, 개발, 프로그래밍, 기술블로그";
 	let postData = null;
 	
 	if (isPostPage) {
@@ -128,11 +162,11 @@ function createDynamicFallbackResponse(url, metadata) {
 			"dateModified": postData.updated || postData.published || new Date().toISOString(),
 			"author": {
 				"@type": "Person",
-				"name": "TobiLife"
+				"name": siteConfig.author || "TobiLife"
 			},
 			"publisher": {
 				"@type": "Organization",
-				"name": "TobiLife 블로그",
+				"name": `${siteConfig.title} 블로그`,
 				"logo": {
 					"@type": "ImageObject",
 					"url": "https://tobilife.netlify.app/images/logo.png"
@@ -147,7 +181,7 @@ function createDynamicFallbackResponse(url, metadata) {
 		structuredData = {
 			"@context": "https://schema.org",
 			"@type": "WebSite",
-			"name": "TobiLife 블로그",
+			"name": `${siteConfig.title} 블로그`,
 			"url": "https://tobilife.netlify.app/",
 			"description": description,
 			"potentialAction": {
@@ -162,7 +196,7 @@ function createDynamicFallbackResponse(url, metadata) {
 	}
 	
 	const html = `<!DOCTYPE html>
-<html lang="ko">
+<html lang="${siteConfig.lang || 'ko'}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -175,7 +209,7 @@ function createDynamicFallbackResponse(url, metadata) {
 <meta property="og:image" content="${fullImageUrl}">
 <meta property="og:type" content="${isPostPage ? 'article' : 'website'}">
 <meta property="og:url" content="${url.href}">
-<meta property="og:site_name" content="TobiLife 블로그">
+<meta property="og:site_name" content="${siteConfig.title} 블로그">
 <link rel="canonical" href="${url.href}">
 <script type="application/ld+json">
 ${JSON.stringify(structuredData, null, 2)}
@@ -184,7 +218,7 @@ ${JSON.stringify(structuredData, null, 2)}
 <body>
 <h1>${title}</h1>
 <p>${description}</p>
-${isPostPage ? `<p>카테고리: ${postData?.category || 'AI'}</p>` : ''}
+${isPostPage && postData ? `<p>카테고리: ${postData.category || 'AI'}</p>` : ''}
 </body>
 </html>`;
 	
