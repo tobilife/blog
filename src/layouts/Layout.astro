@@ -19,6 +19,7 @@ import { defaultFavicons } from "../constants/icon";
 import type { Favicon } from "../types/config";
 import { url, pathsEqual } from "../utils/url-utils";
 import "katex/dist/katex.css";
+import "../styles/optimizations/mobile-performance.css";
 
 interface Props {
 	title?: string;
@@ -632,6 +633,7 @@ import 'photoswipe/style.css';
 // Optimized Swup bundle V2 for better mobile performance
 import { initSwupOptimizations } from '../scripts/optimized/swup-bundle-v2.js';
 import { initMobilePageTransitions } from '../scripts/mobile-page-transition.js';
+import { optimizeMobilePostCards } from '../scripts/mobile-performance.js';
 
 let lightbox: PhotoSwipeLightbox | null = null;
 const pswp = import('photoswipe');
@@ -686,11 +688,13 @@ if (window.swup) {
   setupPhotoSwipe();
   initSwupOptimizations(); // Use optimized Swup bundle
   initMobilePageTransitions(); // Initialize mobile-specific optimizations
+  optimizeMobilePostCards(); // Optimize mobile post card performance
 } else {
   document.addEventListener('swup:enable', () => {
     setupPhotoSwipe();
     initSwupOptimizations(); // Use optimized Swup bundle
     initMobilePageTransitions(); // Initialize mobile-specific optimizations
+    optimizeMobilePostCards(); // Optimize mobile post card performance
   });
 }
 </script>

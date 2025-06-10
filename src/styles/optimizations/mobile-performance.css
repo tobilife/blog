@@ -1,0 +1,112 @@
+/* Mobile Performance Optimizations */
+
+/* Disable will-change on mobile devices */
+@media (max-width: 768px) {
+	/* Remove will-change properties that cause memory overhead */
+	* {
+		will-change: auto !important;
+	}
+
+	/* Simplify transitions on mobile */
+	.card-base a,
+	.card-base .transition,
+	.card-base .transition-all,
+	.card-base .transition-colors {
+		transition-duration: 150ms !important;
+		transition-timing-function: ease-out !important;
+	}
+
+	/* Disable hover effects on touch devices */
+	@media (hover: none) and (pointer: coarse) {
+		.group:hover .group-hover\:opacity-100,
+		.group:hover .group-hover\:translate-x-0,
+		.group:hover .group-hover\:scale-100,
+		.group:hover .group-hover\:bg-black\/30 {
+			opacity: inherit !important;
+			transform: none !important;
+			background: none !important;
+		}
+
+		/* Simplify active states for better touch response */
+		.active\:scale-95:active {
+			transform: scale(0.98) !important;
+			transition-duration: 50ms !important;
+		}
+	}
+
+	/* Optimize PostCard layout calculations */
+	.card-base {
+		/* Use simpler layout on mobile */
+		contain: layout style;
+	}
+
+	/* Reduce paint areas */
+	.card-base > div {
+		/* Isolate paint layers */
+		transform: translateZ(0);
+		backface-visibility: hidden;
+	}
+
+	/* Optimize image containers */
+	.card-base img,
+	.card-base picture {
+		/* Prevent layout shifts */
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+	}
+
+	/* Simplify complex width calculations */
+	.w-\[calc\(100\%_-_52px_-_12px\)\],
+	.w-\[calc\(100\%_-_var\(--coverWidth\)_-_12px\)\] {
+		width: 100% !important;
+	}
+
+	/* Optimize touch targets */
+	.card-base a {
+		/* Ensure minimum touch target size */
+		min-height: 44px;
+		/* Remove complex transitions */
+		transition: opacity 150ms ease-out !important;
+	}
+
+	/* Reduce animation complexity */
+	.onload-animation {
+		animation-duration: 200ms !important;
+		animation-timing-function: ease-out !important;
+	}
+}
+
+/* Force GPU acceleration for smoother scrolling */
+@media (max-width: 768px) {
+	.card-base {
+		-webkit-transform: translate3d(0, 0, 0);
+		transform: translate3d(0, 0, 0);
+	}
+}
+
+/* Optimize for low-end devices */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* Touch feedback optimization */
+@media (hover: none) and (pointer: coarse) {
+	.btn-plain,
+	.card-base a {
+		-webkit-tap-highlight-color: rgba(var(--primary-rgb), 0.1);
+		touch-action: manipulation;
+	}
+
+	/* Faster touch response */
+	.card-base a:active {
+		opacity: 0.8;
+		transition: opacity 50ms !important;
+	}
+}
