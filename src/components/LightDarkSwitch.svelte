@@ -9,14 +9,19 @@ import { onMount } from "svelte";
 
 const seq: LIGHT_DARK_MODE[] = [LIGHT_MODE, DARK_MODE, AUTO_MODE];
 let mode: LIGHT_DARK_MODE = $state(AUTO_MODE);
+let panelRef: HTMLElement | null = null;
 
 onMount(() => {
 	mode = getStoredTheme();
+	panelRef = document.querySelector("#light-dark-panel");
+	
 	const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
 	const changeThemeWhenSchemeChanged: Parameters<typeof darkModePreference.addEventListener<"change">>[1] = (e) => {
-		applyThemeToDocument(mode);
+		requestAnimationFrame(() => {
+			applyThemeToDocument(mode);
+		});
 	};
-	darkModePreference.addEventListener("change", changeThemeWhenSchemeChanged);
+	darkModePreference.addEventListener("change", changeThemeWhenSchemeChanged, { passive: true });
 	return () => {
 		darkModePreference.removeEventListener("change", changeThemeWhenSchemeChanged);
 	};
@@ -24,7 +29,9 @@ onMount(() => {
 
 function switchScheme(newMode: LIGHT_DARK_MODE) {
 	mode = newMode;
-	setTheme(newMode);
+	requestAnimationFrame(() => {
+		setTheme(newMode);
+	});
 }
 
 function toggleScheme() {
@@ -38,31 +45,35 @@ function toggleScheme() {
 }
 
 function showPanel() {
-	const panel = document.querySelector("#light-dark-panel");
-	panel.classList.remove("float-panel-closed");
+	if (!panelRef) return;
+	requestAnimationFrame(() => {
+		panelRef?.classList.remove("float-panel-closed");
+	});
 }
 
 function hidePanel() {
-	const panel = document.querySelector("#light-dark-panel");
-	panel.classList.add("float-panel-closed");
+	if (!panelRef) return;
+	requestAnimationFrame(() => {
+		panelRef?.classList.add("float-panel-closed");
+	});
 }
 </script>
 
 <!-- z-50 make the panel higher than other float panels -->
 <div class="relative z-50" role="menu" tabindex="-1" onmouseleave={hidePanel}>
     <button aria-label="Light/Dark Mode" role="menuitem" class="relative btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="scheme-switch" onclick={toggleScheme} onmouseenter={showPanel}>
-        <div class="absolute" class:opacity-0={mode !== LIGHT_MODE}>
+        <div class="absolute transition-opacity" class:opacity-0={mode !== LIGHT_MODE} style="will-change: opacity;">
             <Icon icon="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem]"></Icon>
         </div>
-        <div class="absolute" class:opacity-0={mode !== DARK_MODE}>
+        <div class="absolute transition-opacity" class:opacity-0={mode !== DARK_MODE} style="will-change: opacity;">
             <Icon icon="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem]"></Icon>
         </div>
-        <div class="absolute" class:opacity-0={mode !== AUTO_MODE}>
+        <div class="absolute transition-opacity" class:opacity-0={mode !== AUTO_MODE} style="will-change: opacity;">
             <Icon icon="material-symbols:radio-button-partial-outline" class="text-[1.25rem]"></Icon>
         </div>
     </button>
 
-    <div id="light-dark-panel" class="hidden lg:block absolute transition float-panel-closed top-11 -right-2 pt-5" >
+    <div bind:this={panelRef} id="light-dark-panel" class="hidden lg:block absolute transition float-panel-closed top-11 -right-2 pt-5" style="will-change: transform, opacity;">
         <div class="card-base float-panel p-2">
             <button class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
                     class:current-theme-btn={mode === LIGHT_MODE}

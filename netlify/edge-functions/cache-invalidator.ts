@@ -88,8 +88,8 @@ class CacheVersionManager {
 		// 캐시 테이블의 모든 엔트리를 가져와서 버전 체크
 		// 실제로는 Astra DB의 제한으로 인해 전체 스캔이 어려울 수 있음
 		// 대안: TTL을 짧게 설정하거나, 버전별 테이블 분리
-		
-		console.log(`Would invalidate caches older than version: ${currentVersion}`);
+
+		console.info(`Would invalidate caches older than version: ${currentVersion}`);
 		// 구현은 Astra DB의 실제 스키마에 따라 달라집니다
 		return 0;
 	}
@@ -116,7 +116,7 @@ async function fetchMetadata(): Promise<MetadataInfo | null> {
 
 export default async (request: Request, context: Context) => {
 	const url = new URL(request.url);
-	
+
 	// /api/cache/check 엔드포인트에서만 작동
 	if (url.pathname !== "/api/cache/check") {
 		return context.next();
@@ -136,11 +136,7 @@ export default async (request: Request, context: Context) => {
 
 	try {
 		// 버전 관리자 초기화
-		const versionManager = new CacheVersionManager(
-			ASTRA_DB_REST_URL,
-			ASTRA_DB_APPLICATION_TOKEN,
-			ASTRA_DB_KEYSPACE,
-		);
+		const versionManager = new CacheVersionManager(ASTRA_DB_REST_URL, ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_KEYSPACE);
 
 		// 현재 메타데이터 버전 가져오기
 		const metadata = await fetchMetadata();
@@ -155,38 +151,43 @@ export default async (request: Request, context: Context) => {
 		const needsInvalidation = !cachedVersion || cachedVersion !== metadata.version;
 
 		if (needsInvalidation) {
-			console.log(`Cache invalidation needed: ${cachedVersion} -> ${metadata.version}`);
-			
+			console.info(`Cache invalidation needed: ${cachedVersion} -> ${metadata.version}`);
+
 			// 버전 업데이트
 			await versionManager.updateVersion(metadata.version);
-			
+
 			// 기존 캐시 무효화 (선택적)
 			// await versionManager.invalidateOldCaches(metadata.version);
 		}
 
-		return new Response(JSON.stringify({
-			currentVersion: metadata.version,
-			cachedVersion: cachedVersion,
-			needsInvalidation: needsInvalidation,
-			lastUpdated: metadata.lastUpdated,
-			totalPosts: metadata.totalPosts,
-		}), {
-			status: 200,
-			headers: {
-				"Content-Type": "application/json",
-				"Cache-Control": "no-cache",
+		return new Response(
+			JSON.stringify({
+				currentVersion: metadata.version,
+				cachedVersion: cachedVersion,
+				needsInvalidation: needsInvalidation,
+				lastUpdated: metadata.lastUpdated,
+				totalPosts: metadata.totalPosts,
+			}),
+			{
+				status: 200,
+				headers: {
+					"Content-Type": "application/json",
+					"Cache-Control": "no-cache",
+				},
 			},
-		});
-
+		);
 	} catch (error) {
 		console.error("Cache check error:", error);
-		return new Response(JSON.stringify({ 
-			error: "Cache check failed",
-			message: error.message,
-		}), {
-			status: 500,
-			headers: { "Content-Type": "application/json" },
-		});
+		return new Response(
+			JSON.stringify({
+				error: "Cache check failed",
+				message: error.message,
+			}),
+			{
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			},
+		);
 	}
 };
 

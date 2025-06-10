@@ -20,19 +20,19 @@ import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 
 // https://astro.build/config
 export default defineConfig({
- site: "https://tobilife.netlify.app/",
- base: "/",
- trailingSlash: "always",
- image: {
-  service: {
-   entrypoint: 'astro/assets/services/sharp',
-   config: {
-    limitInputPixels: false,
-   },
-  },
-  domains: [],
-  remotePatterns: [{ protocol: "https" }],
- },
+	site: "https://tobilife.netlify.app/",
+	base: "/",
+	trailingSlash: "always",
+	image: {
+		service: {
+			entrypoint: 'astro/assets/services/sharp',
+			config: {
+				limitInputPixels: false,
+			},
+		},
+		domains: [],
+		remotePatterns: [{ protocol: "https" }],
+	},
 	integrations: [
 		tailwind({
 			nesting: true,
@@ -45,7 +45,7 @@ export default defineConfig({
 			containers: ["main", "#toc"],
 			smoothScrolling: true,
 			cache: true,
-			preload: true,
+			preload: false, // 자동 프리로드 비활성화
 			accessibility: true,
 			updateHead: true,
 			updateBodyClass: false,
@@ -158,10 +158,28 @@ export default defineConfig({
 		],
 	},
 	vite: {
+		optimizeDeps: {
+			// Pre-bundle heavy dependencies
+			include: [
+				'swup',
+				'@swup/head-plugin',
+				'@swup/scroll-plugin',
+				'@swup/a11y-plugin',
+			],
+		},
 		build: {
-			rollupOptions: {
-				onwarn(warning, warn) {
-					// temporarily suppress this warning
+		 // Optimize for mobile
+		 target: 'es2018',
+		 // Split chunks for better caching
+		 rollupOptions: {
+		  external: (id) => {
+		   // Exclude dynamic imports from bundle
+		   if (id.includes('swup-loader')) {
+		    return true;
+		   }
+		   return false;
+		  },
+		  onwarn(warning, warn) {
 					if (
 						warning.message.includes("is dynamically imported by") &&
 						warning.message.includes("but also statically imported by")
@@ -169,6 +187,17 @@ export default defineConfig({
 						return;
 					}
 					warn(warning);
+				},
+				output: {
+					// Manual chunk splitting for Swup
+					manualChunks: {
+						'swup-core': ['swup'],
+						'swup-plugins': [
+							'@swup/head-plugin',
+							'@swup/scroll-plugin',
+							'@swup/a11y-plugin',
+						],
+					},
 				},
 			},
 		},

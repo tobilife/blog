@@ -2,5 +2,6 @@ ignoredBuiltDependencies:
   - '@biomejs/biome'
   - '@parcel/watcher'
   - esbuild
+  - iconv
   - sharp
   - swup

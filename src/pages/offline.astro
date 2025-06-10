@@ -1,0 +1,190 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="오프라인 - TobiLife" 
+  description="현재 오프라인 상태입니다."
+>
+  <div class="offline-container">
+    <div class="offline-content">
+      <svg class="offline-icon" xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
+      
+      <h1 class="offline-title">오프라인 상태입니다</h1>
+      
+      <p class="offline-message">
+        인터넷 연결이 없습니다. 연결이 복구되면 다시 시도해주세요.
+      </p>
+      
+      <div class="offline-actions">
+        <button id="retry-btn" class="offline-btn">
+          다시 시도
+        </button>
+        <button id="home-btn" class="offline-btn offline-btn-secondary">
+          홈으로
+        </button>
+      </div>
+      
+      <div class="offline-cached">
+        <h2>캐시된 페이지</h2>
+        <ul id="cached-pages"></ul>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .offline-container {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  
+  .offline-content {
+    text-align: center;
+    max-width: 500px;
+  }
+  
+  .offline-icon {
+    color: var(--color-text-muted);
+    margin: 0 auto 2rem;
+    opacity: 0.5;
+  }
+  
+  .offline-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--color-text-heading);
+  }
+  
+  .offline-message {
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  
+  .offline-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+  
+  .offline-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--color-accent);
+    color: white;
+  }
+  
+  .offline-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  
+  .offline-btn-secondary {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+  }
+  
+  .offline-cached {
+    text-align: left;
+    border-top: 1px solid var(--color-border);
+    padding-top: 2rem;
+  }
+  
+  .offline-cached h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--color-text-heading);
+  }
+  
+  .offline-cached ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .offline-cached li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .offline-cached a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  
+  .offline-cached a:hover {
+    text-decoration: underline;
+  }
+  
+  @media (max-width: 768px) {
+    .offline-title {
+      font-size: 1.5rem;
+    }
+    
+    .offline-actions {
+      flex-direction: column;
+    }
+    
+    .offline-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  // Retry button
+  document.getElementById('retry-btn')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+  
+  // Home button
+  document.getElementById('home-btn')?.addEventListener('click', () => {
+    window.location.href = '/';
+  });
+  
+  // List cached pages
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      const dynamicCache = names.find(name => name.includes('dynamic'));
+      if (dynamicCache) {
+        caches.open(dynamicCache).then(cache => {
+          cache.keys().then(requests => {
+            const pages = requests
+              .filter(req => req.url.includes('/posts/'))
+              .slice(0, 10); // Show max 10 pages
+              
+            const list = document.getElementById('cached-pages');
+            if (list && pages.length > 0) {
+              pages.forEach(req => {
+                const url = new URL(req.url);
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = url.pathname;
+                a.textContent = url.pathname.replace('/posts/', '').replace('/', '');
+                li.appendChild(a);
+                list.appendChild(li);
+              });
+            } else if (list) {
+              list.innerHTML = '<li>캐시된 페이지가 없습니다.</li>';
+            }
+          });
+        });
+      }
+    });
+  }
+</script>

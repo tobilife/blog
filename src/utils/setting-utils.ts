@@ -18,25 +18,29 @@ export function setHue(hue: number): void {
 	if (!r) {
 		return;
 	}
-	r.style.setProperty("--hue", String(hue));
+	requestAnimationFrame(() => {
+		r.style.setProperty("--hue", String(hue));
+	});
 }
 
 export function applyThemeToDocument(theme: LIGHT_DARK_MODE) {
-	switch (theme) {
-		case LIGHT_MODE:
-			document.documentElement.classList.remove("dark");
-			break;
-		case DARK_MODE:
-			document.documentElement.classList.add("dark");
-			break;
-		case AUTO_MODE:
-			if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-				document.documentElement.classList.add("dark");
-			} else {
+	requestAnimationFrame(() => {
+		switch (theme) {
+			case LIGHT_MODE:
 				document.documentElement.classList.remove("dark");
-			}
-			break;
-	}
+				break;
+			case DARK_MODE:
+				document.documentElement.classList.add("dark");
+				break;
+			case AUTO_MODE:
+				if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+					document.documentElement.classList.add("dark");
+				} else {
+					document.documentElement.classList.remove("dark");
+				}
+				break;
+		}
+	});
 }
 
 export function setTheme(theme: LIGHT_DARK_MODE): void {

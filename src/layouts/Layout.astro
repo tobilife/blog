@@ -207,9 +207,9 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
         },
         "description": "TobiLife(토비라이프) 블로그 - IT 개발자의 기술 블로그. AI, 보험IT 등 다양한 개발 경험과 지식을 공유합니다.",
         "inLanguage": "ko-KR"
-      }
-      </script>
-      </head>
+        }
+        </script>
+        </head>
   
   <body 
     class="min-h-screen transition" 
@@ -595,8 +595,8 @@ window.addEventListener('resize', () => {
 <script>
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
-// import { optimizeSwupTransitions } from '../scripts/swup-performance.js'; // Disabled - causes cursor issues
-import { ultraOptimizeSwup } from '../scripts/swup-ultra-optimize.js';
+// Optimized Swup bundle V2 for better mobile performance
+import { initSwupOptimizations } from '../scripts/optimized/swup-bundle-v2.js';
 // import { initLightweightScrollbar, initContentScrollbars } from '../scripts/scrollbar-optimize.js'; // Moved inline to fix import issue
 
 let lightbox: PhotoSwipeLightbox | null = null;
@@ -650,11 +650,15 @@ const setupPhotoSwipe = (): void => {
 
 if (window.swup) {
   setupPhotoSwipe();
-  ultraOptimizeSwup(); // Use ultra optimization instead
+  initSwupOptimizations(); // Use optimized Swup bundle
 } else {
   document.addEventListener('swup:enable', () => {
     setupPhotoSwipe();
-    ultraOptimizeSwup(); // Use ultra optimization instead
+    initSwupOptimizations(); // Use optimized Swup bundle
   });
 }
 </script>
+
+<!-- Service Worker Integration -->
+<script src="/scripts/optimized/sw-manager.js" defer></script>
+<script src="/scripts/optimized/swup-sw-integration.js" defer></script>

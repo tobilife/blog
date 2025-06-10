@@ -5,7 +5,6 @@
   X-XSS-Protection: 1; mode=block
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
 
-# 이미지 파일에 대한 Content-Type 설정
 /images/*.png
   Content-Type: image/png
   Cache-Control: public, max-age=31536000, immutable
@@ -26,7 +25,6 @@
   Content-Type: image/gif
   Cache-Control: public, max-age=31536000, immutable
 
-# uploads 하위 디렉터리도 포함
 /images/uploads/*.png
   Content-Type: image/png
   Cache-Control: public, max-age=31536000, immutable

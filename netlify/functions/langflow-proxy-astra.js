@@ -24,8 +24,7 @@ function analyzeQueryComplexity(query) {
 		hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
 		requiresReasoning: /왜|어떻게|분석|비교|설명|차이|장단점|평가/i.test(query),
 		requiresLatestInfo: /최신|현재|오늘|요즘|최근|실시간/i.test(query),
-		isSimpleFactCheck:
-			/무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
+		isSimpleFactCheck: /무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
 		hasComplexTerms: /github|프로그래밍|개발|AI|기술|경제|정치/i.test(query),
 	};
 
@@ -184,14 +183,10 @@ function analyzeQueryIntent(query) {
 	];
 
 	// 블로그 관련 질문 확인
-	const isBlogRelated = blogPatterns.some((pattern) =>
-		pattern.test(lowerQuery),
-	);
+	const isBlogRelated = blogPatterns.some((pattern) => pattern.test(lowerQuery));
 
 	// 날짜/시간 질문 확인
-	const isDateTime = dateTimePatterns.some((pattern) =>
-		pattern.test(lowerQuery),
-	);
+	const isDateTime = dateTimePatterns.some((pattern) => pattern.test(lowerQuery));
 
 	// 날씨 질문 확인
 	const isWeather = weatherPatterns.some((pattern) => pattern.test(lowerQuery));
@@ -258,11 +253,7 @@ function extractCity(query) {
 	];
 
 	// 고양시의 구를 포함한 경우 고양시로 통일
-	if (
-		query.includes("덕양구") ||
-		query.includes("일산동구") ||
-		query.includes("일산서구")
-	) {
+	if (query.includes("덕양구") || query.includes("일산동구") || query.includes("일산서구")) {
 		return "고양시";
 	}
 
@@ -310,16 +301,10 @@ async function getWeather(city, apiKey) {
 
 		const searchCity = cityMap[city] || city;
 
-		const response = await fetch(
-			`${WEATHER_API_URL}?q=${searchCity},KR&appid=${apiKey}&units=metric&lang=kr`,
-		);
+		const response = await fetch(`${WEATHER_API_URL}?q=${searchCity},KR&appid=${apiKey}&units=metric&lang=kr`);
 
 		if (!response.ok) {
-			console.error(
-				"Weather API error:",
-				response.status,
-				await response.text(),
-			);
+			console.error("Weather API error:", response.status, await response.text());
 			return null;
 		}
 
@@ -349,9 +334,7 @@ function getCurrentDateInfo() {
 	const year = koreaTime.getUTCFullYear();
 	const month = koreaTime.getUTCMonth() + 1;
 	const day = koreaTime.getUTCDate();
-	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
-		koreaTime.getUTCDay()
-	];
+	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][koreaTime.getUTCDay()];
 	const monthNames = [
 		"January",
 		"February",
@@ -392,11 +375,7 @@ function optimizeSearchQuery(query) {
 	let optimizedQuery = query;
 
 	// GitHub 관련 질문 처리
-	if (
-		query.includes("github") ||
-		query.includes("깃허브") ||
-		query.includes("깃헙")
-	) {
+	if (query.includes("github") || query.includes("깃허브") || query.includes("깃헙")) {
 		// GitHub 관련 키워드를 영어로 변환
 		optimizedQuery = query
 			.replace(/깃허브|깃헙/g, "GitHub")
@@ -459,16 +438,13 @@ async function searchBrave(query, apiKey) {
 	const searchQuery = optimizeSearchQuery(query);
 
 	try {
-		const response = await fetch(
-			`${BRAVE_API_URL}?q=${encodeURIComponent(searchQuery)}&count=3&freshness=pw`,
-			{
-				headers: {
-					Accept: "application/json",
-					"Accept-Encoding": "gzip",
-					"X-Subscription-Token": apiKey,
-				},
+		const response = await fetch(`${BRAVE_API_URL}?q=${encodeURIComponent(searchQuery)}&count=3&freshness=pw`, {
+			headers: {
+				Accept: "application/json",
+				"Accept-Encoding": "gzip",
+				"X-Subscription-Token": apiKey,
 			},
-		);
+		});
 
 		if (!response.ok) {
 			console.error("Brave Search API error:", response.status);
@@ -518,10 +494,7 @@ async function searchGoogle(query, apiKey, searchEngineId) {
 			console.error("Google Search API error:", response.status, errorData);
 
 			// 할당량 초과 에러 체크
-			if (
-				response.status === 429 ||
-				errorData.error?.message?.includes("quota")
-			) {
+			if (response.status === 429 || errorData.error?.message?.includes("quota")) {
 				return { quotaExceeded: true };
 			}
 			return null;
@@ -694,13 +667,7 @@ function mergeSearchResults(googleResults, braveResults, tavilyResults) {
 }
 
 // Google 우선 + 선택적 보완 검색 함수
-async function performEnhancedSearch(
-	query,
-	googleApiKey,
-	googleSearchEngineId,
-	braveApiKey,
-	tavilyApiKey,
-) {
+async function performEnhancedSearch(query, googleApiKey, googleSearchEngineId, braveApiKey, tavilyApiKey) {
 	// Google 검색 사용량 확인
 	const googleUsage = await getGoogleSearchCount();
 
@@ -727,19 +694,10 @@ async function performEnhancedSearch(
 	let tavilyResults = null;
 	// Google 검색 (사용 가능한 경우)
 	if (googleApiKey && googleSearchEngineId && googleUsage.canUse) {
-		googleResults = await searchWithTimeout(
-			searchGoogle,
-			query,
-			googleApiKey,
-			googleSearchEngineId,
-		);
+		googleResults = await searchWithTimeout(searchGoogle, query, googleApiKey, googleSearchEngineId);
 
 		// Google 검색 성공 시 카운트 증가
-		if (
-			googleResults &&
-			!googleResults.quotaExceeded &&
-			googleResults.length > 0
-		) {
+		if (googleResults && !googleResults.quotaExceeded && googleResults.length > 0) {
 			await incrementGoogleSearchCount(googleUsage.dateKey);
 			// Google 결과가 충분한 경우 (3개 이상) 다른 API 호출 생략
 			if (googleResults.length >= 3) {
@@ -750,12 +708,8 @@ async function performEnhancedSearch(
 
 	// Google 결과가 부족하거나 사용 불가시 Brave/Tavily 병렬 호출
 	const [braveRes, tavilyRes] = await Promise.all([
-		braveApiKey
-			? searchWithTimeout(searchBrave, query, braveApiKey)
-			: Promise.resolve(null),
-		tavilyApiKey
-			? searchWithTimeout(searchTavily, query, tavilyApiKey)
-			: Promise.resolve(null),
+		braveApiKey ? searchWithTimeout(searchBrave, query, braveApiKey) : Promise.resolve(null),
+		tavilyApiKey ? searchWithTimeout(searchTavily, query, tavilyApiKey) : Promise.resolve(null),
 	]);
 
 	braveResults = braveRes;
@@ -766,12 +720,7 @@ async function performEnhancedSearch(
 }
 
 // 검색 결과를 프롬프트에 포함시키는 함수 (기존 코드 재사용)
-function enhancePromptWithSearchResults(
-	originalQuery,
-	searchResults,
-	weatherData,
-	conversationHistory = [],
-) {
+function enhancePromptWithSearchResults(originalQuery, searchResults, weatherData, conversationHistory = []) {
 	// 현재 날짜 정보 가져오기
 	const dateInfo = getCurrentDateInfo();
 
@@ -784,10 +733,7 @@ function enhancePromptWithSearchResults(
 		const recentHistory = conversationHistory.slice(-2);
 		for (const msg of recentHistory) {
 			// 메시지 길이 제한 (100자)
-			const content =
-				msg.content.length > 100
-					? `${msg.content.substring(0, 100)}...`
-					: msg.content;
+			const content = msg.content.length > 100 ? `${msg.content.substring(0, 100)}...` : msg.content;
 			enhancedPrompt += `${msg.role === "user" ? "U" : "A"}: ${content}\n`;
 		}
 		enhancedPrompt += "\n";
@@ -869,9 +815,7 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
 		const responseText = await response.text();
 
 		if (!response.ok) {
-			throw new Error(
-				`Langflow API error: ${response.status} - ${responseText}`,
-			);
+			throw new Error(`Langflow API error: ${response.status} - ${responseText}`);
 		}
 
 		// 작업 완료 처리
@@ -883,18 +827,12 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
 			const parsedResponse = JSON.parse(responseText);
 			// requestBody에서 필요한 컨텍스트 정보 추출
 			const complexity = requestBody.complexity || { score: 0 };
-			await cacheService.set(
-				requestBody.input_value,
-				JSON.stringify(parsedResponse),
-				{
-					conversationLength: requestBody.conversation_history
-						? requestBody.conversation_history.length
-						: 0,
-					hasSearchResults: requestBody.hasSearchResults || false,
-					complexity: complexity.score || 0,
-					responseTime: 0, // 비동기 처리이므로 정확한 시간 계산 어려움
-				},
-			);
+			await cacheService.set(requestBody.input_value, JSON.stringify(parsedResponse), {
+				conversationLength: requestBody.conversation_history ? requestBody.conversation_history.length : 0,
+				hasSearchResults: requestBody.hasSearchResults || false,
+				complexity: complexity.score || 0,
+				responseTime: 0, // 비동기 처리이므로 정확한 시간 계산 어려움
+			});
 		}
 	} catch (error) {
 		console.error("Async task processing error:", error);
@@ -946,9 +884,7 @@ exports.handler = async (event, context) => {
 			hasToken: !!process.env.ASTRA_DB_APPLICATION_TOKEN,
 			hasUrl: !!process.env.ASTRA_DB_REST_URL,
 			hasKeyspace: !!process.env.ASTRA_DB_KEYSPACE,
-			tokenLength: process.env.ASTRA_DB_APPLICATION_TOKEN
-				? process.env.ASTRA_DB_APPLICATION_TOKEN.length
-				: 0,
+			tokenLength: process.env.ASTRA_DB_APPLICATION_TOKEN ? process.env.ASTRA_DB_APPLICATION_TOKEN.length : 0,
 			url: process.env.ASTRA_DB_REST_URL ? "configured" : "missing",
 			keyspace: process.env.ASTRA_DB_KEYSPACE || "missing",
 		};
@@ -983,49 +919,49 @@ exports.handler = async (event, context) => {
 		// Astra DB 캐시 확인 (웹 검색이 비활성화된 경우에만)
 		let cacheService;
 		let cachedResult = { hit: false };
-		
-		if (!enableWebSearch) {
-		 try {
-		  cacheService = getCacheService();
-		  if (cacheService) {
-		   cachedResult = await cacheService.get(userQuery, {
-		    conversationLength: conversationHistory.length,
-		   });
-		  } else {
-		   console.log("Cache service not available");
-		  }
-		 } catch (cacheError) {
-		  console.error("Cache service error:", cacheError);
-		  // 캐시 오류는 무시하고 계속 진행
-		 }
-		
-		 if (cachedResult.hit) {
-		  return {
-		   statusCode: 200,
-		   headers: {
-		    ...headers,
-		    "Content-Type": "application/json",
-		    "X-Cache": "HIT",
-		    "X-Response-Time": String(Date.now() - startTime),
-		    "X-Web-Search": "DISABLED",
-		   },
-		   body: cachedResult.answer,
-		  };
-		 }
+
+		if (enableWebSearch) {
+			console.info("Cache skipped - Web search enabled");
 		} else {
-		 console.log("Cache skipped - Web search enabled");
+			try {
+				cacheService = getCacheService();
+				if (cacheService) {
+					cachedResult = await cacheService.get(userQuery, {
+						conversationLength: conversationHistory.length,
+					});
+				} else {
+					console.info("Cache service not available");
+				}
+			} catch (cacheError) {
+				console.error("Cache service error:", cacheError);
+				// 캐시 오류는 무시하고 계속 진행
+			}
+
+			if (cachedResult.hit) {
+				return {
+					statusCode: 200,
+					headers: {
+						...headers,
+						"Content-Type": "application/json",
+						"X-Cache": "HIT",
+						"X-Response-Time": String(Date.now() - startTime),
+						"X-Web-Search": "DISABLED",
+					},
+					body: cachedResult.answer,
+				};
+			}
 		}
 
 		// 비동기 처리 비활성화 - 모든 요청을 동기적으로 처리
 		// Netlify Functions는 응답 후 즉시 종료되므로 백그라운드 작업이 불가능
 		/*
     if (complexity.recommendations.useAsync) {
-      console.log('Complex query detected, using async processing');
+      console.info('Complex query detected, using async processing');
       
       try {
         const taskService = getAsyncTaskService();
         if (!taskService) {
-          console.log('Async task service not available, falling back to sync processing');
+          console.info('Async task service not available, falling back to sync processing');
           // 비동기 처리 불가능, 일반 처리로 계속 진행
         } else {
           const task = await taskService.createTask(userQuery, { complexity });
@@ -1078,45 +1014,37 @@ exports.handler = async (event, context) => {
 			: complexity.recommendations.searchLimit;
 
 		// 사용자가 웹 검색을 활성화한 경우에만 웹 검색 수행
-		console.log("🔍 웹검색 플래그:", enableWebSearch);
-		console.log("🔍 검색 필요 여부:", intent.needsSearch);
-		console.log("🔍 블로그 관련:", intent.isBlogRelated);
-		
-		if (
-		 enableWebSearch &&
-		 (GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY)
-		) {
-		 // 웹검색이 활성화되면 더 넓은 범위의 질문에 대해 검색 수행
-		 // 단, 날씨/날짜/블로그 관련 질문은 제외
-		 if (
-		  !intent.isWeather &&
-		  !intent.isDateTime &&
-		  !intent.isBlogRelated &&
-		  (intent.needsSearch || hasExplicitSearchRequest || complexity.score >= 2) // 복잡도가 2 이상이면 검색
-		 ) {
-		  console.log("✅ 웹검색 실행");
-		  searchResults = await performEnhancedSearch(
-		   userQuery,
-		   GOOGLE_API_KEY,
-		   GOOGLE_SEARCH_ENGINE_ID,
-		   BRAVE_API_KEY,
-		   TAVILY_API_KEY,
-		  );
-		 } else {
-		  console.log("❌ 웹검색 스킵 - 날씨/날짜/블로그 관련 질문");
-		 }
+		console.info("🔍 웹검색 플래그:", enableWebSearch);
+		console.info("🔍 검색 필요 여부:", intent.needsSearch);
+		console.info("🔍 블로그 관련:", intent.isBlogRelated);
+
+		if (enableWebSearch && (GOOGLE_API_KEY || BRAVE_API_KEY || TAVILY_API_KEY)) {
+			// 웹검색이 활성화되면 더 넓은 범위의 질문에 대해 검색 수행
+			// 단, 날씨/날짜/블로그 관련 질문은 제외
+			if (
+				!intent.isWeather &&
+				!intent.isDateTime &&
+				!intent.isBlogRelated &&
+				(intent.needsSearch || hasExplicitSearchRequest || complexity.score >= 2) // 복잡도가 2 이상이면 검색
+			) {
+				console.info("✅ 웹검색 실행");
+				searchResults = await performEnhancedSearch(
+					userQuery,
+					GOOGLE_API_KEY,
+					GOOGLE_SEARCH_ENGINE_ID,
+					BRAVE_API_KEY,
+					TAVILY_API_KEY,
+				);
+			} else {
+				console.info("❌ 웹검색 스킵 - 날씨/날짜/블로그 관련 질문");
+			}
 		} else if (!enableWebSearch) {
-		 console.log("❌ 웹검색 비활성화됨");
+			console.info("❌ 웹검색 비활성화됨");
 		}
 
 		// 프롬프트 향상
 		if (weatherData || searchResults || conversationHistory.length > 0) {
-			enhancedQuery = enhancePromptWithSearchResults(
-				userQuery,
-				searchResults,
-				weatherData,
-				conversationHistory,
-			);
+			enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, weatherData, conversationHistory);
 			requestBody.hasSearchResults = !!(weatherData || searchResults);
 		}
 
@@ -1135,10 +1063,7 @@ exports.handler = async (event, context) => {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${API_TOKEN}`,
 					Accept: "application/json",
-					"X-Forwarded-For":
-						event.headers["x-forwarded-for"] ||
-						event.headers["client-ip"] ||
-						"",
+					"X-Forwarded-For": event.headers["x-forwarded-for"] || event.headers["client-ip"] || "",
 				},
 				body: JSON.stringify(requestBody),
 				signal: controller.signal,
@@ -1154,7 +1079,7 @@ exports.handler = async (event, context) => {
 				// Gateway 오류 시 직접 오류 반환
 				/*
         if (response.status === 502 || response.status === 503 || response.status === 504) {
-          console.log('Gateway error, switching to async processing');
+          console.info('Gateway error, switching to async processing');
           
           const taskService = getAsyncTaskService();
           const task = await taskService.createTask(userQuery, { complexity, error: 'gateway_timeout' });
@@ -1196,33 +1121,33 @@ exports.handler = async (event, context) => {
 
 			// 응답 캐싱 (웹 검색이 비활성화된 경우에만)
 			if (!enableWebSearch && cacheService) {
-			 try {
-			  await cacheService.set(userQuery, responseText, {
-			   conversationLength: conversationHistory.length,
-			   hasSearchResults: requestBody.hasSearchResults,
-			   complexity: complexity.score,
-			   responseTime: Date.now() - startTime,
-			  });
-			  console.log("Response cached successfully");
-			 } catch (cacheError) {
-			  console.error("Cache set error:", cacheError);
-			  // 캐시 저장 실패는 무시
-			 }
+				try {
+					await cacheService.set(userQuery, responseText, {
+						conversationLength: conversationHistory.length,
+						hasSearchResults: requestBody.hasSearchResults,
+						complexity: complexity.score,
+						responseTime: Date.now() - startTime,
+					});
+					console.info("Response cached successfully");
+				} catch (cacheError) {
+					console.error("Cache set error:", cacheError);
+					// 캐시 저장 실패는 무시
+				}
 			} else if (enableWebSearch) {
-			 console.log("Cache save skipped - Web search enabled");
+				console.info("Cache save skipped - Web search enabled");
 			}
 
 			return {
 				statusCode: 200,
 				headers: {
-				 ...headers,
-				 "Content-Type": "application/json",
-				 "X-Query-Complexity": complexity.level,
-				 "X-Query-Score": String(complexity.score),
-				 "X-Response-Time": String(Date.now() - startTime),
-				 "X-Cache": enableWebSearch ? "BYPASS" : "MISS",
-				 "X-Web-Search": enableWebSearch ? "ENABLED" : "DISABLED",
-				 "X-Search-Results": searchResults ? "YES" : "NO",
+					...headers,
+					"Content-Type": "application/json",
+					"X-Query-Complexity": complexity.level,
+					"X-Query-Score": String(complexity.score),
+					"X-Response-Time": String(Date.now() - startTime),
+					"X-Cache": enableWebSearch ? "BYPASS" : "MISS",
+					"X-Web-Search": enableWebSearch ? "ENABLED" : "DISABLED",
+					"X-Search-Results": searchResults ? "YES" : "NO",
 				},
 				body: responseText,
 			};
@@ -1266,8 +1191,7 @@ exports.handler = async (event, context) => {
 					},
 					body: JSON.stringify({
 						error: "Gateway timeout",
-						message:
-							"요청 처리 시간이 초과되었습니다. 더 간단한 질문을 해보세요.",
+						message: "요청 처리 시간이 초과되었습니다. 더 간단한 질문을 해보세요.",
 						timeout: true,
 						timeoutDuration: dynamicTimeout,
 						complexityLevel: complexity.level,
@@ -1307,8 +1231,7 @@ exports.handler = async (event, context) => {
 			body: JSON.stringify({
 				error: "Internal server error",
 				message: error.message,
-				details:
-					process.env.NODE_ENV === "development" ? error.stack : undefined,
+				details: process.env.NODE_ENV === "development" ? error.stack : undefined,
 			}),
 		};
 	}

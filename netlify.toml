@@ -92,13 +92,8 @@
 
 # 이중 슬래시 정규화
 [[redirects]]
-  from = "/*//"
-  to = "/:splat/"
-  status = 301
-
-[[redirects]]
   from = "/*//*"
-  to = "/:splat1/:splat2"
+  to = "/:splat/"
   status = 301
 
 [[redirects]]

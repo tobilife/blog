@@ -65,11 +65,7 @@ class ResponseQualityEvaluator {
 	};
 	private minQualityScore = 0.7;
 
-	evaluateResponse(
-		response: string,
-		query: string,
-		hasSearchResults = false,
-	): EvaluationResult {
+	evaluateResponse(response: string, query: string, hasSearchResults = false): EvaluationResult {
 		const scores = {
 			completeness: this.evaluateCompleteness(response, query),
 			relevance: this.evaluateRelevance(response, query),
@@ -86,8 +82,7 @@ class ResponseQualityEvaluator {
 			totalScore: Math.round(totalScore * 100) / 100,
 			scores,
 			shouldCache: totalScore >= this.minQualityScore,
-			confidence:
-				totalScore >= 0.8 ? "high" : totalScore >= 0.6 ? "medium" : "low",
+			confidence: totalScore >= 0.8 ? "high" : totalScore >= 0.6 ? "medium" : "low",
 		};
 	}
 
@@ -103,9 +98,7 @@ class ResponseQualityEvaluator {
 		let score = 0.5;
 		const queryWords = query.toLowerCase().split(/\s+/);
 		const responseWords = response.toLowerCase().split(/\s+/);
-		const matchCount = queryWords.filter((word) =>
-			responseWords.includes(word),
-		).length;
+		const matchCount = queryWords.filter((word) => responseWords.includes(word)).length;
 		score += (matchCount / queryWords.length) * 0.5;
 		return Math.min(score, 1);
 	}
@@ -129,26 +122,26 @@ class ResponseQualityEvaluator {
 
 // Astra DB 캐시 클래스
 class AstraDBCache {
- private baseUrl: string;
- private token: string;
- private keyspace: string;
- private metadataVersion: string | null = null;
+	private baseUrl: string;
+	private token: string;
+	private keyspace: string;
+	private metadataVersion: string | null = null;
 
 	constructor(baseUrl: string, token: string, keyspace: string) {
 		this.baseUrl = baseUrl;
 		this.token = token;
 		this.keyspace = keyspace;
 	}
-	
+
 	// 메타데이터 버전 설정
 	setMetadataVersion(version: string) {
-	 this.metadataVersion = version;
+		this.metadataVersion = version;
 	}
-	
+
 	private generateCacheKey(question: string): string {
-	 // 버전이 있으면 캐시 키에 포함
-	 const baseKey = question.toLowerCase().trim().replace(/\s+/g, " ");
-	 return this.metadataVersion ? `${this.metadataVersion}:${baseKey}` : baseKey;
+		// 버전이 있으면 캐시 키에 포함
+		const baseKey = question.toLowerCase().trim().replace(/\s+/g, " ");
+		return this.metadataVersion ? `${this.metadataVersion}:${baseKey}` : baseKey;
 	}
 
 	async getCacheEntry(question: string): Promise<CacheEntry | null> {
@@ -197,18 +190,14 @@ class AstraDBCache {
 			return null;
 		}
 	}
-	async setCacheEntry(
-		question: string,
-		answer: string,
-		context: Record<string, unknown> = {},
-	): Promise<boolean> {
+	async setCacheEntry(question: string, answer: string, context: Record<string, unknown> = {}): Promise<boolean> {
 		const cacheKey = this.generateCacheKey(question);
-		 const ttlSeconds = 3600; // 1시간
-		 const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-		
-		 console.log(`Saving to cache with key: ${cacheKey}, version: ${this.metadataVersion}`);
-		
-		 const data = {
+		const ttlSeconds = 3600; // 1시간
+		const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+
+		console.info(`Saving to cache with key: ${cacheKey}, version: ${this.metadataVersion}`);
+
+		const data = {
 			query: question,
 			response: answer,
 			created_at: new Date().toISOString(),
@@ -244,11 +233,7 @@ class AstraDBCache {
 				return true;
 			}
 
-			console.error(
-				"Cache save error:",
-				response.status,
-				await response.text(),
-			);
+			console.error("Cache save error:", response.status, await response.text());
 			return false;
 		} catch (error) {
 			console.error("Cache set error:", error);
@@ -339,22 +324,17 @@ class ApiUsageTracker {
 	}
 
 	// API 사용량 업데이트
-	async updateUsageStats(
-		apiType: "google" | "brave" | "tavily",
-	): Promise<boolean> {
+	async updateUsageStats(apiType: "google" | "brave" | "tavily"): Promise<boolean> {
 		const dateKey = this.getKoreaDateKey();
 		const currentStats = await this.getUsageStats();
 
 		// 카운트 증가
 		if (apiType === "google") {
-			currentStats.google_search_count =
-				(currentStats.google_search_count || 0) + 1;
+			currentStats.google_search_count = (currentStats.google_search_count || 0) + 1;
 		} else if (apiType === "brave") {
-			currentStats.brave_search_count =
-				(currentStats.brave_search_count || 0) + 1;
+			currentStats.brave_search_count = (currentStats.brave_search_count || 0) + 1;
 		} else if (apiType === "tavily") {
-			currentStats.tavily_search_count =
-				(currentStats.tavily_search_count || 0) + 1;
+			currentStats.tavily_search_count = (currentStats.tavily_search_count || 0) + 1;
 		}
 
 		// PUT 요청을 위한 데이터 준비 - date_key는 URL에 포함되므로 body에서 제외
@@ -381,11 +361,7 @@ class ApiUsageTracker {
 				return true;
 			}
 
-			console.error(
-				"Usage stats update error:",
-				response.status,
-				await response.text(),
-			);
+			console.error("Usage stats update error:", response.status, await response.text());
 			return false;
 		} catch (error) {
 			console.error("Update usage stats error:", error);
@@ -450,10 +426,7 @@ class ApiUsageTracker {
 		const braveMonthly = await this.getMonthlyUsage("brave");
 		const tavilyMonthly = await this.getMonthlyUsage("tavily");
 
-		const googleRemaining = Math.max(
-			0,
-			99 - (dailyStats.google_search_count || 0),
-		);
+		const googleRemaining = Math.max(0, 99 - (dailyStats.google_search_count || 0));
 		const braveRemaining = Math.max(0, 1000 - braveMonthly);
 		const tavilyRemaining = Math.max(0, 1000 - tavilyMonthly);
 
@@ -475,8 +448,7 @@ function analyzeQueryComplexity(query: string) {
 		hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
 		requiresReasoning: /왜|어떻게|분석|비교|설명|차이|장단점|평가/i.test(query),
 		requiresLatestInfo: /최신|현재|오늘|요즘|최근|실시간/i.test(query),
-		isSimpleFactCheck:
-			/무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
+		isSimpleFactCheck: /무엇|누구|언제|어디|몇/i.test(query) && query.split(" ").length < 8,
 		hasComplexTerms: /github|프로그래밍|개발|AI|기술|경제|정치/i.test(query),
 	};
 
@@ -509,33 +481,33 @@ function analyzeQueryComplexity(query: string) {
 
 // 질문의 주제를 분석하는 함수
 function analyzeQueryIntent(query: string) {
- const lowerQuery = query.toLowerCase();
+	const lowerQuery = query.toLowerCase();
 
- // 블로그 관련 패턴들
- const blogPatterns = [
-  /블로그/,
-  /blog/,
-  /포스트/,
-  /post/,
-  /글/,
-  /게시글/,
-  /최신글/,
-  /글목록/,
-  /글 목록/,
-  /어떤 글/,
-  /무슨 글/,
-  /쓴 글/,
-  /작성한/,
-  /article/,
-  /content/,
-  /콘텐츠/,
-  /주제/,
-  /topic/,
- ];
+	// 블로그 관련 패턴들
+	const blogPatterns = [
+		/블로그/,
+		/blog/,
+		/포스트/,
+		/post/,
+		/글/,
+		/게시글/,
+		/최신글/,
+		/글목록/,
+		/글 목록/,
+		/어떤 글/,
+		/무슨 글/,
+		/쓴 글/,
+		/작성한/,
+		/article/,
+		/content/,
+		/콘텐츠/,
+		/주제/,
+		/topic/,
+	];
 
- const isBlogRelated = blogPatterns.some((pattern) => pattern.test(lowerQuery));
+	const isBlogRelated = blogPatterns.some((pattern) => pattern.test(lowerQuery));
 
- // 검색이 필요한 패턴들
+	// 검색이 필요한 패턴들
 	const searchPatterns = [
 		/검색해/,
 		/검색해줘/,
@@ -590,14 +562,12 @@ function analyzeQueryIntent(query: string) {
 		/요금/,
 	];
 
-	const needsSearch = searchPatterns.some((pattern) =>
-		pattern.test(lowerQuery),
-	);
+	const needsSearch = searchPatterns.some((pattern) => pattern.test(lowerQuery));
 
 	return {
-	 needsSearch,
-	 isBlogRelated,
-	 originalQuery: query,
+		needsSearch,
+		isBlogRelated,
+		originalQuery: query,
 	};
 }
 
@@ -605,10 +575,7 @@ function analyzeQueryIntent(query: string) {
 function removeChinese(text: string): string {
 	let result = text;
 	result = result.replace(/集中/g, "집중");
-	result = result.replace(
-		/([\uAC00-\uD7AF\s]+)([\u4E00-\u9FFF]+)([\uAC00-\uD7AF\s]+)/g,
-		"$1 $3",
-	);
+	result = result.replace(/([\uAC00-\uD7AF\s]+)([\u4E00-\u9FFF]+)([\uAC00-\uD7AF\s]+)/g, "$1 $3");
 	return result.trim();
 }
 
@@ -637,16 +604,13 @@ async function searchBrave(query: string, apiKey: string) {
 	const BRAVE_API_URL = "https://api.search.brave.com/res/v1/web/search";
 
 	try {
-		const response = await fetch(
-			`${BRAVE_API_URL}?q=${encodeURIComponent(query)}&count=3&freshness=pw`,
-			{
-				headers: {
-					Accept: "application/json",
-					"Accept-Encoding": "gzip",
-					"X-Subscription-Token": apiKey,
-				},
+		const response = await fetch(`${BRAVE_API_URL}?q=${encodeURIComponent(query)}&count=3&freshness=pw`, {
+			headers: {
+				Accept: "application/json",
+				"Accept-Encoding": "gzip",
+				"X-Subscription-Token": apiKey,
 			},
-		);
+		});
 
 		if (!response.ok) {
 			console.error("Brave Search API error:", response.status);
@@ -656,13 +620,11 @@ async function searchBrave(query: string, apiKey: string) {
 		const data = await response.json();
 
 		if (data.web?.results) {
-			return data.web.results
-				.slice(0, 3)
-				.map((result: { title: string; description: string; url: string }) => ({
-					title: result.title,
-					description: result.description,
-					url: result.url,
-				}));
+			return data.web.results.slice(0, 3).map((result: { title: string; description: string; url: string }) => ({
+				title: result.title,
+				description: result.description,
+				url: result.url,
+			}));
 		}
 
 		return null;
@@ -677,14 +639,11 @@ async function searchGoogle(query: string, apiKey: string, cx: string) {
 	const GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1";
 
 	try {
-		const response = await fetch(
-			`${GOOGLE_API_URL}?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&num=3`,
-			{
-				headers: {
-					Accept: "application/json",
-				},
+		const response = await fetch(`${GOOGLE_API_URL}?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&num=3`, {
+			headers: {
+				Accept: "application/json",
 			},
-		);
+		});
 
 		if (!response.ok) {
 			console.error("Google Search API error:", response.status);
@@ -694,13 +653,11 @@ async function searchGoogle(query: string, apiKey: string, cx: string) {
 		const data = await response.json();
 
 		if (data.items) {
-			return data.items
-				.slice(0, 3)
-				.map((item: { title: string; snippet: string; link: string }) => ({
-					title: item.title,
-					description: item.snippet,
-					url: item.link,
-				}));
+			return data.items.slice(0, 3).map((item: { title: string; snippet: string; link: string }) => ({
+				title: item.title,
+				description: item.snippet,
+				url: item.link,
+			}));
 		}
 
 		return null;
@@ -737,13 +694,11 @@ async function searchTavily(query: string, apiKey: string) {
 		const data = await response.json();
 
 		if (data.results) {
-			return data.results
-				.slice(0, 3)
-				.map((result: { title: string; content: string; url: string }) => ({
-					title: result.title,
-					description: result.content,
-					url: result.url,
-				}));
+			return data.results.slice(0, 3).map((result: { title: string; content: string; url: string }) => ({
+				title: result.title,
+				description: result.content,
+				url: result.url,
+			}));
 		}
 
 		return null;
@@ -755,27 +710,27 @@ async function searchTavily(query: string, apiKey: string) {
 
 // 메타데이터 가져오기
 async function fetchBlogMetadata(): Promise<{ version: string; lastUpdated: string; totalPosts: number } | null> {
- try {
-  // waitUntil을 사용해 비동기로 처리
-  const response = await fetch("https://blog.tobimind.com/posts-metadata.json", {
-   signal: AbortSignal.timeout(3000), // 3초 타임아웃
-  });
-  
-  if (!response.ok) {
-   console.error("Failed to fetch metadata:", response.status);
-   return null;
-  }
-  
-  const data = await response.json();
-  return {
-   version: data.version || "unknown",
-   lastUpdated: data.lastUpdated || new Date().toISOString(),
-   totalPosts: data.totalPosts || 0,
-  };
- } catch (error) {
-  console.error("Error fetching metadata:", error);
-  return null;
- }
+	try {
+		// waitUntil을 사용해 비동기로 처리
+		const response = await fetch("https://blog.tobimind.com/posts-metadata.json", {
+			signal: AbortSignal.timeout(3000), // 3초 타임아웃
+		});
+
+		if (!response.ok) {
+			console.error("Failed to fetch metadata:", response.status);
+			return null;
+		}
+
+		const data = await response.json();
+		return {
+			version: data.version || "unknown",
+			lastUpdated: data.lastUpdated || new Date().toISOString(),
+			totalPosts: data.totalPosts || 0,
+		};
+	} catch (error) {
+		console.error("Error fetching metadata:", error);
+		return null;
+	}
 }
 
 // 프롬프트 향상 함수
@@ -789,9 +744,7 @@ function enhancePromptWithSearchResults(
 	const year = koreaTime.getUTCFullYear();
 	const month = koreaTime.getUTCMonth() + 1;
 	const day = koreaTime.getUTCDate();
-	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
-		koreaTime.getUTCDay()
-	];
+	const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][koreaTime.getUTCDay()];
 
 	let enhancedPrompt = "";
 
@@ -806,10 +759,7 @@ function enhancePromptWithSearchResults(
 		enhancedPrompt += "이전 대화:\n";
 		const recentHistory = conversationHistory.slice(-3);
 		for (const msg of recentHistory) {
-			const content =
-				msg.content.length > 100
-					? `${msg.content.substring(0, 100)}...`
-					: msg.content;
+			const content = msg.content.length > 100 ? `${msg.content.substring(0, 100)}...` : msg.content;
 			enhancedPrompt += `${msg.role === "user" ? "U" : "A"}: ${content}\n`;
 		}
 		enhancedPrompt += "\n";
@@ -832,16 +782,14 @@ function enhancePromptWithSearchResults(
 
 		enhancedPrompt += "### 필수 답변 규칙 ###\n";
 		enhancedPrompt += "1. 반드시 위의 검색 결과를 사용하여 답변하세요.\n";
-		enhancedPrompt +=
-			"2. 검색 결과가 당신의 기존 지식과 다르다면, 검색 결과가 최신 정보입니다.\n";
+		enhancedPrompt += "2. 검색 결과가 당신의 기존 지식과 다르다면, 검색 결과가 최신 정보입니다.\n";
 		enhancedPrompt += `3. "제 지식으로는" 또는 "2025년 1월 기준" 같은 표현을 사용하지 마세요.\n`;
 		enhancedPrompt += "4. 검색 결과를 바탕으로 현재 상황을 설명하세요.\n";
 		enhancedPrompt += "5. 답변에 출처를 포함할 때는 위의 URL을 참고하세요.\n\n";
 	} else {
 		enhancedPrompt += "### 답변 지침 ###\n";
 		enhancedPrompt += "- 친절하고 도움이 되는 답변을 제공하세요.\n";
-		enhancedPrompt +=
-			"- 정확한 정보를 제공하되, 불확실한 경우 그렇게 말씀드리세요.\n";
+		enhancedPrompt += "- 정확한 정보를 제공하되, 불확실한 경우 그렇게 말씀드리세요.\n";
 	}
 
 	return enhancedPrompt;
@@ -875,9 +823,7 @@ export default async (request: Request, context: Context) => {
 		const LANGFLOW_API_TOKEN = Deno.env.get("LANGFLOW_API_TOKEN");
 		const BRAVE_API_KEY = Deno.env.get("BRAVE_SEARCH_API_KEY");
 		const ASTRA_DB_REST_URL = Deno.env.get("ASTRA_DB_REST_URL");
-		const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get(
-			"ASTRA_DB_APPLICATION_TOKEN",
-		);
+		const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get("ASTRA_DB_APPLICATION_TOKEN");
 		const ASTRA_DB_KEYSPACE = Deno.env.get("ASTRA_DB_KEYSPACE");
 		const GOOGLE_API_KEY = Deno.env.get("GOOGLE_SEARCH_API_KEY");
 		const GOOGLE_CX = Deno.env.get("GOOGLE_SEARCH_CX");
@@ -885,9 +831,7 @@ export default async (request: Request, context: Context) => {
 
 		// 모든 환경 변수 목록 확인 (Google 관련만)
 		const allEnvVars = Object.keys(Deno.env.toObject());
-		const googleRelatedVars = allEnvVars.filter(
-			(key) => key.includes("GOOGLE") || key.includes("SEARCH"),
-		);
+		const googleRelatedVars = allEnvVars.filter((key) => key.includes("GOOGLE") || key.includes("SEARCH"));
 
 		if (!LANGFLOW_API_TOKEN) {
 			throw new Error("LANGFLOW_API_TOKEN is not configured");
@@ -913,82 +857,71 @@ export default async (request: Request, context: Context) => {
 		// 복잡도 및 의도 분석
 		const complexity = analyzeQueryComplexity(userQuery);
 		const intent = analyzeQueryIntent(userQuery);
-		
+
 		// 블로그 관련 질문일 때만 메타데이터 버전 체크
 		let metadataVersion = "unknown";
 		let metadataPromise = null;
-		
+
 		if (intent.isBlogRelated) {
-		 console.log("Blog-related query detected, checking metadata version...");
-		 metadataPromise = fetchBlogMetadata().then(metadata => {
-		  if (metadata) {
-		   metadataVersion = metadata.version;
-		   console.log(`Metadata version: ${metadataVersion}, Total posts: ${metadata.totalPosts}`);
-		  }
-		 });
+			console.info("Blog-related query detected, checking metadata version...");
+			metadataPromise = fetchBlogMetadata().then((metadata) => {
+				if (metadata) {
+					metadataVersion = metadata.version;
+					console.info(`Metadata version: ${metadataVersion}, Total posts: ${metadata.totalPosts}`);
+				}
+			});
 		}
-		
+
 		// Astra DB 캐시 초기화 및 확인 (웹 검색이 비활성화된 경우에만)
 		let cacheService: AstraDBCache | null = null;
 		let cachedResult = null;
-		
+
 		if (!enableWebSearch && ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
-		 try {
-		  // 블로그 관련 질문이고 메타데이터 프라미스가 있으면 기다림
-		  if (metadataPromise) {
-		   await Promise.race([
-		    metadataPromise,
-		    new Promise(resolve => setTimeout(resolve, 1000))
-		   ]);
-		  }
-		  
-		  cacheService = new AstraDBCache(
-		   ASTRA_DB_REST_URL,
-		   ASTRA_DB_APPLICATION_TOKEN,
-		   ASTRA_DB_KEYSPACE,
-		  );
-		  
-		  // 블로그 관련 질문일 때만 메타데이터 버전 설정
-		  if (intent.isBlogRelated && metadataVersion !== "unknown") {
-		   cacheService.setMetadataVersion(metadataVersion);
-		   console.log(`Cache key will include version: ${metadataVersion}`);
-		  }
-		  
-		  cachedResult = await cacheService.getCacheEntry(userQuery);
-		  if (cachedResult?.hit) {
-		   return new Response(cachedResult.answer, {
-		    status: 200,
-		    headers: {
-		     ...headers,
-		     "Content-Type": "application/json",
-		     "X-Cache": "HIT",
-		     "X-Response-Time": String(Date.now() - startTime),
-		     "X-Web-Search": "DISABLED",
-		    },
-		   });
-		  }
-		 } catch (cacheError) {
-		  console.error("Cache service error:", cacheError);
-		  // 캐시 오류는 무시하고 계속 진행
-		 }
+			try {
+				// 블로그 관련 질문이고 메타데이터 프라미스가 있으면 기다림
+				if (metadataPromise) {
+					await Promise.race([metadataPromise, new Promise((resolve) => setTimeout(resolve, 1000))]);
+				}
+
+				cacheService = new AstraDBCache(ASTRA_DB_REST_URL, ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_KEYSPACE);
+
+				// 블로그 관련 질문일 때만 메타데이터 버전 설정
+				if (intent.isBlogRelated && metadataVersion !== "unknown") {
+					cacheService.setMetadataVersion(metadataVersion);
+					console.info(`Cache key will include version: ${metadataVersion}`);
+				}
+
+				cachedResult = await cacheService.getCacheEntry(userQuery);
+				if (cachedResult?.hit) {
+					return new Response(cachedResult.answer, {
+						status: 200,
+						headers: {
+							...headers,
+							"Content-Type": "application/json",
+							"X-Cache": "HIT",
+							"X-Response-Time": String(Date.now() - startTime),
+							"X-Web-Search": "DISABLED",
+						},
+					});
+				}
+			} catch (cacheError) {
+				console.error("Cache service error:", cacheError);
+				// 캐시 오류는 무시하고 계속 진행
+			}
 		} else if (enableWebSearch) {
-		 console.log("Cache skipped - Web search enabled");
+			console.info("Cache skipped - Web search enabled");
 		}
 
 		// API 사용량 추적기 초기화
 		let usageTracker: ApiUsageTracker | null = null;
 		if (ASTRA_DB_REST_URL && ASTRA_DB_APPLICATION_TOKEN && ASTRA_DB_KEYSPACE) {
-			usageTracker = new ApiUsageTracker(
-				ASTRA_DB_REST_URL,
-				ASTRA_DB_APPLICATION_TOKEN,
-				ASTRA_DB_KEYSPACE,
-			);
+			usageTracker = new ApiUsageTracker(ASTRA_DB_REST_URL, ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_KEYSPACE);
 		}
 
 		let searchResults = null;
 		let enhancedQuery = userQuery;
 		let searchApiUsed: "google" | "brave" | "tavily" | null = null;
-		
+
 		// 검색이 필요한 경우 (웹 검색이 활성화된 경우에만)
 		if (enableWebSearch && intent.needsSearch) {
 			// API 사용 가능 여부 확인
@@ -1008,11 +941,7 @@ export default async (request: Request, context: Context) => {
 
 			// Google Search API 우선 사용
 			if (GOOGLE_API_KEY && GOOGLE_CX && apiAvailability.canUseGoogle) {
-				searchResults = await searchGoogle(
-					userQuery,
-					GOOGLE_API_KEY,
-					GOOGLE_CX,
-				);
+				searchResults = await searchGoogle(userQuery, GOOGLE_API_KEY, GOOGLE_CX);
 				if (searchResults) {
 					searchApiUsed = "google";
 				}
@@ -1101,12 +1030,7 @@ export default async (request: Request, context: Context) => {
 
 					if (sortedResults.length > 0) {
 						searchResults = sortedResults;
-						searchApiUsed =
-							braveResults && tavilyResults
-								? "brave+tavily"
-								: braveResults
-									? "brave"
-									: "tavily";
+						searchApiUsed = braveResults && tavilyResults ? "brave+tavily" : braveResults ? "brave" : "tavily";
 
 						// 결과 품질 로그
 						for (const result of searchResults) {
@@ -1128,26 +1052,20 @@ export default async (request: Request, context: Context) => {
 						const braveUpdated = await usageTracker.updateUsageStats("brave");
 						const tavilyUpdated = await usageTracker.updateUsageStats("tavily");
 					} else {
-						const updated = await usageTracker.updateUsageStats(
-							searchApiUsed as "google" | "brave" | "tavily",
-						);
+						const updated = await usageTracker.updateUsageStats(searchApiUsed as "google" | "brave" | "tavily");
 					}
 				} catch (error) {
 					console.error("Failed to update API usage:", error);
 				}
 			} else {
 			}
-			} else if (!enableWebSearch && intent.needsSearch) {
-			console.log("Web search skipped - Search disabled by user");
-			}
+		} else if (!enableWebSearch && intent.needsSearch) {
+			console.info("Web search skipped - Search disabled by user");
+		}
 
 		// 프롬프트 향상
 		if (searchResults || conversationHistory.length > 0) {
-			enhancedQuery = enhancePromptWithSearchResults(
-				userQuery,
-				searchResults,
-				conversationHistory,
-			);
+			enhancedQuery = enhancePromptWithSearchResults(userQuery, searchResults, conversationHistory);
 			requestBody.hasSearchResults = !!searchResults;
 		}
 
@@ -1158,12 +1076,7 @@ export default async (request: Request, context: Context) => {
 			requestBody.tweaks = {};
 		}
 		requestBody.tweaks.ChatOutput = {
-			max_tokens:
-				complexity.level === "simple"
-					? 800
-					: complexity.level === "moderate"
-						? 1500
-						: 2500,
+			max_tokens: complexity.level === "simple" ? 800 : complexity.level === "moderate" ? 1500 : 2500,
 		};
 
 		// Langflow API 호출 (스트리밍 지원)
@@ -1214,8 +1127,7 @@ export default async (request: Request, context: Context) => {
 				// 응답 텍스트 추출 (JSON에서 실제 응답 텍스트 찾기)
 				let responseText = JSON.stringify(parsedResponse);
 				if (parsedResponse.outputs?.[0]?.outputs?.[0]?.results?.message?.text) {
-					responseText =
-						parsedResponse.outputs[0].outputs[0].results.message.text;
+					responseText = parsedResponse.outputs[0].outputs[0].results.message.text;
 				} else if (parsedResponse.result) {
 					responseText = parsedResponse.result;
 				} else if (parsedResponse.message) {
@@ -1223,26 +1135,18 @@ export default async (request: Request, context: Context) => {
 				}
 
 				// 품질 평가 수행
-				const evaluation = evaluator.evaluateResponse(
-					responseText,
-					userQuery,
-					requestBody.hasSearchResults,
-				);
+				const evaluation = evaluator.evaluateResponse(responseText, userQuery, requestBody.hasSearchResults);
 
 				// 품질 기준을 통과한 경우에만 캐싱
 				if (evaluation.shouldCache) {
-					await cacheService.setCacheEntry(
-						userQuery,
-						JSON.stringify(parsedResponse),
-						{
-							complexity: complexity.score,
-							hasSearchResults: requestBody.hasSearchResults,
-							responseTime: Date.now() - startTime,
-							qualityScore: evaluation.totalScore,
-							confidence: evaluation.confidence,
-							qualityDetails: evaluation.scores, // 품질 평가 세부 점수 추가
-						},
-					);
+					await cacheService.setCacheEntry(userQuery, JSON.stringify(parsedResponse), {
+						complexity: complexity.score,
+						hasSearchResults: requestBody.hasSearchResults,
+						responseTime: Date.now() - startTime,
+						qualityScore: evaluation.totalScore,
+						confidence: evaluation.confidence,
+						qualityDetails: evaluation.scores, // 품질 평가 세부 점수 추가
+					});
 				} else {
 				}
 
@@ -1261,9 +1165,9 @@ export default async (request: Request, context: Context) => {
 				console.error("Cache evaluation/save error:", cacheError);
 				// 품질 평가 또는 캐시 저장 실패는 무시
 			}
-			} else if (enableWebSearch) {
-			console.log("Cache save skipped - Web search enabled");
-			}
+		} else if (enableWebSearch) {
+			console.info("Cache save skipped - Web search enabled");
+		}
 
 		// API 사용량 정보 추가
 		if (usageTracker && searchApiUsed) {
@@ -1296,14 +1200,14 @@ export default async (request: Request, context: Context) => {
 		return new Response(JSON.stringify(parsedResponse), {
 			status: 200,
 			headers: {
-			 ...headers,
-			 "Content-Type": "application/json",
-			 "X-Query-Complexity": complexity.level,
-			 "X-Response-Time": String(Date.now() - startTime),
-			 "X-Cache": enableWebSearch ? "BYPASS" : "MISS",
-			 "X-Web-Search": enableWebSearch ? "ENABLED" : "DISABLED",
-			 "X-Search-API-Used": searchApiUsed || "none",
-			 "X-Search-Results": searchResults ? "YES" : "NO",
+				...headers,
+				"Content-Type": "application/json",
+				"X-Query-Complexity": complexity.level,
+				"X-Response-Time": String(Date.now() - startTime),
+				"X-Cache": enableWebSearch ? "BYPASS" : "MISS",
+				"X-Web-Search": enableWebSearch ? "ENABLED" : "DISABLED",
+				"X-Search-API-Used": searchApiUsed || "none",
+				"X-Search-Results": searchResults ? "YES" : "NO",
 			},
 		});
 	} catch (error) {

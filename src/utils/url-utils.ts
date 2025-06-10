@@ -35,31 +35,31 @@ function joinUrl(...parts: string[]): string {
 }
 
 export function getPostUrlBySlug(slug: string): string {
-	return url(`/posts/${slug}`);
+	return url(`/posts/${slug}/`);
 }
 export function getTagUrl(tag: string): string {
 	if (!tag || !tag.trim()) {
-		return url("/archive/tag");
+		return url("/archive/tag/");
 	}
 
 	// Use encodeURIComponent for URL encoding
 	const encodedTag = encodeURIComponent(tag.trim());
-	const tagUrl = `/archive/tag/${encodedTag}`;
+	const tagUrl = `/archive/tag/${encodedTag}/`;
 	return url(tagUrl);
 }
 
 export function getCategoryUrl(category: string): string {
 	if (!category || !category.trim()) {
-		return url("/archive/category");
+		return url("/archive/category/");
 	}
 
 	const trimmedCategory = category.trim();
 	if (trimmedCategory === i18n(i18nKey.uncategorized)) {
-		return url("/archive/category/uncategorized");
+		return url("/archive/category/uncategorized/");
 	}
 
 	// Use encodeURIComponent for URL encoding
-	return url(`/archive/category/${encodeURIComponent(trimmedCategory)}`);
+	return url(`/archive/category/${encodeURIComponent(trimmedCategory)}/`);
 }
 
 export function getDir(path: string): string {

@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const postsDir = "./src/content/posts";
 const outputPath = "./public/posts-metadata.json";
@@ -16,11 +16,11 @@ function extractFrontmatter(content) {
 			const data = {};
 			let currentKey = null;
 			let currentArray = null;
-			
+
 			for (const line of lines) {
 				const trimmed = line.trim();
 				if (!trimmed) continue;
-				
+
 				// Handle array items
 				if (trimmed.startsWith("- ")) {
 					if (currentKey && currentArray) {
@@ -28,28 +28,28 @@ function extractFrontmatter(content) {
 					}
 					continue;
 				}
-				
+
 				// Handle key-value pairs
 				const colonIndex = line.indexOf(":");
 				if (colonIndex > 0) {
 					const key = line.substring(0, colonIndex).trim();
 					const value = line.substring(colonIndex + 1).trim();
-					
-					if (!value) {
-						// Start of array
-						currentKey = key;
-						currentArray = [];
-						data[key] = currentArray;
-					} else {
+
+					if (value) {
 						// Simple value
 						currentKey = null;
 						currentArray = null;
 						// Remove quotes if present
 						data[key] = value.replace(/^["']|["']$/g, "");
+					} else {
+						// Start of array
+						currentKey = key;
+						currentArray = [];
+						data[key] = currentArray;
 					}
 				}
 			}
-			
+
 			return data;
 		} catch (error) {
 			console.error("Error parsing frontmatter:", error);
@@ -62,27 +62,27 @@ function extractFrontmatter(content) {
 // Validate metadata
 function validateMetadata(metadata, filename) {
 	const errors = [];
-	
+
 	if (!metadata.title) {
 		errors.push(`Missing title in ${filename}`);
 	}
-	
+
 	if (!metadata.description) {
 		errors.push(`Missing description in ${filename}`);
 	}
-	
+
 	if (!metadata.category) {
 		errors.push(`Missing category in ${filename}`);
 	}
-	
+
 	if (!metadata.published) {
 		errors.push(`Missing published date in ${filename}`);
 	}
-	
+
 	if (metadata.image && !metadata.image.startsWith("/")) {
 		errors.push(`Image path should start with "/" in ${filename}`);
 	}
-	
+
 	// Check if image file exists
 	if (metadata.image) {
 		const imagePath = join("./public", metadata.image);
@@ -90,7 +90,7 @@ function validateMetadata(metadata, filename) {
 			console.warn(`Warning: Image file not found: ${imagePath} (referenced in ${filename})`);
 		}
 	}
-	
+
 	return errors;
 }
 
@@ -101,21 +101,21 @@ const files = readdirSync(postsDir);
 let totalPosts = 0;
 let draftPosts = 0;
 
-console.log("Building posts metadata...");
+console.info("Building posts metadata...");
 
 for (const file of files) {
 	if (file.endsWith(".md")) {
 		const filePath = join(postsDir, file);
 		const content = readFileSync(filePath, "utf-8");
 		const frontmatter = extractFrontmatter(content);
-		
+
 		if (frontmatter) {
 			if (frontmatter.draft === "true") {
 				draftPosts++;
-				console.log(`Skipping draft: ${file}`);
+				console.info(`Skipping draft: ${file}`);
 				continue;
 			}
-			
+
 			const slug = frontmatter.slug || file.replace(".md", "");
 			const postMetadata = {
 				title: frontmatter.title || "",
@@ -126,18 +126,18 @@ for (const file of files) {
 				published: frontmatter.published || null,
 				updated: frontmatter.updated || null,
 			};
-			
+
 			// Validate metadata
 			const errors = validateMetadata(postMetadata, file);
 			if (errors.length > 0) {
 				allErrors.push(...errors);
 			}
-			
+
 			metadata[slug] = postMetadata;
 			totalPosts++;
-			
+
 			// Log summary for each post
-			console.log(`✓ ${slug}: "${postMetadata.title}" (${postMetadata.tags.length} tags)`);
+			console.info(`✓ ${slug}: "${postMetadata.title}" (${postMetadata.tags.length} tags)`);
 		} else {
 			console.error(`Failed to parse frontmatter in ${file}`);
 		}
@@ -146,66 +146,65 @@ for (const file of files) {
 
 // Generate version hash based on all metadata
 const metadataString = JSON.stringify(metadata);
-const versionHash = createHash('sha256').update(metadataString).digest('hex').substring(0, 12);
+const versionHash = createHash("sha256").update(metadataString).digest("hex").substring(0, 12);
 
 // Add version info to metadata
 const metadataWithVersion = {
- version: versionHash,
- lastUpdated: new Date().toISOString(),
- totalPosts: totalPosts,
- posts: metadata
+	version: versionHash,
+	lastUpdated: new Date().toISOString(),
+	totalPosts: totalPosts,
+	posts: metadata,
 };
 
 // Write metadata to JSON file
 writeFileSync(outputPath, JSON.stringify(metadataWithVersion, null, 2));
 
 // Print summary
-console.log("\n=== Build Summary ===");
-console.log(`Total posts processed: ${totalPosts}`);
-console.log(`Draft posts skipped: ${draftPosts}`);
-console.log(`Metadata file: ${outputPath}`);
-console.log(`Version hash: ${versionHash}`);
+console.info("\n=== Build Summary ===");
+console.info(`Total posts processed: ${totalPosts}`);
+console.info(`Draft posts skipped: ${draftPosts}`);
+console.info(`Metadata file: ${outputPath}`);
+console.info(`Version hash: ${versionHash}`);
 
 // Print validation errors if any
 if (allErrors.length > 0) {
-	console.log("\n=== Validation Errors ===");
+	console.info("\n=== Validation Errors ===");
 	for (const error of allErrors) {
-	 console.error(`❌ ${error}`);
+		console.error(`❌ ${error}`);
 	}
 } else {
-	console.log("\n✅ All posts validated successfully!");
+	console.info("\n✅ All posts validated successfully!");
 }
 
 // Print post statistics
-console.log("\n=== Post Statistics ===");
+console.info("\n=== Post Statistics ===");
 const categories = {};
 const allTags = {};
 
 for (const post of Object.values(metadata)) {
- // Count categories
- if (post.category) {
-  categories[post.category] = (categories[post.category] || 0) + 1;
- }
- 
- // Count tags
- if (Array.isArray(post.tags)) {
-  for (const tag of post.tags) {
-   allTags[tag] = (allTags[tag] || 0) + 1;
-  }
- }
+	// Count categories
+	if (post.category) {
+		categories[post.category] = (categories[post.category] || 0) + 1;
+	}
+
+	// Count tags
+	if (Array.isArray(post.tags)) {
+		for (const tag of post.tags) {
+			allTags[tag] = (allTags[tag] || 0) + 1;
+		}
+	}
 }
 
-console.log("\nCategories:");
-const sortedCategories = Object.entries(categories)
- .sort((a, b) => b[1] - a[1]);
+console.info("\nCategories:");
+const sortedCategories = Object.entries(categories).sort((a, b) => b[1] - a[1]);
 for (const [cat, count] of sortedCategories) {
- console.log(`  - ${cat}: ${count} posts`);
+	console.info(`  - ${cat}: ${count} posts`);
 }
 
-console.log("\nTop Tags:");
+console.info("\nTop Tags:");
 const topTags = Object.entries(allTags)
- .sort((a, b) => b[1] - a[1])
- .slice(0, 10);
+	.sort((a, b) => b[1] - a[1])
+	.slice(0, 10);
 for (const [tag, count] of topTags) {
- console.log(`  - ${tag}: ${count} posts`);
+	console.info(`  - ${tag}: ${count} posts`);
 }

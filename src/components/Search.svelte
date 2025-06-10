@@ -11,15 +11,22 @@ let keywordMobile = "";
 let result: SearchResult[] = [];
 let isSearching = false;
 let pagefindLoaded = false;
+let searchPanelRef: HTMLElement | null = null;
 
-// Debounce utility
+// Debounce utility with requestAnimationFrame
 function debounce<T extends (...args: unknown[]) => unknown>(func: T, wait: number): (...args: Parameters<T>) => void {
 	let timeout: ReturnType<typeof setTimeout> | null = null;
+	let rafId: number | null = null;
 	return (...args: Parameters<T>) => {
 		if (timeout) {
 			clearTimeout(timeout);
 		}
-		timeout = setTimeout(() => func(...args), wait);
+		if (rafId) {
+			cancelAnimationFrame(rafId);
+		}
+		timeout = setTimeout(() => {
+			rafId = requestAnimationFrame(() => func(...args));
+		}, wait);
 	};
 }
 
@@ -41,21 +48,29 @@ const fakeResult: SearchResult[] = [
 ];
 
 const togglePanel = () => {
-	const panel = document.getElementById("search-panel");
-	panel?.classList.toggle("float-panel-closed");
+	if (!searchPanelRef) {
+		searchPanelRef = document.getElementById("search-panel");
+	}
+	requestAnimationFrame(() => {
+		searchPanelRef?.classList.toggle("float-panel-closed");
+	});
 };
 
 const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
-	const panel = document.getElementById("search-panel");
-	if (!panel || !isDesktop) {
+	if (!searchPanelRef) {
+		searchPanelRef = document.getElementById("search-panel");
+	}
+	if (!searchPanelRef || !isDesktop) {
 		return;
 	}
 
-	if (show) {
-		panel.classList.remove("float-panel-closed");
-	} else {
-		panel.classList.add("float-panel-closed");
-	}
+	requestAnimationFrame(() => {
+		if (show) {
+			searchPanelRef?.classList.remove("float-panel-closed");
+		} else {
+			searchPanelRef?.classList.add("float-panel-closed");
+		}
+	});
 };
 
 const searchImpl = async (keyword: string, isDesktop: boolean): Promise<void> => {
@@ -70,10 +85,23 @@ const searchImpl = async (keyword: string, isDesktop: boolean): Promise<void> =>
 	try {
 		let searchResults: SearchResult[] = [];
 
-		if (import.meta.env.PROD && pagefindLoaded) {
-			const response = await window.pagefind.search(keyword);
-			searchResults = await Promise.all(response.results.map((item) => item.data()));
+		// Production에서는 pagefind가 동적으로 로드되므로 window.pagefind를 다시 확인
+		if (import.meta.env.PROD) {
+			// pagefind가 아직 로드되지 않았으면 다시 확인
+			if (!pagefindLoaded && window.pagefind) {
+				pagefindLoaded = true;
+			}
+
+			if (pagefindLoaded && window.pagefind) {
+				const response = await window.pagefind.search(keyword);
+				searchResults = await Promise.all(response.results.map((item) => item.data()));
+			} else {
+				// Production이지만 pagefind가 아직 로드되지 않은 경우
+				console.warn("Pagefind not loaded yet");
+				searchResults = [];
+			}
 		} else {
+			// Development 환경
 			searchResults = fakeResult;
 		}
 
@@ -93,9 +121,24 @@ const searchDesktop = debounce((keyword: string) => searchImpl(keyword, true), 3
 const searchMobile = debounce((keyword: string) => searchImpl(keyword, false), 300);
 
 onMount(async () => {
-	pagefindLoaded = typeof window !== "undefined" && "pagefind" in window;
+	// Production 환경에서 pagefind 로드 대기
+	if (import.meta.env.PROD) {
+		// pagefind가 로드될 때까지 대기 (최대 5초)
+		let checkCount = 0;
+		const checkPagefind = setInterval(() => {
+			if (window.pagefind || checkCount > 50) {
+				clearInterval(checkPagefind);
+				pagefindLoaded = !!window.pagefind;
+				if (pagefindLoaded) {
+					console.info("Pagefind loaded successfully");
+				}
+			}
+			checkCount++;
+		}, 100);
+	}
 
 	if (import.meta.env.DEV) {
+		console.info("Development mode - using fake results");
 	}
 });
 
@@ -118,7 +161,7 @@ $: if (!keywordMobile) {
 <div id="search-bar" class="hidden lg:flex transition-all items-center h-11 mr-2 rounded-lg
       bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
       dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
-">
+" style="will-change: background-color;">
     <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
     <input placeholder="{i18n(I18nKey.search)}" bind:value={keywordDesktop} on:focus={() => searchImpl(keywordDesktop, true)}
            class="transition-all pl-10 text-sm bg-transparent outline-0
@@ -134,7 +177,7 @@ $: if (!keywordMobile) {
 
 <!-- search panel -->
 <div id="search-panel" class="float-panel float-panel-closed search-panel absolute md:w-[30rem]
-top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
+top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2" style="will-change: transform, opacity;">
 
     <!-- search bar inside panel for phone/tablet -->
     <div id="search-bar-inside" class="flex relative lg:hidden transition-all items-center h-11 rounded-xl

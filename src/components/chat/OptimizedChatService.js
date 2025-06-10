@@ -11,7 +11,7 @@ export class OptimizedChatService {
 	async sendMessage(payload) {
 		// enableWebSearch에 따른 URL 결정
 		const apiUrl = payload.enableWebSearch ? this.EDGE_API_URL : this.LANGFLOW_API_URL;
-		console.log(`🌐 Web Search: ${payload.enableWebSearch ? "ON" : "OFF"}, Using: ${apiUrl}`);
+		console.info(`🌐 Web Search: ${payload.enableWebSearch ? "ON" : "OFF"}, Using: ${apiUrl}`);
 
 		const response = await fetch(apiUrl, {
 			method: "POST",
