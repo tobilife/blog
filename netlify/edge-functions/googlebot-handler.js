@@ -72,53 +72,35 @@ export default async (request, context) => {
 	
 	console.info(`Google bot detected: ${userAgent.substring(0, 100)} for ${url.pathname}`);
 	
+	// For Google bots, always return a fallback response instead of trying context.next()
+	// This prevents 502 errors and timeouts
 	try {
-		// Get the original response with a timeout
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-		
-		const response = await Promise.race([
-			context.next(),
-			new Promise((_, reject) => 
-				setTimeout(() => reject(new Error("Timeout")), 5000)
-			)
-		]);
-		
-		clearTimeout(timeoutId);
-		
-		// If we got a response, enhance it
-		if (response && response.status < 500) {
-			const headers = new Headers(response.headers);
-			headers.set("x-robots-tag", "index, follow");
-			headers.set("cache-control", "public, max-age=3600");
-			
-			return new Response(response.body, {
-				status: response.status,
-				statusText: response.statusText,
-				headers: headers
-			});
-		}
-		
-		// If server error, return a dynamic fallback
-		if (!response || response.status >= 500) {
-			console.error(`Server error for Googlebot: ${response ? response.status : 'No response'}`);
-			const [metadata, siteConfig] = await Promise.all([
-				getPostsMetadata(),
-				getSiteConfig()
-			]);
-			return createDynamicFallbackResponse(url, metadata, siteConfig);
-		}
-		
-		return response;
-		
-	} catch (error) {
-		console.error(`Error handling Googlebot: ${error.message}`);
-		// Return a dynamic fallback on any error
 		const [metadata, siteConfig] = await Promise.all([
 			getPostsMetadata(),
 			getSiteConfig()
 		]);
+		
 		return createDynamicFallbackResponse(url, metadata, siteConfig);
+	} catch (error) {
+		console.error(`Error creating response for Googlebot: ${error.message}`);
+		// Return a minimal response on error
+		return new Response(`<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>토비라이프 블로그</title>
+<meta name="description" content="기술 블로그">
+</head>
+<body>
+<h1>토비라이프</h1>
+</body>
+</html>`, {
+			status: 200,
+			headers: {
+				"content-type": "text/html; charset=UTF-8",
+				"x-robots-tag": "index, follow"
+			}
+		});
 	}
 };
 
@@ -218,7 +200,11 @@ ${JSON.stringify(structuredData, null, 2)}
 <body>
 <h1>${title}</h1>
 <p>${description}</p>
-${isPostPage && postData ? `<p>카테고리: ${postData.category || 'AI'}</p>` : ''}
+${isPostPage && postData ? `
+<p>카테고리: ${postData.category || 'AI'}</p>
+<p>태그: ${postData.tags ? postData.tags.join(", ") : ''}</p>
+<p>작성일: ${postData.published || ''}</p>
+` : ''}
 </body>
 </html>`;
 	
@@ -227,7 +213,8 @@ ${isPostPage && postData ? `<p>카테고리: ${postData.category || 'AI'}</p>` :
 		headers: {
 			"content-type": "text/html; charset=UTF-8",
 			"x-robots-tag": "index, follow",
-			"cache-control": "public, max-age=300"
+			"cache-control": "public, max-age=300",
+			"x-served-by": "googlebot-handler"
 		}
 	});
 }
