@@ -2,7 +2,8 @@
 
 export function initMobilePageTransitions() {
 	// Check if it's a mobile device
-	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+	const isMobile =
+		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
 		window.innerWidth < 768;
 
 	if (!isMobile || !window.swup) {
@@ -15,7 +16,7 @@ export function initMobilePageTransitions() {
 
 	// Override Swup default options for mobile
 	window.swup.options.animationDuration = MOBILE_ANIMATION_DURATION;
-	
+
 	// Cache mobile-specific elements
 	const mobileCache = {
 		navbar: null,
@@ -35,7 +36,7 @@ export function initMobilePageTransitions() {
 
 		// Disable heavy animations on mobile
 		document.documentElement.classList.add("mobile-transitioning");
-		
+
 		// Immediately hide non-essential elements
 		if (mobileCache.footer) {
 			mobileCache.footer.style.opacity = "0";
@@ -59,7 +60,7 @@ export function initMobilePageTransitions() {
 		// Quick cleanup
 		requestAnimationFrame(() => {
 			document.documentElement.classList.remove("mobile-transitioning");
-			
+
 			// Restore footer
 			if (mobileCache.footer) {
 				mobileCache.footer.style.opacity = "";
@@ -68,23 +69,31 @@ export function initMobilePageTransitions() {
 	});
 
 	// Mobile-specific link handling
-	document.addEventListener("touchstart", (e) => {
-		const link = e.target.closest("a[href]");
-		if (!link || link.origin !== window.location.origin) {
-			return;
-		}
+	document.addEventListener(
+		"touchstart",
+		(e) => {
+			const link = e.target.closest("a[href]");
+			if (!link || link.origin !== window.location.origin) {
+				return;
+			}
 
-		// Provide immediate feedback
-		link.classList.add("touch-active");
-	}, { passive: true });
+			// Provide immediate feedback
+			link.classList.add("touch-active");
+		},
+		{ passive: true },
+	);
 
-	document.addEventListener("touchend", () => {
-		// Remove all touch states
-		const activeLinks = document.querySelectorAll(".touch-active");
-		for (const link of activeLinks) {
-			link.classList.remove("touch-active");
-		}
-	}, { passive: true });
+	document.addEventListener(
+		"touchend",
+		() => {
+			// Remove all touch states
+			const activeLinks = document.querySelectorAll(".touch-active");
+			for (const link of activeLinks) {
+				link.classList.remove("touch-active");
+			}
+		},
+		{ passive: true },
+	);
 
 	// Add mobile-specific styles
 	const style = document.createElement("style");

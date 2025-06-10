@@ -5,26 +5,26 @@
 const isDev = import.meta.env.DEV || import.meta.env.MODE === "development";
 
 export const logger = {
-	info: (...args: any[]) => {
+	info: (...args: unknown[]) => {
 		if (isDev) {
 			console.info(...args);
 		}
 	},
-	log: (...args: any[]) => {
+	log: (...args: unknown[]) => {
 		if (isDev) {
-			console.log(...args);
+			console.info(...args);
 		}
 	},
-	warn: (...args: any[]) => {
+	warn: (...args: unknown[]) => {
 		if (isDev) {
 			console.warn(...args);
 		}
 	},
-	error: (...args: any[]) => {
+	error: (...args: unknown[]) => {
 		// 에러는 항상 출력
 		console.error(...args);
 	},
-	debug: (...args: any[]) => {
+	debug: (...args: unknown[]) => {
 		if (isDev) {
 			console.debug(...args);
 		}
@@ -41,25 +41,25 @@ export function setupGlobalLogger() {
 			debug: console.debug,
 		};
 
-		console.info = (...args: any[]) => {
+		console.info = (...args: unknown[]) => {
 			if (isDev) {
 				originalConsole.info(...args);
 			}
 		};
 
-		console.log = (...args: any[]) => {
+		console.log = (...args: unknown[]) => {
 			if (isDev) {
 				originalConsole.log(...args);
 			}
 		};
 
-		console.warn = (...args: any[]) => {
+		console.warn = (...args: unknown[]) => {
 			if (isDev) {
 				originalConsole.warn(...args);
 			}
 		};
 
-		console.debug = (...args: any[]) => {
+		console.debug = (...args: unknown[]) => {
 			if (isDev) {
 				originalConsole.debug(...args);
 			}
