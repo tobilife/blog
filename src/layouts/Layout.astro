@@ -634,6 +634,7 @@ import 'photoswipe/style.css';
 import { initSwupOptimizations } from '../scripts/optimized/swup-bundle-v2.js';
 import { initMobilePageTransitions } from '../scripts/mobile-page-transition.js';
 import { optimizeMobilePostCards } from '../scripts/mobile-performance.js';
+import { optimizePostTransitions } from '../scripts/post-transition-optimize.js';
 
 let lightbox: PhotoSwipeLightbox | null = null;
 const pswp = import('photoswipe');
@@ -689,12 +690,14 @@ if (window.swup) {
   initSwupOptimizations(); // Use optimized Swup bundle
   initMobilePageTransitions(); // Initialize mobile-specific optimizations
   optimizeMobilePostCards(); // Optimize mobile post card performance
+  optimizePostTransitions(); // Optimize post page transitions
 } else {
   document.addEventListener('swup:enable', () => {
     setupPhotoSwipe();
     initSwupOptimizations(); // Use optimized Swup bundle
     initMobilePageTransitions(); // Initialize mobile-specific optimizations
     optimizeMobilePostCards(); // Optimize mobile post card performance
+    optimizePostTransitions(); // Optimize post page transitions
   });
 }
 </script>
