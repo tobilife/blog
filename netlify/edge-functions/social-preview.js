@@ -79,9 +79,16 @@ export default async (request, context) => {
 
 	// API 경로는 건너뛰기
 	if (url.pathname.startsWith("/api/")) {
-		return context.next();
+	 return context.next();
 	}
-
+	
+	// Google 봇은 googlebot-handler에서 처리
+	if (userAgent.toLowerCase().includes("googlebot") || 
+	    userAgent.toLowerCase().includes("google-inspectiontool") ||
+	    userAgent.toLowerCase().includes("google-structured-data-testing-tool")) {
+	 return context.next();
+	}
+	
 	// 카카오톡 인앱 브라우저는 제외
 	if (userAgent.toLowerCase().includes("inapp")) {
 		return context.next();
