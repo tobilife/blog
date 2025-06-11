@@ -48,11 +48,11 @@
 	}
 
 	/* Optimize image containers */
-	.card-base img,
-	.card-base picture {
-		/* Prevent layout shifts */
-		aspect-ratio: 16 / 9;
-		object-fit: cover;
+	.card-base > a > div img,
+	.card-base > a > div picture {
+	 /* Prevent layout shifts - but allow natural aspect ratio on mobile */
+	 /* aspect-ratio: 16 / 9; - removed to show full image */
+	 /* object-fit: cover; - removed to allow object-contain from ImageWrapper */
 	}
 
 	/* Simplify complex width calculations */
@@ -62,11 +62,18 @@
 	}
 
 	/* Optimize touch targets */
-	.card-base a {
-		/* Ensure minimum touch target size */
-		min-height: 44px;
-		/* Remove complex transitions */
-		transition: opacity 150ms ease-out !important;
+	.card-base > a,
+	.card-base > div > a {
+	 /* Ensure minimum touch target size for main card links */
+	 min-height: 44px;
+	 /* Remove complex transitions */
+	 transition: opacity 150ms ease-out !important;
+	}
+	
+	/* Exclude PostMeta links from min-height */
+	.card-base .link,
+	.card-base .link-lg {
+	 min-height: auto !important;
 	}
 
 	/* Reduce animation complexity */
