@@ -53,6 +53,12 @@
 	 /* aspect-ratio: 16 / 9; - removed to show full image */
 	 /* object-fit: cover; - removed to allow object-contain from ImageWrapper */
 	}
+	
+	/* iOS specific image fixes */
+	.card-base img {
+	 object-fit: contain !important;
+	 -webkit-object-fit: contain !important;
+	}
 
 	/* Simplify complex width calculations */
 	.w-\[calc\(100\%_-_52px_-_12px\)\],
@@ -115,4 +121,20 @@
 		opacity: 0.8;
 		transition: opacity 50ms !important;
 	}
-}
+	}
+	
+	/* Additional iOS Safari specific fixes */
+	@media screen and (-webkit-min-device-pixel-ratio:0) {
+	/* iOS Safari specific styles */
+	.card-base img,
+	#post-cover img {
+	 -webkit-object-fit: contain !important;
+	 object-fit: contain !important;
+	}
+	
+	/* Reset any aspect ratio for images on iOS */
+	.card-base > a > div,
+	#post-cover {
+	 aspect-ratio: auto !important;
+	}
+	}

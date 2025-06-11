@@ -441,6 +441,92 @@ pnpm format     # Biome 포맷팅
 pnpm type-check # TypeScript 타입 체크
 ```
 
+## 🎯 최근 주요 개선사항 (2025년 1월)
+
+### 1. 모바일 UI/UX 최적화
+
+#### PostMeta 컴포넌트 개선
+- **문제**: 모바일에서 a 태그의 높이가 과도하게 높아 보이는 문제
+- **해결**: 
+  - `link-lg` 클래스를 `link md:link-lg`로 변경하여 모바일에서는 작은 패딩 적용
+  - 긴 태그/카테고리 텍스트 처리: `max-w-[150px] truncate` 적용
+  - 태그 컨테이너를 `flex-wrap`으로 변경하여 여러 줄 지원
+
+#### 이미지 표시 개선
+- **PostCard 이미지**:
+  - 모바일에서 `max-h-[20vh]` 제한 제거
+  - `object-contain`으로 변경하여 전체 이미지 표시
+- **Post Cover 이미지**:
+  - 모바일에서 16:9 비율 제거
+  - `object-fit: contain` 적용으로 전체 이미지 표시
+
+#### CSS 미디어 쿼리 개선
+- **실제 모바일 기기 감지**:
+  - `@media (max-width: 768px)` → `@media (max-width: 768px), (hover: none) and (pointer: coarse)`
+  - 터치 기기 특성을 정확히 감지하여 스타일 적용
+
+### 2. 성능 최적화
+
+#### mobile-performance.css
+- **터치 타겟 최적화**: 
+  - PostCard의 메인 링크만 44px 최소 높이 유지
+  - PostMeta 링크는 `min-height: auto`로 예외 처리
+- **애니메이션 최적화**:
+  - 모바일에서 불필요한 호버 효과 제거
+  - 터치 응답성 향상을 위한 transition 단순화
+
+#### post-critical.css
+- **FOUC(Flash of Unstyled Content) 방지**:
+  - 중요 스타일을 인라인으로 로드
+  - 모바일 전용 스타일도 critical CSS에 포함
+
+### 3. Swup 페이지 전환 개선
+
+#### swup-bundle-v2.js
+- **preloadPage 오류 수정**:
+  - `window.swup.preloadPage` 메서드 존재 여부 체크 강화
+  - 메서드가 없을 경우 graceful fallback 처리
+
+### 4. 빌드 및 배포 최적화
+
+#### 빌드 프로세스
+- **스크립트 실행 순서**:
+  1. `build-knowledge-base.js`
+  2. `build-posts-metadata.js`
+  3. `build-site-config.js`
+  4. Astro 빌드
+  5. Pagefind 인덱스 생성
+  6. `postbuild.js`
+  7. `generate-sw-manifest.js`
+
+#### Vite 설정
+- **청크 분할 최적화**:
+  - `swup-core`: swup 메인 번들
+  - `swup-plugins`: swup 플러그인들 분리
+- **빌드 타겟**: ES2018 (더 넓은 브라우저 지원)
+
+### 5. 접근성 및 사용성 개선
+
+#### 링크 접근성
+- 모든 링크에 적절한 `aria-label` 추가
+- 터치 타겟 크기 최적화 (최소 44px 유지)
+
+#### 반응형 디자인
+- 데스크톱: 기존 디자인 유지
+- 태블릿/모바일: 최적화된 레이아웃과 간격
+
+## 📊 성능 지표 개선
+
+### Core Web Vitals
+- **LCP (Largest Contentful Paint)**: 이미지 로딩 최적화로 개선
+- **CLS (Cumulative Layout Shift)**: aspect-ratio 제거로 모바일에서 개선
+- **INP (Interaction to Next Paint)**: 터치 응답성 최적화로 개선
+
+### 모바일 특화 최적화
+- 불필요한 애니메이션 제거
+- CSS will-change 속성 최소화
+- 터치 이벤트 최적화 (`touch-action: manipulation`)
+
 ## 📈 모니터링 및 분석
 
 ### 성능 모니터링
@@ -481,6 +567,32 @@ pnpm type-check # TypeScript 타입 체크
 - main 브랜치 자동 배포
 - Pull Request 미리보기 배포
 - 롤백 지원
+
+### Git 커밋 컨벤션
+- `fix:` 버그 수정
+- `feat:` 새로운 기능
+- `docs:` 문서 업데이트
+- `style:` 코드 스타일 변경
+- `refactor:` 코드 리팩토링
+- `perf:` 성능 개선
+- `chore:` 빌드 프로세스 등 기타 변경
+
+## 🐛 알려진 이슈 및 해결 방법
+
+### 1. 모바일 CSS 적용 문제
+- **증상**: 데스크톱에서 모바일 크기로 브라우저를 줄였을 때는 정상 작동하나, 실제 모바일 기기에서는 스타일이 적용되지 않음
+- **원인**: 모바일 기기의 `hover: none`과 `pointer: coarse` 특성을 고려하지 않음
+- **해결**: 미디어 쿼리에 `(hover: none) and (pointer: coarse)` 조건 추가
+
+### 2. Swup 페이지 전환 오류
+- **증상**: `window.swup.preloadPage is not a function` 콘솔 오류
+- **원인**: Swup 초기화 타이밍 문제
+- **해결**: preloadPage 메서드 존재 여부 체크 후 실행
+
+### 3. 이미지 FOUC 현상
+- **증상**: 페이지 로드 시 이미지가 원본 크기로 보였다가 스타일이 적용됨
+- **원인**: CSS 로드 순서 문제
+- **해결**: critical CSS에 모바일 이미지 스타일 포함
 
 ## Astra DB
 - USE chat_data;
