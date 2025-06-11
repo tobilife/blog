@@ -373,19 +373,23 @@ class OptimizedPreloader {
 		this.pending.add(url);
 
 		const prefetch = () => {
-			if (window.swup && typeof window.swup.preloadPage === "function") {
-				window.swup
-					.preloadPage(url)
-					.then(() => {
-						this.cache.set(url, Date.now());
-						this.pending.delete(url);
-						// Clean old cache entries
-						this.cleanCache();
-					})
-					.catch(() => {
-						this.pending.delete(url);
-					});
-			}
+		 // Check if swup is fully initialized with preloadPage method
+		 if (window.swup && window.swup.preloadPage && typeof window.swup.preloadPage === "function") {
+		  window.swup
+		   .preloadPage(url)
+		   .then(() => {
+		    this.cache.set(url, Date.now());
+		    this.pending.delete(url);
+		    // Clean old cache entries
+		    this.cleanCache();
+		   })
+		   .catch(() => {
+		    this.pending.delete(url);
+		   });
+		 } else {
+		  // If preloadPage is not available, remove from pending
+		  this.pending.delete(url);
+		 }
 		};
 
 		if (priority === "high" || state.isMobile) {

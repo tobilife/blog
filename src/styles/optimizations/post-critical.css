@@ -59,9 +59,25 @@
  }
 }
 
+/* Critical styles from mobile-performance.css to prevent FOUC */
+@media (max-width: 768px) {
+ /* Optimize image containers - but with correct styles */
+ .card-base > a > div img,
+ .card-base > a > div picture {
+  /* Allow natural aspect ratio on mobile */
+  /* No forced aspect-ratio or object-fit */
+ }
+ 
+ /* Exclude PostMeta links from min-height */
+ .card-base .link,
+ .card-base .link-lg {
+  min-height: auto !important;
+ }
+}
+
 /* Stabilize metadata section */
 .post-metadata {
-	min-height: 2rem;
+ min-height: 2rem;
 }
 
 /* Prevent button layout shift */
