@@ -82,6 +82,12 @@ export default async (request, context) => {
 	 return context.next();
 	}
 	
+	// 사이트맵, RSS, robots.txt 파일은 건너뛰기
+	if (url.pathname.includes("sitemap") && url.pathname.endsWith(".xml") ||
+	    url.pathname === "/rss.xml" ||
+	    url.pathname === "/robots.txt") {
+	 return context.next();
+	}
 	// Google 봇은 googlebot-handler에서 처리
 	if (userAgent.toLowerCase().includes("googlebot") || 
 	    userAgent.toLowerCase().includes("google-inspectiontool") ||

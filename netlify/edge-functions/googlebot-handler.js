@@ -59,6 +59,13 @@ export default async (request, context) => {
 	const userAgent = request.headers.get("user-agent") || "";
 	const lowerUserAgent = userAgent.toLowerCase();
 	
+	// 사이트맵, RSS, robots.txt 파일은 건너뛰기
+	if (url.pathname.includes("sitemap") && url.pathname.endsWith(".xml") ||
+	    url.pathname === "/rss.xml" ||
+	    url.pathname === "/robots.txt") {
+	 return context.next();
+	}
+	
 	// Only handle Googlebot and Google Inspection Tool
 	const isGoogleBot = lowerUserAgent.includes("googlebot") || 
 	                   lowerUserAgent.includes("google-inspectiontool") ||
@@ -67,7 +74,7 @@ export default async (request, context) => {
 	
 	// Pass through if not Google bot
 	if (!isGoogleBot) {
-		return context.next();
+	 return context.next();
 	}
 	
 	console.info(`Google bot detected: ${userAgent.substring(0, 100)} for ${url.pathname}`);
