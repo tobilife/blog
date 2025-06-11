@@ -1,8 +1,7 @@
 /* Mobile Performance Optimizations */
 
-/* Disable will-change on mobile devices */
-@media (max-width: 768px) {
-	/* Remove will-change properties that cause memory overhead */
+/* Apply styles for actual mobile devices and small screens */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
 	* {
 		will-change: auto !important;
 	}
