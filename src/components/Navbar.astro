@@ -59,50 +59,54 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
 </div>
 
 <script>
-// Cache DOM references
-let navMenuPanel: HTMLElement | null = null;
-let displaySettingPanel: HTMLElement | null = null;
-
 function switchTheme() {
-    requestAnimationFrame(() => {
-        if (localStorage.theme === 'dark') {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
-        }
-    });
+ requestAnimationFrame(() => {
+  if (localStorage.theme === 'dark') {
+   document.documentElement.classList.remove('dark');
+   localStorage.theme = 'light';
+  } else {
+   document.documentElement.classList.add('dark');
+   localStorage.theme = 'dark';
+  }
+ });
 }
 
-function togglePanel(panel: HTMLElement | null) {
-    if (!panel) return;
+function togglePanel(panelId: string) {
+ const panel = document.getElementById(panelId);
+ if (!panel) {
+  // Retry after a short delay if panel not found (in case Svelte component is still loading)
+  setTimeout(() => {
+   const retryPanel = document.getElementById(panelId);
+   if (retryPanel) {
     requestAnimationFrame(() => {
-        panel.classList.toggle("float-panel-closed");
+     retryPanel.classList.toggle("float-panel-closed");
     });
+   }
+  }, 100);
+  return;
+ }
+ requestAnimationFrame(() => {
+  panel.classList.toggle("float-panel-closed");
+ });
 }
 
 function loadButtonScript() {
-    // Cache panel references
-    navMenuPanel = document.getElementById("nav-menu-panel");
-    displaySettingPanel = document.getElementById("display-setting");
+ // Use event delegation on navbar for better performance
+ const navbar = document.getElementById("navbar");
+ if (!navbar) return;
 
-    // Use event delegation on navbar for better performance
-    const navbar = document.getElementById("navbar");
-    if (!navbar) return;
+ navbar.addEventListener("click", (e: MouseEvent) => {
+  const target = (e.target as HTMLElement)?.closest("button");
+  if (!target) return;
 
-    navbar.addEventListener("click", (e: MouseEvent) => {
-        const target = (e.target as HTMLElement)?.closest("button");
-        if (!target) return;
-
-        if (target.id === "scheme-switch") {
-            switchTheme();
-        } else if (target.id === "display-settings-switch") {
-            togglePanel(displaySettingPanel);
-        } else if (target.id === "nav-menu-switch") {
-            togglePanel(navMenuPanel);
-        }
-    }, { passive: true });
+  if (target.id === "scheme-switch") {
+   switchTheme();
+  } else if (target.id === "display-settings-switch") {
+   togglePanel("display-setting");
+  } else if (target.id === "nav-menu-switch") {
+   togglePanel("nav-menu-panel");
+  }
+ }, { passive: true });
 }
 
 loadButtonScript();

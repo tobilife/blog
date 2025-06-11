@@ -1,7 +1,6 @@
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
-import swup from "@swup/astro";
 import icon from "astro-icon";
 import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -36,20 +35,6 @@ export default defineConfig({
 	integrations: [
 		tailwind({
 			nesting: true,
-		}),
-		swup({
-			theme: false,
-			animationClass: "transition-swup-", // see https://swup.js.org/options/#animationselector
-			// the default value `transition-` cause transition delay
-			// when the Tailwind class `transition-all` is used
-			containers: ["main", "#toc"],
-			smoothScrolling: true,
-			cache: true,
-			preload: false, // 자동 프리로드 비활성화
-			accessibility: true,
-			updateHead: true,
-			updateBodyClass: false,
-			globalInstance: true,
 		}),
 		icon({
 			include: {
@@ -160,20 +145,12 @@ export default defineConfig({
 	vite: {
 		optimizeDeps: {
 			// Pre-bundle heavy dependencies
-			include: ["swup", "@swup/head-plugin", "@swup/scroll-plugin", "@swup/a11y-plugin"],
+			include: ["photoswipe", "overlayscrollbars"],
 		},
 		build: {
 			// Optimize for mobile
 			target: "es2018",
-			// Split chunks for better caching
 			rollupOptions: {
-				external: (id) => {
-					// Exclude dynamic imports from bundle
-					if (id.includes("swup-loader")) {
-						return true;
-					}
-					return false;
-				},
 				onwarn(warning, warn) {
 					if (
 						warning.message.includes("is dynamically imported by") &&
@@ -182,13 +159,6 @@ export default defineConfig({
 						return;
 					}
 					warn(warning);
-				},
-				output: {
-					// Manual chunk splitting for Swup
-					manualChunks: {
-						"swup-core": ["swup"],
-						"swup-plugins": ["@swup/head-plugin", "@swup/scroll-plugin", "@swup/a11y-plugin"],
-					},
 				},
 			},
 		},
