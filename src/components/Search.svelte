@@ -140,6 +140,15 @@ onMount(async () => {
 	if (import.meta.env.DEV) {
 		console.info("Development mode - using fake results");
 	}
+
+	// Fix search panel position on mobile
+	if (window.innerWidth < 768) {
+		const panel = document.getElementById("search-panel");
+		if (panel) {
+			// Move panel to body to avoid transform issues
+			document.body.appendChild(panel);
+		}
+	}
 });
 
 // Watch for keyword changes and trigger debounced search
@@ -176,8 +185,8 @@ $: if (!keywordMobile) {
 </button>
 
 <!-- search panel -->
-<div id="search-panel" class="float-panel float-panel-closed search-panel absolute md:w-[30rem]
-top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2" style="will-change: transform, opacity;">
+<div id="search-panel" class="float-panel float-panel-closed search-panel fixed md:absolute md:w-[30rem]
+left-2 right-2 md:left-[unset] md:right-4 top-20 shadow-2xl rounded-2xl p-2" style="will-change: transform, opacity;">
 
     <!-- search bar inside panel for phone/tablet -->
     <div id="search-bar-inside" class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
@@ -186,8 +195,8 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2" style="will-ch
   ">
         <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
         <input placeholder="Search" bind:value={keywordMobile}
-               class="pl-10 absolute inset-0 text-base bg-transparent outline-0
-               focus:w-60 text-black/50 dark:text-white/50"
+               class="pl-10 pr-3 absolute inset-0 text-base bg-transparent outline-0 w-full
+               text-black/50 dark:text-white/50"
         >
     </div>
 
