@@ -1,5 +1,5 @@
 import type { LIGHT_DARK_MODE } from "@/types/config";
-import { AUTO_MODE, DARK_MODE, DEFAULT_THEME, LIGHT_MODE } from "@constants/constants.ts";
+import { DARK_MODE } from "@constants/constants.ts";
 
 export function getDefaultHue(): number {
 	const fallback = "250";
@@ -23,7 +23,7 @@ export function setHue(hue: number): void {
 	});
 }
 
-export function applyThemeToDocument(theme: LIGHT_DARK_MODE) {
+export function applyThemeToDocument(_theme: LIGHT_DARK_MODE) {
  requestAnimationFrame(() => {
   // Always apply dark mode
   document.documentElement.classList.add("dark");
