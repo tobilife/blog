@@ -2,11 +2,12 @@
   import { onMount } from 'svelte';
   
   let isExpanded = false;
-  let isMinimized = false;
+  let isMinimized = true;  // 기본값을 true로 변경 (처음엔 최소화)
   
   function toggleExpanded() {
     if (isMinimized) {
       isMinimized = false;
+      isExpanded = true;  // 버튼 클릭 시 바로 확장
     } else {
       isExpanded = !isExpanded;
     }
@@ -18,15 +19,16 @@
   }
   
   function openInNewWindow() {
-    const width = 800;
-    const height = 750;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
+    // 화면 전체 크기로 설정
+    const width = window.screen.width;
+    const height = window.screen.height;
+    const left = 0;
+    const top = 0;
     
     window.open(
-      'https://my-awesome-chatbot-three-theta.vercel.app',
+      'https://my-awesome-chatbot-git-main-tobilifes-projects.vercel.app/',
       'TobiLifeChatbot',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`
+      `width=${width},height=${height},left=${left},top=${top},resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`
     );
   }
   
