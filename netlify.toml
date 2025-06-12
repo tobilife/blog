@@ -10,8 +10,12 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-
 # Edge Functions 설정
+# Sitemap handler - MUST run first for sitemap files
+[[edge_functions]]
+  path = "/sitemap*.xml"
+  function = "sitemap-handler"
+
 # Social media preview handler - MUST run first
 [[edge_functions]]
   path = "/*"
