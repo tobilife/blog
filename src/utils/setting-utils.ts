@@ -24,10 +24,10 @@ export function setHue(hue: number): void {
 }
 
 export function applyThemeToDocument(_theme: LIGHT_DARK_MODE) {
- requestAnimationFrame(() => {
-  // Always apply dark mode
-  document.documentElement.classList.add("dark");
- });
+	requestAnimationFrame(() => {
+		// Always apply dark mode
+		document.documentElement.classList.add("dark");
+	});
 }
 
 export function setTheme(theme: LIGHT_DARK_MODE): void {
@@ -36,5 +36,5 @@ export function setTheme(theme: LIGHT_DARK_MODE): void {
 }
 
 export function getStoredTheme(): LIGHT_DARK_MODE {
- return DARK_MODE;
+	return DARK_MODE;
 }
