@@ -55,7 +55,7 @@
       {/if}
       <iframe
         bind:this={iframeElement}
-        src="https://my-awesome-chatbot-three-theta.vercel.app/"
+        src="https://my-awesome-chatbot-three-theta.vercel.app"
         title="토비라이프 챗봇"
         style="border: none; opacity: {iframeLoaded ? 1 : 0};"
         on:load={handleIframeLoad}
