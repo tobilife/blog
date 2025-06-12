@@ -26,7 +26,7 @@
     window.open(
       'https://my-awesome-chatbot-three-theta.vercel.app',
       'TobiLifeChatbot',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`
     );
   }
   
