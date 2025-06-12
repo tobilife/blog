@@ -16,15 +16,16 @@
   path = "/sitemap*.xml"
   function = "sitemap-handler"
 
-# Social media preview handler - MUST run first
+# Googlebot handler - runs before social preview to avoid conflicts
+[[edge_functions]]
+  path = "/*"
+  function = "googlebot-handler"
+
+# Social media preview handler
 [[edge_functions]]
   path = "/*"
   function = "social-preview"
 
-# Googlebot handler runs after social preview handler
-[[edge_functions]]
-  path = "/*"
-  function = "googlebot-handler"
 
 [[edge_functions]]
   path = "/health"
