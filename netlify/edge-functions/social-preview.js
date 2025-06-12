@@ -25,9 +25,8 @@ async function getPostsMetadata() {
 			console.info("Posts metadata loaded successfully");
 			console.info(`Total posts loaded: ${Object.keys(metadataCache).length}`);
 			return metadataCache;
-		} else {
-			console.error(`Failed to fetch metadata: HTTP ${response.status}`);
 		}
+		console.error(`Failed to fetch metadata: HTTP ${response.status}`);
 	} catch (error) {
 		console.error("Failed to fetch posts metadata:", error.message);
 	}
@@ -79,22 +78,37 @@ export default async (request, context) => {
 
 	// API 경로는 건너뛰기
 	if (url.pathname.startsWith("/api/")) {
-	 return context.next();
+		return context.next();
 	}
-	
+
+	// JSON, 정적 리소스 파일들은 건너뛰기
+	if (
+		url.pathname.endsWith(".json") ||
+		url.pathname.endsWith(".js") ||
+		url.pathname.endsWith(".css") ||
+		url.pathname.includes("/images/") ||
+		url.pathname.includes("/fonts/")
+	) {
+		return context.next();
+	}
+
 	// 사이트맵, RSS, robots.txt 파일은 건너뛰기
-	if (url.pathname.includes("sitemap") && url.pathname.endsWith(".xml") ||
-	    url.pathname === "/rss.xml" ||
-	    url.pathname === "/robots.txt") {
-	 return context.next();
+	if (
+		(url.pathname.includes("sitemap") && url.pathname.endsWith(".xml")) ||
+		url.pathname === "/rss.xml" ||
+		url.pathname === "/robots.txt"
+	) {
+		return context.next();
 	}
 	// Google 봇은 googlebot-handler에서 처리
-	if (userAgent.toLowerCase().includes("googlebot") || 
-	    userAgent.toLowerCase().includes("google-inspectiontool") ||
-	    userAgent.toLowerCase().includes("google-structured-data-testing-tool")) {
-	 return context.next();
+	if (
+		userAgent.toLowerCase().includes("googlebot") ||
+		userAgent.toLowerCase().includes("google-inspectiontool") ||
+		userAgent.toLowerCase().includes("google-structured-data-testing-tool")
+	) {
+		return context.next();
 	}
-	
+
 	// 카카오톡 인앱 브라우저는 제외
 	if (userAgent.toLowerCase().includes("inapp")) {
 		return context.next();
@@ -157,19 +171,7 @@ export default async (request, context) => {
 	let html;
 
 	if (userAgent.toLowerCase().includes("kakaotalk")) {
-		html =
-			"<!DOCTYPE html>" +
-			"<html>" +
-			"<head>" +
-			'<meta charset="UTF-8">' +
-			`<title>${title}</title>` +
-			`<meta property="og:title" content="${title}">` +
-			`<meta property="og:description" content="${description}">` +
-			`<meta property="og:image" content="${imageUrl}">` +
-			`<meta property="og:url" content="${url.href}">` +
-			"</head>" +
-			"<body></body>" +
-			"</html>";
+		html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><meta property="og:title" content="${title}"><meta property="og:description" content="${description}"><meta property="og:image" content="${imageUrl}"><meta property="og:url" content="${url.href}"></head><body></body></html>`;
 	} else {
 		// 다른 크롤러들을 위한 상세 HTML
 		html = `<!DOCTYPE html>
