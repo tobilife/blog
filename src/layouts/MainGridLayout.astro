@@ -1,7 +1,7 @@
 ---
 import Footer from "@components/Footer.astro";
 import Navbar from "@components/Navbar.astro";
-import SimpleChatbot from "@components/chat/SimpleChatbot.svelte";
+import FloatingChatbot from "@components/chat/FloatingChatbot.svelte";
 import BackToTop from "@components/control/BackToTop.astro";
 import SideBar from "@components/widget/SideBar.astro";
 import type { MarkdownHeading } from "astro";
@@ -111,6 +111,6 @@ const mainPanelTop = siteConfig.banner.enable ? `calc(${BANNER_HEIGHT}vh - ${MAI
 </div>
 
 <!-- Chat Widget -->
-<SimpleChatbot client:only="svelte" />
+<FloatingChatbot client:only="svelte" />
 
 </Layout>
