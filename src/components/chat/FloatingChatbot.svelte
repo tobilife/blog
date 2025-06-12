@@ -373,6 +373,7 @@
   }
   
   /* 모바일 반응형 */
+  /* 모바일 반응형 */
   @media (max-width: 640px) {
     .floating-container.expanded {
       width: calc(100vw - 40px);
@@ -384,6 +385,22 @@
     .chat-panel {
       width: 100%;
       height: 100%;
+    }
+    
+    /* 모바일에서 chat-content 패딩 조정 */
+    .chat-content {
+      padding: 16px;
+    }
+    
+    /* 모바일에서 버튼 크기 조정 */
+    .primary-button {
+      width: 100%;
+      padding: 12px 20px;
+    }
+    
+    /* 모바일에서 feature 패딩 조정 */
+    .feature {
+      padding: 10px 12px;
     }
   }
 </style>
