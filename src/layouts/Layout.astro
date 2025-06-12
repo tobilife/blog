@@ -19,8 +19,6 @@ import { defaultFavicons } from "../constants/icon";
 import type { Favicon } from "../types/config";
 import { url, pathsEqual } from "../utils/url-utils";
 import "katex/dist/katex.css";
-import "../styles/optimizations/mobile-performance.css";
-
 interface Props {
 	title?: string;
 	banner?: string;
@@ -316,6 +314,7 @@ import 'overlayscrollbars/overlayscrollbars.css';
 import { OverlayScrollbars } from 'overlayscrollbars';
 import { getHue, getStoredTheme, setHue, setTheme } from '../utils/setting-utils';
 import { siteConfig } from '../config';
+import { BANNER_HEIGHT_EXTEND } from '../constants/constants';
 
 const bannerEnabled = !!document.getElementById('banner-wrapper');
 

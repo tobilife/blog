@@ -32,25 +32,23 @@
         @apply bg-transparent text-[var(--primary)]
     }
     
-    /* Fix for mobile search panel positioning */
+    /* Mobile search panel positioning */
     @media (max-width: 767px) {
-        #search-panel.search-panel {
+        .search-panel-mobile {
             position: fixed !important;
             left: 8px !important;
             right: 8px !important;
             width: auto !important;
-            max-width: calc(100vw - 16px) !important;
+            transform: none !important;
+            z-index: 9999 !important;
+        }
+        }
+    
+    @media (min-width: 768px) {
+        .search-panel-mobile {
+            /* Desktop positioning - keep default */
         }
     }
-    
-        @media (min-width: 768px) {
-            .search-panel-mobile {
-                left: unset;
-                right: unset;
-                width: unset;
-                transform: unset;
-            }
-        }
 
     .btn-card {
         @apply transition flex items-center justify-center bg-[var(--card-bg)] hover:bg-[var(--btn-card-bg-hover)]

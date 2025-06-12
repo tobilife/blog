@@ -141,13 +141,37 @@ onMount(async () => {
 		console.info("Development mode - using fake results");
 	}
 
-	// Fix search panel position on mobile
-	if (window.innerWidth < 768) {
-		const panel = document.getElementById("search-panel");
-		if (panel) {
-			// Move panel to body to avoid transform issues
-			document.body.appendChild(panel);
-		}
+	// Fix for mobile search panel positioning
+	// Move search panel to body to escape transform context
+	if (typeof window !== "undefined") {
+		const moveSearchPanel = () => {
+			const panel = document.getElementById("search-panel");
+			if (panel && window.innerWidth < 768) {
+				// Store original parent for potential cleanup
+				const originalParent = panel.parentElement;
+
+				// Move to body
+				document.body.appendChild(panel);
+
+				// Ensure panel is properly positioned
+				panel.style.position = "fixed";
+				panel.style.left = "8px";
+				panel.style.right = "8px";
+				panel.style.width = "auto";
+				panel.style.maxWidth = "calc(100vw - 16px)";
+				panel.style.transform = "none";
+				panel.style.zIndex = "9999";
+			}
+		};
+
+		// Run immediately and on resize
+		moveSearchPanel();
+		window.addEventListener("resize", moveSearchPanel);
+
+		// Cleanup on unmount
+		return () => {
+			window.removeEventListener("resize", moveSearchPanel);
+		};
 	}
 });
 
@@ -185,8 +209,8 @@ $: if (!keywordMobile) {
 </button>
 
 <!-- search panel -->
-<div id="search-panel" class="float-panel float-panel-closed search-panel fixed md:absolute md:w-[30rem]
-left-2 right-2 md:left-[unset] md:right-4 top-20 shadow-2xl rounded-2xl p-2" style="will-change: transform, opacity;">
+<div id="search-panel" class="float-panel float-panel-closed search-panel search-panel-mobile fixed md:absolute md:w-[30rem]
+top-20 md:left-[unset] md:right-4 shadow-2xl rounded-2xl p-2" style="will-change: transform, opacity;">
 
     <!-- search bar inside panel for phone/tablet -->
     <div id="search-bar-inside" class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
