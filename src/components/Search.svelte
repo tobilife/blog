@@ -197,7 +197,7 @@ $: if (!keywordMobile) {
 " style="will-change: background-color;">
     <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
     <input placeholder="{i18n(I18nKey.search)}" bind:value={keywordDesktop} on:focus={() => searchImpl(keywordDesktop, true)}
-           class="transition-all pl-10 text-sm bg-transparent outline-0
+           class="transition-all pl-10 text-base md:text-sm bg-transparent outline-0
          h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
     >
 </div>
@@ -243,6 +243,21 @@ top-20 md:left-[unset] md:right-4 shadow-2xl rounded-2xl p-2" style="will-change
   input:focus {
     outline: 0;
   }
+  
+  /* Prevent iOS zoom on input focus */
+  @supports (-webkit-touch-callout: none) {
+    input {
+      font-size: 16px !important;
+    }
+  }
+  
+  /* Alternative method for iOS */
+  @media screen and (-webkit-min-device-pixel-ratio: 0) {
+    input:focus {
+      font-size: 16px !important;
+    }
+  }
+  
   .search-panel {
     max-height: calc(100vh - 100px);
     overflow-y: auto;
