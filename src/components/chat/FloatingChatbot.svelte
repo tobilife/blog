@@ -19,16 +19,10 @@
   }
   
   function openInNewWindow() {
-    // 화면 전체 크기로 설정
-    const width = window.screen.width;
-    const height = window.screen.height;
-    const left = 0;
-    const top = 0;
-    
+    // 일반 새 창으로 열기 (팝업이 아닌 브라우저 기본 새 창)
     window.open(
       'https://my-awesome-chatbot-git-main-tobilifes-projects.vercel.app/',
-      'TobiLifeChatbot',
-      `width=${width},height=${height},left=${left},top=${top},resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`
+      '_blank'
     );
   }
   
