@@ -9,6 +9,11 @@ let windowWidth = 0;
 let isIframeLoading = true;
 let iframeError = false;
 let previousScrollY = 0;
+let hasLoadedOnce = false; // iframe이 한번이라도 로드되었는지 추적
+let showLoadingMinTime = false; // 3초 로딩 표시 여부
+
+// 테스트용 플래그 - false로 설정하면 iframe이 로드되지 않음
+const checkFlag = true;
 
 // 모바일 감지 함수
 function checkMobile() {
@@ -66,17 +71,30 @@ function handleMessage(event) {
 	}
 }
 
-// 챗봇 토글 함수
 function toggleChat() {
 	chatVisible = !chatVisible;
-	isIframeLoading = true;
-	iframeError = false;
-
 	if (chatVisible) {
-		// 모바일에서 스크롤 잠금
+		// 챗봇을 열 때
+		if (hasLoadedOnce) {
+			// 이미 한번 로드된 경우 즉시 iframe 표시
+			isIframeLoading = false;
+		} else {
+			// 최초 로딩시 3초 동안 로딩 인디케이터 표시
+			isIframeLoading = true;
+			showLoadingMinTime = true;
+
+			// 3초 후 로딩 인디케이터 숨기기
+			setTimeout(() => {
+				showLoadingMinTime = false;
+				if (checkFlag) {
+					isIframeLoading = false;
+				}
+			}, 3000);
+		}
+
+		iframeError = false;
 		lockBodyScroll();
 
-		// iframe이 로드된 후 상태 전송
 		if (iframeRef) {
 			setTimeout(() => {
 				iframeRef.contentWindow.postMessage(
@@ -89,7 +107,6 @@ function toggleChat() {
 			}, 100);
 		}
 	} else {
-		// 스크롤 잠금 해제
 		unlockBodyScroll();
 	}
 }
@@ -143,29 +160,32 @@ onDestroy(() => {
 <div class="chat-container">
 	<!-- 챗봇 버튼 -->
 	<button 
-		class="chat-button"
-		class:active={chatVisible}
-		on:click={toggleChat}
-		aria-label="AI 챗봇 열기"
+	 class="chat-button"
+	 class:active={chatVisible}
+	 on:click={toggleChat}
+	 aria-label="AI 챗봇 열기"
 	>
-		{#if !chatVisible}
-			<span class="notification-badge">AI</span>
-		{/if}
-		
-		{#if chatVisible}
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			</svg>
-		{:else}
-			<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20Z" fill="currentColor"/>
-				<path d="M12 6C12.55 6 13 6.45 13 7V11.25L16.5 13.5C16.89 13.76 17 14.26 16.74 14.65C16.48 15.04 15.98 15.15 15.59 14.89L11.59 12.39C11.41 12.27 11.3 12.08 11.3 11.88V7C11.3 6.45 11.75 6 12 6Z" fill="currentColor"/>
-				<circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-				<path d="M8 14C8 14 9.5 16 12 16C14.5 16 16 14 16 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-			</svg>
-		{/if}
-	</button>
-	
+	 {#if !chatVisible}
+	  <!-- 챗봇 아이콘 이미지 -->
+	  <img 
+	   src="/images/chat-bot-icon.webp" 
+	   alt="AI 챗봇" 
+	   class="chat-icon"
+	  />
+	 {/if}
+	 
+	 {#if chatVisible}
+	  <!-- 닫기 아이콘 -->
+	  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+	   <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+	  </svg>
+	 {/if}
+	 </button>
+	 <!-- 챗봇 텍스트 배지 -->
+	 {#if !chatVisible}
+	  <div class="chat-badge">토비라이프 AI</div>
+	 {/if}
+	 
 	<!-- 챗봇 iframe 창 -->
 	{#if chatVisible}
 		<div 
@@ -188,42 +208,88 @@ onDestroy(() => {
 			
 			<!-- iframe -->
 			{#if isIframeLoading}
-			 <div class="loading-container">
-			  <div class="loading-wrapper">
-			   <!-- 로고 애니메이션 -->
-			   <div class="logo-animation">
-			    <div class="logo-circle">
-			     <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-			      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			      <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			      <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			 <!-- ====================================================== -->
+			 <!-- START: 새로운 우주 테마 로딩 인디케이터 -->
+			 <!-- ====================================================== -->
+			 <div class="loading-container-space">
+			  <!-- 별 배경 (3개 레이어로 시차 효과) -->
+			  <div class="stars"></div>
+			  <div class="stars2"></div>
+			  <div class="stars3"></div>
+			
+			  <div class="loading-wrapper-space">
+			   <!-- 달 -->
+			   <div class="moon">
+			    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+			     <path d="M50 0 C22.3858 0 0 22.3858 0 50 C0 77.6142 22.3858 100 50 100 C77.6142 100 100 77.6142 100 50 C100 22.3858 77.6142 0 50 0 Z M50 10 C72.0914 10 90 27.9086 90 50 C90 72.0914 72.0914 90 50 90 C35.938 90 23.733 81.3323 17.5 70 C25.525 70.143 45 65 55 45 C65 25 60 15 60 15 C57.0699 11.9614 53.6677 10 50 10 Z" fill="#F7F3E3"/>
+			    </svg>
+			   </div>
+			   
+			   <!-- 달려가는 캐릭터와 경로 -->
+			   <div class="rocket-container">
+			    <!-- 귀여운 우주선과 토비 캐릭터 -->
+			    <div class="rocket-tobi">
+			     <!-- 우주선 본체 -->
+			     <svg id="rocket" width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+			      <!-- 우주선 몸통 -->
+			      <ellipse cx="75" cy="75" rx="45" ry="55" fill="#FF6B6B"/>
+			      <ellipse cx="75" cy="75" rx="40" ry="50" fill="#FF8C8C"/>
+			      
+			      <!-- 우주선 창문 -->
+			      <circle cx="75" cy="65" r="25" fill="#4ECDC4" opacity="0.8"/>
+			      <circle cx="75" cy="65" r="22" fill="#6FFFE9" opacity="0.6"/>
+			      <ellipse cx="70" cy="60" rx="12" ry="15" fill="rgba(255,255,255,0.4)"/>
+			      
+			      <!-- 토비 캐릭터 (창문 안에) -->
+			      <g id="tobi-character">
+			       <!-- 머리 -->
+			       <circle cx="75" cy="60" r="15" fill="#FFE5B4"/>
+			       <!-- 눈 -->
+			       <circle cx="70" cy="58" r="2" fill="#333"/>
+			       <circle cx="80" cy="58" r="2" fill="#333"/>
+			       <circle cx="71" cy="57" r="1" fill="#FFF"/>
+			       <circle cx="81" cy="57" r="1" fill="#FFF"/>
+			       <!-- 볼 -->
+			       <circle cx="65" cy="63" r="3" fill="#FFB3BA" opacity="0.7"/>
+			       <circle cx="85" cy="63" r="3" fill="#FFB3BA" opacity="0.7"/>
+			       <!-- 미소 -->
+			       <path d="M70 65 Q 75 68, 80 65" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+			       <!-- 헬멧 -->
+			       <path d="M60 55 Q 75 45, 90 55" stroke="none" fill="#FFD93D" opacity="0.3"/>
+			      </g>
+			      
+			      <!-- 우주선 날개 -->
+			      <ellipse cx="30" cy="85" rx="20" ry="35" fill="#FF6B6B" transform="rotate(-30 30 85)"/>
+			      <ellipse cx="120" cy="85" rx="20" ry="35" fill="#FF6B6B" transform="rotate(30 120 85)"/>
+			      
+			      <!-- 우주선 하단 -->
+			      <ellipse cx="75" cy="120" rx="25" ry="15" fill="#FFD93D"/>
+			      <ellipse cx="75" cy="125" rx="20" ry="10" fill="#FFED4B"/>
+			      
+			      <!-- 불꽃 효과 -->
+			      <g id="flames">
+			       <ellipse cx="75" cy="135" rx="15" ry="25" fill="#FFD93D" opacity="0.8"/>
+			       <ellipse cx="75" cy="140" rx="10" ry="20" fill="#FF6B6B" opacity="0.6"/>
+			       <ellipse cx="75" cy="145" rx="5" ry="15" fill="#FFF" opacity="0.4"/>
+			      </g>
+			      
+			      <!-- TOBI 가방/표시 -->
+			      <rect x="85" y="70" width="25" height="18" rx="6" fill="#764ba2"/>
+			      <text x="97" y="82" font-family="Arial Black" font-size="8" font-weight="bold" text-anchor="middle" fill="#FFF">TOBI</text>
 			     </svg>
 			    </div>
-			    <div class="pulse-ring"></div>
-			    <div class="pulse-ring delay"></div>
 			   </div>
 			   
-			   <!-- 텍스트 -->
-			   <div class="loading-text-container">
-			    <h3 class="loading-title">토비라이프 AI 챗봇</h3>
-			    <p class="loading-subtitle">지능형 블로그 어시스턴트를 준비하고 있습니다...</p>
-			   </div>
-			   
-			   <!-- 프로그레스 바 -->
-			   <div class="progress-bar-container">
-			    <div class="progress-bar">
-			     <div class="progress-fill"></div>
-			    </div>
-			   </div>
-			   
-			   <!-- 로딩 도트 -->
-			   <div class="loading-dots">
-			    <span class="dot"></span>
-			    <span class="dot"></span>
-			    <span class="dot"></span>
+			   <!-- 로딩 텍스트 -->
+			   <div class="loading-text-container-space">
+			    <h3 class="loading-title-space">우주선을 타고 달로 향하고 있어요 🚀</h3>
+			    <p class="loading-subtitle-space">토비라이프 AI를 초기화중입니다..</p>
 			   </div>
 			  </div>
 			 </div>
+			 <!-- ====================================================== -->
+			 <!-- END: 새로운 우주 테마 로딩 인디케이터 -->
+			 <!-- ====================================================== -->
 			{/if}
 			
 			{#if iframeError}
@@ -256,7 +322,15 @@ onDestroy(() => {
 			 class:loading={isIframeLoading}
 			 allow="clipboard-write; accelerometer; camera; geolocation; gyroscope; microphone; payment"
 			 sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-popups-to-escape-sandbox allow-top-navigation"
-			 on:load={() => { isIframeLoading = false; }}
+			 on:load={() => { 
+			  if (checkFlag) { 
+			   hasLoadedOnce = true; // iframe이 한번 로드되었음을 기록
+			   if (!showLoadingMinTime) {
+			    // 3초 로딩 시간이 지난 경우에만 로딩 화면 숨김
+			    isIframeLoading = false; 
+			   }
+			  } 
+			 }}
 			 on:error={() => { isIframeLoading = false; iframeError = true; }}
 			/>
 		</div>
@@ -273,64 +347,117 @@ onDestroy(() => {
 	
 	/* 챗봇 버튼 스타일 */
 	.chat-button {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		width: 60px;
-		height: 60px;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		color: white;
-		border: none;
-		border-radius: 50%;
-		cursor: pointer;
-		box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-		transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-		position: relative;
-		overflow: hidden;
-	}
+	 display: flex;
+	 justify-content: center;
+	 align-items: center;
+	 width: 63px;
+	 height: 63px;
+	 background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #F97316 100%);
+	 color: white;
+	 border: 3px solid rgba(255, 255, 255, 0.8);
+	 border-radius: 50%;
+	 cursor: pointer;
+	 transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+	 position: relative;
+	 overflow: hidden;
+	 animation: bounceAttention 3s ease-in-out infinite;
+	 padding: 0;
+	 }
 	
+	/* Glow effect base */
 	.chat-button::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 50%;
-		transform: scale(0);
-		transition: transform 0.4s ease;
+	 content: none;
 	}
 	
-	.chat-button:hover {
-		transform: translateY(-3px) scale(1.05);
-		box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+	/* Subtle pulse animation */
+	@keyframes subtlePulse {
+	 0%, 100% {
+	  transform: scale(1);
+	  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.25), 0 2px 8px rgba(0, 0, 0, 0.08);
+	 }
+	 50% {
+	  transform: scale(1.03);
+	  box-shadow: 0 6px 28px rgba(124, 58, 237, 0.3), 0 3px 12px rgba(0, 0, 0, 0.1);
+	 }
 	}
 	
-	.chat-button:hover::before {
-		transform: scale(1);
+	/* 눈에 띄는 바운스 애니메이션 */
+	@keyframes bounceAttention {
+	 0%, 100% {
+	  transform: scale(1) translateY(0);
+	 }
+	 25% {
+	  transform: scale(1.1) translateY(-5px);
+	 }
+	 75% {
+	  transform: scale(0.95) translateY(2px);
+	 }
 	}
-	
+		
 	.chat-button:active {
-		transform: translateY(-1px) scale(1.02);
-		box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+	 transform: translateY(-1px) scale(1.02);
 	}
 	
 	.chat-button.active {
-		background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-		animation: pulse 2s infinite;
+	 background: linear-gradient(135deg, #DC2626 0%, #F87171 50%, #FCA5A5 100%);
+	 animation: activePulse 2s ease-in-out infinite;
 	}
 	
-	@keyframes pulse {
-		0% {
-			box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
-		}
-		50% {
-			box-shadow: 0 4px 30px rgba(240, 147, 251, 0.6);
-		}
-		100% {
-			box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
-		}
+	/* Active pulse animation */
+	@keyframes activePulse {
+	 0%, 100% {
+	  box-shadow: 0 4px 24px rgba(220, 38, 38, 0.25), 0 2px 8px rgba(0, 0, 0, 0.08);
+	 }
+	 50% {
+	  box-shadow: 0 6px 32px rgba(220, 38, 38, 0.35), 0 3px 12px rgba(0, 0, 0, 0.12);
+	 }
+	}
+	
+	/* Chat icon styling */
+	.chat-icon {
+	 width: calc(100% - 6px);
+	 height: calc(100% - 6px);
+	 object-fit: cover;
+	 border-radius: 50%;
+	}
+	
+	@keyframes float {
+	 0%, 100% {
+	  transform: translateY(0);
+	 }
+	 50% {
+	  transform: translateY(-3px);
+	 }
+	}
+	
+	/* 챗봇 텍스트 배지 */
+	.chat-badge {
+	 position: absolute;
+	 bottom: -17px;
+	 left: 50%;
+	 transform: translateX(-50%);
+	 background: linear-gradient(135deg, #376fe9 0%, #376fe9 100%);
+	 color: white;
+	 padding: 4px 12px;
+	 border-radius: 15px;
+	 font-size: 12px;
+	 font-weight: bold;
+	 white-space: nowrap;
+	 box-shadow: 
+	  0 0 10px #376fe9,
+	  0 0 20px #376fe9,
+	  0 4px 12px rgba(0, 0, 0, 0.3);
+	 z-index: 2;
+	 animation: pulseBadge 2s ease-in-out infinite;
+	}
+	
+	@keyframes pulseBadge {
+	 0%, 100% {
+	  transform: translateX(-50%) scale(1);
+	 }
+	 50% {
+	  transform: translateX(-50%) scale(1.05);
+	 }
 	}
 	
 	.notification-badge {
@@ -504,191 +631,318 @@ onDestroy(() => {
 		}
 		}
 		
-		/* 로딩 컨테이너 스타일 */
-		.loading-container {
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 20;
-		overflow: hidden;
-		}
-		
-		.loading-wrapper {
-		text-align: center;
-		padding: 40px;
-		}
-		
-		/* 로고 애니메이션 */
-		.logo-animation {
-		position: relative;
-		width: 120px;
-		height: 120px;
-		margin: 0 auto 30px;
-		}
-		
-		.logo-circle {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 80px;
-		height: 80px;
-		background: white;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-		animation: float 3s ease-in-out infinite;
-		z-index: 3;
-		}
-		
-		.logo-circle svg {
-		color: #667eea;
-		animation: rotate 4s linear infinite;
-		}
-		
-		.pulse-ring {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 80px;
-		height: 80px;
-		border: 2px solid rgba(255, 255, 255, 0.5);
-		border-radius: 50%;
-		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-		}
-		
-		.pulse-ring.delay {
-		animation-delay: 1s;
-		}
-		
-		/* 텍스트 스타일 */
-		.loading-text-container {
-		margin-bottom: 30px;
-		}
-		
-		.loading-title {
-		color: white;
-		font-size: 24px;
-		font-weight: 700;
-		margin: 0 0 8px 0;
-		animation: fadeInUp 0.8s ease-out;
-		}
-		
-		.loading-subtitle {
-		color: rgba(255, 255, 255, 0.9);
-		font-size: 14px;
-		margin: 0;
-		animation: fadeInUp 0.8s ease-out 0.2s both;
-		}
-		
-		/* 프로그레스 바 */
-		.progress-bar-container {
-		width: 200px;
-		margin: 0 auto 20px;
-		}
-		
-		.progress-bar {
-		height: 4px;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 2px;
-		overflow: hidden;
-		}
-		
-		.progress-fill {
-		height: 100%;
-		background: white;
-		border-radius: 2px;
-		animation: progress 2s ease-in-out infinite;
-		}
-		
-		/* 로딩 도트 */
-		.loading-dots {
-		display: flex;
-		justify-content: center;
-		gap: 8px;
-		}
-		
-		.dot {
-		width: 8px;
-		height: 8px;
-		background: white;
-		border-radius: 50%;
-		animation: bounce 1.4s ease-in-out infinite;
-		}
-		
-		.dot:nth-child(1) {
-		animation-delay: 0s;
-		}
-		
-		.dot:nth-child(2) {
-		animation-delay: 0.2s;
-		}
-		
-		.dot:nth-child(3) {
-		animation-delay: 0.4s;
-		}
-		
-		/* 로딩 애니메이션 */
-		@keyframes float {
-		0%, 100% {
-		 transform: translate(-50%, -50%) translateY(0);
-		}
-		50% {
-		 transform: translate(-50%, -50%) translateY(-10px);
-		}
-		}
-		
-		@keyframes rotate {
-		from {
-		 transform: rotate(0deg);
-		}
-		to {
-		 transform: rotate(360deg);
-		}
-		}
-		
-		@keyframes pulse {
-		0% {
-		 transform: translate(-50%, -50%) scale(1);
-		 opacity: 1;
-		}
-		100% {
-		 transform: translate(-50%, -50%) scale(1.5);
-		 opacity: 0;
-		}
-		}
-		
-		@keyframes fadeInUp {
-		from {
-		 opacity: 0;
-		 transform: translateY(20px);
-		}
-		to {
-		 opacity: 1;
-		 transform: translateY(0);
-		}
-		}
-		
-		@keyframes progress {
-		0% {
-		 width: 0%;
-		}
-		50% {
+		/* 별 배경 생성 - 풍성한 별똥별들 */
+		.stars, .stars2, .stars3 {
+		 position: absolute;
+		 top: 0;
+		 left: 0;
+		 right: 0;
+		 bottom: 0;
 		 width: 100%;
+		 height: 100%;
 		}
-		100% {
-		 width: 0%;
+		
+		/* 별 모양 만들기 위한 기본 스타일 */
+		.stars::before, .stars2::before, .stars3::before {
+		 content: '★';
+		 position: absolute;
+		 color: #FFD700;
+		 text-shadow: 0 0 6px #FFD700;
 		}
+		
+		/* 첫 번째 레이어 - 큰 별들 */
+		.stars::before {
+		 font-size: 20px;
+		 left: 10%;
+		 animation: star-fall-1 15s ease-in-out infinite;
 		}
+		.stars::after {
+		 content: '★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★';
+		 position: absolute;
+		 font-size: 18px;
+		 color: #FFF8DC;
+		 text-shadow: 0 0 5px #FFF8DC;
+		 letter-spacing: 50px;
+		 white-space: nowrap;
+		 left: -20%;
+		 animation: star-fall-2 20s ease-in-out infinite;
+		}
+		
+		/* 두 번째 레이어 - 중간 별들 */
+		.stars2::before {
+		 content: '★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★';
+		 font-size: 14px;
+		 color: #FFFACD;
+		 text-shadow: 0 0 4px #FFFACD;
+		 letter-spacing: 40px;
+		 white-space: nowrap;
+		 left: 30%;
+		 animation: star-fall-3 25s ease-in-out infinite;
+		}
+		.stars2::after {
+		 content: '✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦';
+		 position: absolute;
+		 font-size: 12px;
+		 color: #FFE5E5;
+		 text-shadow: 0 0 3px #FFE5E5;
+		 letter-spacing: 35px;
+		 white-space: nowrap;
+		 left: -40%;
+		 animation: star-fall-4 30s ease-in-out infinite;
+		}
+		
+		/* 세 번째 레이어 - 작고 많은 별들 */
+		.stars3::before {
+		 content: '· · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·';
+		 font-size: 16px;
+		 color: #FFFFFF;
+		 text-shadow: 0 0 2px #FFFFFF;
+		 letter-spacing: 25px;
+		 white-space: nowrap;
+		 left: 50%;
+		 animation: star-fall-5 35s ease-in-out infinite;
+		}
+		.stars3::after {
+		 content: '★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦';
+		 position: absolute;
+		 font-size: 10px;
+		 color: #FFF0F5;
+		 text-shadow: 0 0 2px #FFF0F5;
+		 letter-spacing: 30px;
+		 white-space: nowrap;
+		 left: -30%;
+		 animation: star-fall-6 40s ease-in-out infinite;
+		}
+		
+		/* 눈 내리듯 떨어지는 별 애니메이션들 */
+		@keyframes star-fall-1 {
+		 from { 
+		  transform: translateY(0vh) translateX(0px);
+		  opacity: 1;
+		 }
+		 to { 
+		  transform: translateY(100vh) translateX(30px);
+		  opacity: 0.3;
+		 }
+		}
+		
+		@keyframes star-fall-2 {
+		 from { 
+		  transform: translateY(0vh) translateX(0px);
+		  opacity: 0.9;
+		 }
+		 to { 
+		  transform: translateY(100vh) translateX(-20px);
+		  opacity: 0.2;
+		 }
+		}
+		
+		@keyframes star-fall-3 {
+		 from { 
+		  transform: translateY(0vh) translateX(0px);
+		  opacity: 0.95;
+		 }
+		 to { 
+		  transform: translateY(100vh) translateX(25px);
+		  opacity: 0.3;
+		 }
+		}
+		
+		@keyframes star-fall-4 {
+		 from { 
+		  transform: translateY(0vh) translateX(0px);
+		  opacity: 0.85;
+		 }
+		 to { 
+		  transform: translateY(100vh) translateX(-35px);
+		  opacity: 0.2;
+		 }
+		}
+		
+		@keyframes star-fall-5 {
+		 from { 
+		  transform: translateY(0vh) translateX(0px);
+		  opacity: 0.8;
+		 }
+		 to { 
+		  transform: translateY(100vh) translateX(40px);
+		  opacity: 0.25;
+		 }
+		}
+		
+		@keyframes star-fall-6 {
+		 from { 
+		  transform: translateY(0vh) translateX(0px);
+		  opacity: 0.9;
+		 }
+		 to { 
+		  transform: translateY(100vh) translateX(-45px);
+		  opacity: 0.2;
+		 }
+		}
+		
+		
+		/* 별 반짝임 효과 */
+		@keyframes twinkle {
+		 0%, 100% { 
+		  opacity: 1; 
+		  transform: scale(1);
+		 }
+		 50% { 
+		  opacity: 0.5; 
+		  transform: scale(0.8);
+		 }
+		}
+		
+		
+		/* ====================================================== */
+		/* START: 새로운 우주 테마 로딩 스타일                    */
+		/* ====================================================== */
+		
+		.loading-container-space {
+		 position: absolute;
+		 top: 0; left: 0; right: 0; bottom: 0;
+		 background: oklch(0.19 0.015 var(--hue));
+		 display: flex;
+		 align-items: center;
+		 justify-content: center;
+		 z-index: 20;
+		 overflow: hidden;
+		}
+		
+		.loading-wrapper-space {
+		 position: relative;
+		 width: 100%;
+		 height: 100%;
+		 display: flex;
+		 flex-direction: column;
+		 align-items: center;
+		 justify-content: center;
+		}
+		/* 달 스타일 */
+		.moon {
+		 position: absolute;
+		 top: 15%;
+		 right: 15%;
+		 transform: translate(50%, -50%);
+		 animation: moon-glow 4s ease-in-out infinite;
+		 filter: drop-shadow(0 0 15px rgba(247, 243, 227, 0.7));
+		}
+		
+		@keyframes moon-glow {
+		 0%, 100% { transform: translate(50%, -50%) scale(1); }
+		 50% { transform: translate(50%, -50%) scale(1.05); }
+		}
+		
+		/* 우주선 컨테이너 */
+		.rocket-container {
+		 position: absolute;
+		 bottom: 30%;
+		 left: -150px;
+		 width: 150px;
+		 height: 150px;
+		 animation: fly-to-moon 40s ease-in-out infinite;
+		}
+		
+		@keyframes fly-to-moon {
+		 0% {
+		  transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+		 }
+		 25% {
+		  transform: translateX(calc(50vw - 75px)) translateY(-50px) rotate(10deg) scale(1.1);
+		 }
+		 50% {
+		  transform: translateX(calc(100vw - 150px)) translateY(-100px) rotate(0deg) scale(1);
+		 }
+		 75% {
+		  transform: translateX(calc(150vw - 225px)) translateY(-50px) rotate(-10deg) scale(0.9);
+		 }
+		 100% {
+		  transform: translateX(calc(100vw + 200px)) translateY(0) rotate(0deg) scale(1);
+		 }
+		}
+		
+		/* 우주선 토비 */
+		.rocket-tobi {
+		 width: 100%;
+		 height: 100%;
+		 animation: rocket-wobble 3s ease-in-out infinite;
+		}
+		
+		@keyframes rocket-wobble {
+		 0%, 100% {
+		  transform: translateY(0) rotate(-5deg);
+		 }
+		 50% {
+		  transform: translateY(-10px) rotate(5deg);
+		 }
+		}
+		
+		/* 불꽃 애니메이션 */
+		#flames {
+		 animation: flame-flicker 0.8s ease-in-out infinite alternate;
+		 transform-origin: center top;
+		}
+		
+		@keyframes flame-flicker {
+		 0% {
+		  transform: scaleY(1) scaleX(1);
+		  opacity: 0.8;
+		 }
+		 100% {
+		  transform: scaleY(1.2) scaleX(0.8);
+		  opacity: 1;
+		 }
+		}
+		
+		/* 토비 캐릭터 애니메이션 */
+		#tobi-character {
+		 animation: tobi-bounce 4s ease-in-out infinite;
+		}
+		
+		@keyframes tobi-bounce {
+		 0%, 100% {
+		  transform: translateY(0);
+		 }
+		 50% {
+		  transform: translateY(-5px);
+		 }
+		}
+		
+		.loading-text-container-space {
+		 text-align: center;
+		 color: white;
+		 position: absolute;
+		 bottom: 15%;
+		 left: 50%;
+		 transform: translateX(-50%);
+		 width: 90%;
+		}
+		
+		.loading-title-space {
+		 font-size: 22px;
+		 font-weight: 700;
+		 margin: 0 0 10px;
+		 text-shadow: 0 2px 10px rgba(118, 75, 162, 0.5);
+		 animation: fade-in-up 1s ease-out both;
+		}
+		
+		.loading-subtitle-space {
+		 font-size: 14px;
+		 color: rgba(255, 255, 255, 0.85);
+		 margin: 0;
+		 text-shadow: 0 1px 5px rgba(118, 75, 162, 0.5);
+		 animation: fade-in-up 1s ease-out 0.2s both;
+		}
+		
+		@keyframes fade-in-up {
+		 from { opacity: 0; transform: translateY(20px); }
+		 to { opacity: 1; transform: translateY(0); }
+		}
+		
+		/* ====================================================== */
+		/* END: 새로운 우주 테마 로딩 스타일                      */
+		/* ====================================================== */
 		
 		@keyframes bounce {
 		0%, 80%, 100% {
