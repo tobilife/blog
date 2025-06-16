@@ -143,20 +143,61 @@ onDestroy(() => {
 			<!-- iframe -->
 			{#if isIframeLoading}
 			 <div class="loading-container">
-			  <div class="loading-spinner"></div>
-			  <p class="loading-text">챗봇을 불러오는 중...</p>
+			  <div class="loading-wrapper">
+			   <!-- 로고 애니메이션 -->
+			   <div class="logo-animation">
+			    <div class="logo-circle">
+			     <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			      <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			      <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			     </svg>
+			    </div>
+			    <div class="pulse-ring"></div>
+			    <div class="pulse-ring delay"></div>
+			   </div>
+			   
+			   <!-- 텍스트 -->
+			   <div class="loading-text-container">
+			    <h3 class="loading-title">토비라이프 AI 챗봇</h3>
+			    <p class="loading-subtitle">지능형 블로그 어시스턴트를 준비하고 있습니다...</p>
+			   </div>
+			   
+			   <!-- 프로그레스 바 -->
+			   <div class="progress-bar-container">
+			    <div class="progress-bar">
+			     <div class="progress-fill"></div>
+			    </div>
+			   </div>
+			   
+			   <!-- 로딩 도트 -->
+			   <div class="loading-dots">
+			    <span class="dot"></span>
+			    <span class="dot"></span>
+			    <span class="dot"></span>
+			   </div>
+			  </div>
 			 </div>
 			{/if}
 			
 			{#if iframeError}
 			 <div class="error-container">
-			  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-			   <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			  </svg>
-			  <p class="error-text">챗봇을 불러올 수 없습니다.</p>
-			  <button class="retry-button" on:click={() => { iframeError = false; isIframeLoading = true; }}>
-			   다시 시도
-			  </button>
+			  <div class="error-wrapper">
+			   <div class="error-icon">
+			    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			     <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			    </svg>
+			   </div>
+			   <h3 class="error-title">연결 오류</h3>
+			   <p class="error-text">토비라이프 AI 챗봇을 불러올 수 없습니다.</p>
+			   <p class="error-subtext">네트워크 연결을 확인하고 다시 시도해주세요.</p>
+			   <button class="retry-button" on:click={() => { iframeError = false; isIframeLoading = true; }}>
+			    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			     <path d="M1 4V10H7M23 20V14H17M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14L18.36 18.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			    </svg>
+			    다시 시도
+			   </button>
+			  </div>
 			 </div>
 			{/if}
 			
@@ -388,8 +429,307 @@ onDestroy(() => {
 			width: 450px;
 			height: 700px;
 		}
-	}
-	
+		}
+		
+		/* 로딩 컨테이너 스타일 */
+		.loading-container {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 20;
+		overflow: hidden;
+		}
+		
+		.loading-wrapper {
+		text-align: center;
+		padding: 40px;
+		}
+		
+		/* 로고 애니메이션 */
+		.logo-animation {
+		position: relative;
+		width: 120px;
+		height: 120px;
+		margin: 0 auto 30px;
+		}
+		
+		.logo-circle {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 80px;
+		height: 80px;
+		background: white;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+		animation: float 3s ease-in-out infinite;
+		z-index: 3;
+		}
+		
+		.logo-circle svg {
+		color: #667eea;
+		animation: rotate 4s linear infinite;
+		}
+		
+		.pulse-ring {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 80px;
+		height: 80px;
+		border: 2px solid rgba(255, 255, 255, 0.5);
+		border-radius: 50%;
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+		}
+		
+		.pulse-ring.delay {
+		animation-delay: 1s;
+		}
+		
+		/* 텍스트 스타일 */
+		.loading-text-container {
+		margin-bottom: 30px;
+		}
+		
+		.loading-title {
+		color: white;
+		font-size: 24px;
+		font-weight: 700;
+		margin: 0 0 8px 0;
+		animation: fadeInUp 0.8s ease-out;
+		}
+		
+		.loading-subtitle {
+		color: rgba(255, 255, 255, 0.9);
+		font-size: 14px;
+		margin: 0;
+		animation: fadeInUp 0.8s ease-out 0.2s both;
+		}
+		
+		/* 프로그레스 바 */
+		.progress-bar-container {
+		width: 200px;
+		margin: 0 auto 20px;
+		}
+		
+		.progress-bar {
+		height: 4px;
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: 2px;
+		overflow: hidden;
+		}
+		
+		.progress-fill {
+		height: 100%;
+		background: white;
+		border-radius: 2px;
+		animation: progress 2s ease-in-out infinite;
+		}
+		
+		/* 로딩 도트 */
+		.loading-dots {
+		display: flex;
+		justify-content: center;
+		gap: 8px;
+		}
+		
+		.dot {
+		width: 8px;
+		height: 8px;
+		background: white;
+		border-radius: 50%;
+		animation: bounce 1.4s ease-in-out infinite;
+		}
+		
+		.dot:nth-child(1) {
+		animation-delay: 0s;
+		}
+		
+		.dot:nth-child(2) {
+		animation-delay: 0.2s;
+		}
+		
+		.dot:nth-child(3) {
+		animation-delay: 0.4s;
+		}
+		
+		/* 로딩 애니메이션 */
+		@keyframes float {
+		0%, 100% {
+		 transform: translate(-50%, -50%) translateY(0);
+		}
+		50% {
+		 transform: translate(-50%, -50%) translateY(-10px);
+		}
+		}
+		
+		@keyframes rotate {
+		from {
+		 transform: rotate(0deg);
+		}
+		to {
+		 transform: rotate(360deg);
+		}
+		}
+		
+		@keyframes pulse {
+		0% {
+		 transform: translate(-50%, -50%) scale(1);
+		 opacity: 1;
+		}
+		100% {
+		 transform: translate(-50%, -50%) scale(1.5);
+		 opacity: 0;
+		}
+		}
+		
+		@keyframes fadeInUp {
+		from {
+		 opacity: 0;
+		 transform: translateY(20px);
+		}
+		to {
+		 opacity: 1;
+		 transform: translateY(0);
+		}
+		}
+		
+		@keyframes progress {
+		0% {
+		 width: 0%;
+		}
+		50% {
+		 width: 100%;
+		}
+		100% {
+		 width: 0%;
+		}
+		}
+		
+		@keyframes bounce {
+		0%, 80%, 100% {
+		 transform: scale(0);
+		 opacity: 0.5;
+		}
+		40% {
+		 transform: scale(1);
+		 opacity: 1;
+		}
+		}
+		
+		/* 에러 컨테이너 스타일 */
+		.error-container {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 20;
+		}
+		
+		.error-wrapper {
+		text-align: center;
+		padding: 40px;
+		max-width: 320px;
+		}
+		
+		.error-icon {
+		width: 80px;
+		height: 80px;
+		margin: 0 auto 20px;
+		background: white;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+		animation: shake 0.5s ease-in-out;
+		}
+		
+		.error-icon svg {
+		color: #ef4444;
+		}
+		
+		.error-title {
+		color: white;
+		font-size: 24px;
+		font-weight: 700;
+		margin: 0 0 12px 0;
+		}
+		
+		.error-text {
+		color: rgba(255, 255, 255, 0.95);
+		font-size: 16px;
+		margin: 0 0 8px 0;
+		line-height: 1.5;
+		}
+		
+		.error-subtext {
+		color: rgba(255, 255, 255, 0.8);
+		font-size: 14px;
+		margin: 0 0 24px 0;
+		}
+		
+		.retry-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 12px 24px;
+		background: white;
+		color: #ef4444;
+		border: none;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 16px;
+		font-weight: 600;
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+		transition: all 0.3s ease;
+		}
+		
+		.retry-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+		}
+		
+		.retry-button:active {
+		transform: translateY(0);
+		}
+		
+		.retry-button svg {
+		animation: rotate 2s linear infinite paused;
+		}
+		
+		.retry-button:hover svg {
+		animation-play-state: running;
+		}
+		
+		@keyframes shake {
+		0%, 100% {
+		 transform: translateX(0);
+		}
+		25% {
+		 transform: translateX(-10px);
+		}
+		75% {
+		 transform: translateX(10px);
+		}
+		}
+		
 	/* iOS 노치 대응 */
 	@supports (padding: max(0px)) {
 		.mobile-close-button {
