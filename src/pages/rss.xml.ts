@@ -10,24 +10,26 @@ const parser = new MarkdownIt();
 // HTML 태그를 제거하고 텍스트만 추출하는 함수
 function stripHtml(html: string): string {
 	// 더 강력한 HTML 태그 제거
-	return html
-		// 먼저 script와 style 태그의 내용까지 제거
-		.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-		.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
-		// 모든 HTML 태그 제거
-		.replace(/<[^>]*>/g, "")
-		// HTML 엔티티 디코딩
-		.replace(/&lt;/g, "<")
-		.replace(/&gt;/g, ">")
-		.replace(/&amp;/g, "&")
-		.replace(/&quot;/g, '"')
-		.replace(/&#039;/g, "'")
-		.replace(/&nbsp;/g, " ")
-		// 연속된 공백을 하나로
-		.replace(/\s+/g, " ")
-		// 줄바꿈 정리
-		.replace(/\n\s*\n/g, "\n")
-		.trim();
+	return (
+		html
+			// 먼저 script와 style 태그의 내용까지 제거
+			.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+			.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+			// 모든 HTML 태그 제거
+			.replace(/<[^>]*>/g, "")
+			// HTML 엔티티 디코딩
+			.replace(/&lt;/g, "<")
+			.replace(/&gt;/g, ">")
+			.replace(/&amp;/g, "&")
+			.replace(/&quot;/g, '"')
+			.replace(/&#039;/g, "'")
+			.replace(/&nbsp;/g, " ")
+			// 연속된 공백을 하나로
+			.replace(/\s+/g, " ")
+			// 줄바꿈 정리
+			.replace(/\n\s*\n/g, "\n")
+			.trim()
+	);
 }
 
 // 설명을 위한 텍스트 추출 (처음 200자)
@@ -55,10 +57,7 @@ export async function GET(context: APIContext) {
 			// content:encoded를 위한 HTML (선택사항)
 			// RSS 리더가 HTML을 지원하는 경우를 위해
 			const cleanHtml = sanitizeHtml(htmlContent, {
-				allowedTags: [
-					"p", "br", "strong", "em", "ul", "ol", "li",
-					"a", "code", "pre", "blockquote", "h2", "h3", "h4",
-				],
+				allowedTags: ["p", "br", "strong", "em", "ul", "ol", "li", "a", "code", "pre", "blockquote", "h2", "h3", "h4"],
 				allowedAttributes: {
 					a: ["href"],
 				},

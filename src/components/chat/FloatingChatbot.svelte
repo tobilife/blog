@@ -1,34 +1,31 @@
 <script>
-  import { onMount } from 'svelte';
-  
-  let isExpanded = false;
-  let isMinimized = true;  // 기본값을 true로 변경 (처음엔 최소화)
-  
-  function toggleExpanded() {
-    if (isMinimized) {
-      isMinimized = false;
-      isExpanded = true;  // 버튼 클릭 시 바로 확장
-    } else {
-      isExpanded = !isExpanded;
-    }
-  }
-  
-  function minimize() {
-    isMinimized = true;
-    isExpanded = false;
-  }
-  
-  function openInNewWindow() {
-    // 일반 새 창으로 열기 (팝업이 아닌 브라우저 기본 새 창)
-    window.open(
-      'https://my-awesome-chatbot-git-main-tobilifes-projects.vercel.app/',
-      '_blank'
-    );
-  }
-  
-  onMount(() => {
-    console.log('FloatingChatbot mounted');
-  });
+import { onMount } from "svelte";
+
+let isExpanded = false;
+let isMinimized = true; // 기본값을 true로 변경 (처음엔 최소화)
+
+function toggleExpanded() {
+	if (isMinimized) {
+		isMinimized = false;
+		isExpanded = true; // 버튼 클릭 시 바로 확장
+	} else {
+		isExpanded = !isExpanded;
+	}
+}
+
+function minimize() {
+	isMinimized = true;
+	isExpanded = false;
+}
+
+function openInNewWindow() {
+	// 일반 새 창으로 열기 (팝업이 아닌 브라우저 기본 새 창)
+	window.open("https://my-awesome-chatbot-git-main-tobilifes-projects.vercel.app/", "_blank");
+}
+
+onMount(() => {
+	// FloatingChatbot 마운트 완료
+});
 </script>
 
 <div class="floating-container" class:expanded={isExpanded} class:minimized={isMinimized}>

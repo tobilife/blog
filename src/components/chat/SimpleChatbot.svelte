@@ -1,22 +1,22 @@
 <script>
-  import { onMount } from 'svelte';
-  
-  let chatVisible = false;
-  let iframeLoaded = false;
-  let iframeElement;
-  
-  function toggleChat() {
-    chatVisible = !chatVisible;
-  }
-  
-  function handleIframeLoad() {
-    iframeLoaded = true;
-    console.log('Iframe preloaded successfully');
-  }
-  
-  onMount(() => {
-    console.log('SimpleChatbot mounted');
-  });
+import { onMount } from "svelte";
+
+let chatVisible = false;
+let iframeLoaded = false;
+let iframeElement;
+
+function toggleChat() {
+	chatVisible = !chatVisible;
+}
+
+function handleIframeLoad() {
+	iframeLoaded = true;
+	// Iframe 로드 완료
+}
+
+onMount(() => {
+	// SimpleChatbot 마운트 완료
+});
 </script>
 
 <div class="chat-container">
