@@ -349,32 +349,59 @@ onDestroy(() => {
 	
 	/* 모바일 닫기 버튼 */
 	.mobile-close-button {
-		position: absolute;
-		top: 20px;
-		right: 20px;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		background: rgba(0, 0, 0, 0.8);
-		backdrop-filter: blur(10px);
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		color: white;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		z-index: 10001;
-		transition: all 0.2s ease;
-		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+	 position: absolute !important;
+	 top: 20px;
+	 right: 20px;
+	 width: 40px;
+	 height: 40px;
+	 border-radius: 50%;
+	 background: rgba(0, 0, 0, 0.85) !important;
+	 -webkit-backdrop-filter: blur(8px);
+	 backdrop-filter: blur(8px);
+	 border: none !important;
+	 color: white;
+	 display: flex;
+	 align-items: center;
+	 justify-content: center;
+	 cursor: pointer;
+	 z-index: 10001;
+	 transition: all 0.2s ease;
+	 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+	 /* 오버플로우 숨김 방지 */
+	 overflow: hidden;
+	 /* 모바일 터치 최적화 */
+	 -webkit-tap-highlight-color: transparent;
+	 /* 차단 자동 스타일 제거 */
+	 -webkit-appearance: none;
+	 -moz-appearance: none;
+	 appearance: none;
+	 outline: none !important;
+	 padding: 0;
+	 margin: 0;
+	}
+	
+	/* 자식 요소가 배경을 벗어나지 않도록 */
+	.mobile-close-button::before,
+	.mobile-close-button::after {
+	 content: none !important;
+	 display: none !important;
 	}
 	
 	.mobile-close-button:hover {
-		background: rgba(0, 0, 0, 0.9);
-		transform: scale(1.1);
+	 background: rgba(0, 0, 0, 0.9);
+	 transform: scale(1.05);
 	}
 	
 	.mobile-close-button:active {
-		transform: scale(0.95);
+	 transform: scale(0.95);
+	 background: rgba(0, 0, 0, 0.8);
+	}
+	
+	/* 닫기 버튼 SVG 스타일 */
+	.mobile-close-button svg {
+	 width: 24px;
+	 height: 24px;
+	 pointer-events: none;
 	}
 	
 	/* iframe 스타일 */
