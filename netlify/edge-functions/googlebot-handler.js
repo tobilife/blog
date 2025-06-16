@@ -1,4 +1,4 @@
-// Optimized Googlebot handler - immediate fallback response
+// Optimized Googlebot handler - improved version
 // Metadata cache
 let metadataCache = null;
 let siteConfigCache = null;
@@ -80,6 +80,25 @@ export default async (request, context) => {
 		return context.next();
 	}
 
+	// CSS, JS, 이미지 파일들은 반드시 건너뛰기 - 구글봇이 리소스에 접근 가능하도록
+	if (
+		url.pathname.endsWith(".css") ||
+		url.pathname.endsWith(".js") ||
+		url.pathname.includes("/_astro/") ||
+		url.pathname.includes("/images/") ||
+		url.pathname.includes("/fonts/") ||
+		url.pathname.endsWith(".woff") ||
+		url.pathname.endsWith(".woff2") ||
+		url.pathname.endsWith(".png") ||
+		url.pathname.endsWith(".jpg") ||
+		url.pathname.endsWith(".jpeg") ||
+		url.pathname.endsWith(".webp") ||
+		url.pathname.endsWith(".gif") ||
+		url.pathname.endsWith(".svg")
+	) {
+		return context.next();
+	}
+
 	// 사이트맵, RSS, robots.txt 파일은 건너뛰기
 	if (
 		(url.pathname.includes("sitemap") && url.pathname.endsWith(".xml")) ||
@@ -103,17 +122,45 @@ export default async (request, context) => {
 
 	console.info(`Google bot detected: ${userAgent.substring(0, 100)} for ${url.pathname}`);
 
-	// Google bot에 대해서는 즉시 최적화된 응답 생성
-	// context.next()를 호출하면 502/504 오류가 발생하므로 직접 응답 생성
+	// Google Search Console URL 검사와 일반 구글봇을 구분
+	const isGoogleInspection = 
+		lowerUserAgent.includes("google-inspectiontool") ||
+		lowerUserAgent.includes("google-structured-data-testing-tool") ||
+		lowerUserAgent.includes("google-site-verification");
+
+	// Google Search Console URL 검사일 경우 실제 페이지를 보여줌
+	if (isGoogleInspection) {
+		console.info(`Google Inspection Tool detected - serving actual page`);
+		return context.next();
+	}
+
+	// 일반 Googlebot에 대해서도 HTML 페이지는 실제 페이지를 보여줌
+	// 단, 파일 크기가 크거나 동적 콘텐츠가 많은 경우를 위해 fallback 유지
 	try {
+		// 먼저 실제 페이지를 제공해보고, 실패하면 fallback
+		const response = await context.next();
+		
+		// 응답이 성공적이면 그대로 반환
+		if (response.ok) {
+			return response;
+		}
+		
+		// 오류가 발생하면 fallback response
+		console.warn(`Failed to get actual page for Googlebot, using fallback`);
 		const [metadata, siteConfig] = await Promise.all([getPostsMetadata(), getSiteConfig()]);
 		return createDynamicFallbackResponse(url, metadata, siteConfig);
 	} catch (error) {
-		console.error(`Error creating response for Googlebot: ${error.message}`);
+		console.error(`Error serving page to Googlebot: ${error.message}`);
 		
-		// Return a minimal but valid response on error
-		return new Response(
-			`<!DOCTYPE html>
+		// Fallback response
+		try {
+			const [metadata, siteConfig] = await Promise.all([getPostsMetadata(), getSiteConfig()]);
+			return createDynamicFallbackResponse(url, metadata, siteConfig);
+		} catch (fallbackError) {
+			console.error(`Fallback also failed: ${fallbackError.message}`);
+			// Return a minimal but valid response on error
+			return new Response(
+				`<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -130,15 +177,16 @@ export default async (request, context) => {
 <p>70살까지 꿈꾸고 개발하며 성장하고싶은 개발자입니다.✨</p>
 </body>
 </html>`,
-			{
-				status: 200,
-				headers: {
-					"content-type": "text/html; charset=UTF-8",
-					"x-robots-tag": "index, follow",
-					"cache-control": "public, max-age=300",
+				{
+					status: 200,
+					headers: {
+						"content-type": "text/html; charset=UTF-8",
+						"x-robots-tag": "index, follow",
+						"cache-control": "public, max-age=300",
+					},
 				},
-			},
-		);
+			);
+		}
 	}
 };
 
