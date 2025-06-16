@@ -8,6 +8,7 @@ let windowHeight = 0;
 let windowWidth = 0;
 let isIframeLoading = true;
 let iframeError = false;
+let previousScrollY = 0;
 
 // 모바일 감지 함수
 function checkMobile() {
@@ -15,6 +16,39 @@ function checkMobile() {
 		isMobile = window.innerWidth <= 768;
 		windowHeight = window.innerHeight;
 		windowWidth = window.innerWidth;
+	}
+}
+
+// 스크롤 잠금/해제 함수
+function lockBodyScroll() {
+	if (typeof document !== "undefined" && isMobile) {
+		// 현재 스크롤 위치 저장
+		previousScrollY = window.scrollY;
+
+		// body 스타일 설정
+		document.body.style.position = "fixed";
+		document.body.style.top = `-${previousScrollY}px`;
+		document.body.style.width = "100%";
+		document.body.style.overflow = "hidden";
+
+		// iOS 바운스 스크롤 방지
+		document.documentElement.style.overflow = "hidden";
+	}
+}
+
+function unlockBodyScroll() {
+	if (typeof document !== "undefined" && isMobile) {
+		// body 스타일 복원
+		document.body.style.position = "";
+		document.body.style.top = "";
+		document.body.style.width = "";
+		document.body.style.overflow = "";
+
+		// html overflow 복원
+		document.documentElement.style.overflow = "";
+
+		// 이전 스크롤 위치로 복원
+		window.scrollTo(0, previousScrollY);
 	}
 }
 
@@ -28,6 +62,7 @@ function handleMessage(event) {
 	// 메시지 타입에 따른 처리
 	if (event.data && event.data.type === "close-chat") {
 		chatVisible = false;
+		unlockBodyScroll();
 	}
 }
 
@@ -37,17 +72,25 @@ function toggleChat() {
 	isIframeLoading = true;
 	iframeError = false;
 
-	// iframe이 로드된 후 상태 전송
-	if (chatVisible && iframeRef) {
-		setTimeout(() => {
-			iframeRef.contentWindow.postMessage(
-				{
-					type: "chat-opened",
-					isMobile: isMobile,
-				},
-				"https://my-awesome-chatbot-three-theta.vercel.app",
-			);
-		}, 100);
+	if (chatVisible) {
+		// 모바일에서 스크롤 잠금
+		lockBodyScroll();
+
+		// iframe이 로드된 후 상태 전송
+		if (iframeRef) {
+			setTimeout(() => {
+				iframeRef.contentWindow.postMessage(
+					{
+						type: "chat-opened",
+						isMobile: isMobile,
+					},
+					"https://my-awesome-chatbot-three-theta.vercel.app",
+				);
+			}, 100);
+		}
+	} else {
+		// 스크롤 잠금 해제
+		unlockBodyScroll();
 	}
 }
 
@@ -58,6 +101,7 @@ function closeChat() {
 		iframeRef.contentWindow.postMessage({ type: "chat-closing" }, "https://my-awesome-chatbot-three-theta.vercel.app");
 	}
 	chatVisible = false;
+	unlockBodyScroll();
 }
 
 onMount(() => {
@@ -90,6 +134,8 @@ onDestroy(() => {
 	if (typeof window !== "undefined") {
 		window.removeEventListener("resize", checkMobile);
 		window.removeEventListener("message", handleMessage);
+		// 컴포넌트가 언마운트될 때 스크롤 잠금 해제
+		unlockBodyScroll();
 	}
 });
 </script>
