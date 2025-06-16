@@ -6,6 +6,8 @@ let iframeRef;
 let isMobile = false;
 let windowHeight = 0;
 let windowWidth = 0;
+let isIframeLoading = true;
+let iframeError = false;
 
 // 모바일 감지 함수
 function checkMobile() {
@@ -32,6 +34,8 @@ function handleMessage(event) {
 // 챗봇 토글 함수
 function toggleChat() {
 	chatVisible = !chatVisible;
+	isIframeLoading = true;
+	iframeError = false;
 
 	// iframe이 로드된 후 상태 전송
 	if (chatVisible && iframeRef) {
@@ -137,14 +141,36 @@ onDestroy(() => {
 			{/if}
 			
 			<!-- iframe -->
+			{#if isIframeLoading}
+			 <div class="loading-container">
+			  <div class="loading-spinner"></div>
+			  <p class="loading-text">챗봇을 불러오는 중...</p>
+			 </div>
+			{/if}
+			
+			{#if iframeError}
+			 <div class="error-container">
+			  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			   <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			  </svg>
+			  <p class="error-text">챗봇을 불러올 수 없습니다.</p>
+			  <button class="retry-button" on:click={() => { iframeError = false; isIframeLoading = true; }}>
+			   다시 시도
+			  </button>
+			 </div>
+			{/if}
+			
 			<iframe
-				bind:this={iframeRef}
-				src="https://my-awesome-chatbot-three-theta.vercel.app/embed"
-				title="토비라이프 AI 챗봇"
-				class="chat-iframe"
-				class:mobile={isMobile}
-				allow="clipboard-write"
-				sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+			 bind:this={iframeRef}
+			 src="https://my-awesome-chatbot-three-theta.vercel.app/embed"
+			 title="토비라이프 AI 챗봇"
+			 class="chat-iframe"
+			 class:mobile={isMobile}
+			 class:loading={isIframeLoading}
+			 allow="clipboard-write; accelerometer; camera; geolocation; gyroscope; microphone; payment"
+			 sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-popups-to-escape-sandbox allow-top-navigation"
+			 on:load={() => { isIframeLoading = false; }}
+			 on:error={() => { isIframeLoading = false; iframeError = true; }}
 			/>
 		</div>
 	{/if}
