@@ -653,9 +653,8 @@ onDestroy(() => {
 		/* 첫 번째 레이어 - 큰 별들 */
 		.stars::before {
 		 font-size: 20px;
-		 top: -10%;
 		 left: 10%;
-		 animation: star-fall-1 8s linear infinite;
+		 animation: star-fall-1 15s ease-in-out infinite;
 		}
 		.stars::after {
 		 content: '★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★';
@@ -665,9 +664,8 @@ onDestroy(() => {
 		 text-shadow: 0 0 5px #FFF8DC;
 		 letter-spacing: 50px;
 		 white-space: nowrap;
-		 top: -15%;
 		 left: -20%;
-		 animation: star-fall-2 10s linear infinite;
+		 animation: star-fall-2 20s ease-in-out infinite;
 		}
 		
 		/* 두 번째 레이어 - 중간 별들 */
@@ -678,9 +676,8 @@ onDestroy(() => {
 		 text-shadow: 0 0 4px #FFFACD;
 		 letter-spacing: 40px;
 		 white-space: nowrap;
-		 top: -20%;
 		 left: 30%;
-		 animation: star-fall-3 12s linear infinite;
+		 animation: star-fall-3 25s ease-in-out infinite;
 		}
 		.stars2::after {
 		 content: '✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦';
@@ -690,9 +687,8 @@ onDestroy(() => {
 		 text-shadow: 0 0 3px #FFE5E5;
 		 letter-spacing: 35px;
 		 white-space: nowrap;
-		 top: -25%;
 		 left: -40%;
-		 animation: star-fall-4 14s linear infinite;
+		 animation: star-fall-4 30s ease-in-out infinite;
 		}
 		
 		/* 세 번째 레이어 - 작고 많은 별들 */
@@ -703,9 +699,8 @@ onDestroy(() => {
 		 text-shadow: 0 0 2px #FFFFFF;
 		 letter-spacing: 25px;
 		 white-space: nowrap;
-		 top: -30%;
 		 left: 50%;
-		 animation: star-fall-5 16s linear infinite;
+		 animation: star-fall-5 35s ease-in-out infinite;
 		}
 		.stars3::after {
 		 content: '★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦';
@@ -715,26 +710,19 @@ onDestroy(() => {
 		 text-shadow: 0 0 2px #FFF0F5;
 		 letter-spacing: 30px;
 		 white-space: nowrap;
-		 top: -35%;
 		 left: -30%;
-		 animation: star-fall-6 18s linear infinite;
+		 animation: star-fall-6 40s ease-in-out infinite;
 		}
 		
 		/* 눈 내리듯 떨어지는 별 애니메이션들 */
 		@keyframes star-fall-1 {
 		 from { 
-		  transform: translateY(-100px) translateX(0px);
-		  opacity: 0;
-		 }
-		 10% {
-		  opacity: 1;
-		 }
-		 90% {
+		  transform: translateY(0vh) translateX(0px);
 		  opacity: 1;
 		 }
 		 to { 
-		  transform: translateY(120vh) translateX(30px);
-		  opacity: 0;
+		  transform: translateY(100vh) translateX(30px);
+		  opacity: 0.3;
 		 }
 		}
 		
@@ -850,38 +838,27 @@ onDestroy(() => {
 		.rocket-container {
 		 position: absolute;
 		 bottom: 30%;
-		 left: 50%;
-		 transform: translateX(-50%);
+		 left: -150px;
 		 width: 150px;
 		 height: 150px;
-		 animation: fly-to-moon 8s ease-in-out infinite;
+		 animation: fly-to-moon 40s ease-in-out infinite;
 		}
 		
 		@keyframes fly-to-moon {
 		 0% {
-		  transform: translateX(-50%) translateY(0) rotate(0deg) scale(0.5);
-		  opacity: 0;
-		 }
-		 5% {
-		  transform: translateX(-50%) translateY(0) rotate(0deg) scale(1);
-		  opacity: 1;
+		  transform: translateX(0) translateY(0) rotate(0deg) scale(1);
 		 }
 		 25% {
-		  transform: translateX(calc(-50% + 25vw)) translateY(-50px) rotate(10deg) scale(1.1);
+		  transform: translateX(calc(50vw - 75px)) translateY(-50px) rotate(10deg) scale(1.1);
 		 }
 		 50% {
-		  transform: translateX(calc(-50% + 50vw)) translateY(-100px) rotate(0deg) scale(1);
+		  transform: translateX(calc(100vw - 150px)) translateY(-100px) rotate(0deg) scale(1);
 		 }
 		 75% {
-		  transform: translateX(calc(-50% + 75vw)) translateY(-50px) rotate(-10deg) scale(0.9);
-		 }
-		 95% {
-		  transform: translateX(calc(-50% + 100vw + 150px)) translateY(0) rotate(0deg) scale(1);
-		  opacity: 1;
+		  transform: translateX(calc(150vw - 225px)) translateY(-50px) rotate(-10deg) scale(0.9);
 		 }
 		 100% {
-		  transform: translateX(calc(-50% + 100vw + 200px)) translateY(0) rotate(0deg) scale(1);
-		  opacity: 0;
+		  transform: translateX(calc(100vw + 200px)) translateY(0) rotate(0deg) scale(1);
 		 }
 		}
 		
