@@ -88,7 +88,7 @@
 		"@types/mdast": "^4.0.4",
 		"@types/sanitize-html": "^2.16.0",
 		"autoprefixer": "^10.4.21",
-		"postcss-import": "^16.1.0",
+		"postcss-import": "^16.1.1",
 		"postcss-nesting": "^13.0.2",
 		"rimraf": "^6.0.1"
 	},
