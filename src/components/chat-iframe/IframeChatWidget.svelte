@@ -654,7 +654,7 @@ onDestroy(() => {
 		.stars::before {
 		 font-size: 20px;
 		 left: 10%;
-		 animation: star-fall-1 15s ease-in-out infinite;
+		 animation: star-fall-1 7s ease-in-out infinite;
 		}
 		.stars::after {
 		 content: '★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★';
@@ -665,7 +665,7 @@ onDestroy(() => {
 		 letter-spacing: 50px;
 		 white-space: nowrap;
 		 left: -20%;
-		 animation: star-fall-2 20s ease-in-out infinite;
+		 animation: star-fall-2 10s ease-in-out infinite;
 		}
 		
 		/* 두 번째 레이어 - 중간 별들 */
@@ -677,7 +677,7 @@ onDestroy(() => {
 		 letter-spacing: 40px;
 		 white-space: nowrap;
 		 left: 30%;
-		 animation: star-fall-3 25s ease-in-out infinite;
+		 animation: star-fall-3 12s ease-in-out infinite;
 		}
 		.stars2::after {
 		 content: '✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦';
@@ -688,7 +688,7 @@ onDestroy(() => {
 		 letter-spacing: 35px;
 		 white-space: nowrap;
 		 left: -40%;
-		 animation: star-fall-4 30s ease-in-out infinite;
+		 animation: star-fall-4 15s ease-in-out infinite;
 		}
 		
 		/* 세 번째 레이어 - 작고 많은 별들 */
@@ -700,7 +700,7 @@ onDestroy(() => {
 		 letter-spacing: 25px;
 		 white-space: nowrap;
 		 left: 50%;
-		 animation: star-fall-5 35s ease-in-out infinite;
+		 animation: star-fall-5 17s ease-in-out infinite;
 		}
 		.stars3::after {
 		 content: '★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦';
@@ -711,7 +711,7 @@ onDestroy(() => {
 		 letter-spacing: 30px;
 		 white-space: nowrap;
 		 left: -30%;
-		 animation: star-fall-6 40s ease-in-out infinite;
+		 animation: star-fall-6 20s ease-in-out infinite;
 		}
 		
 		/* 눈 내리듯 떨어지는 별 애니메이션들 */
@@ -838,7 +838,7 @@ onDestroy(() => {
 		.rocket-container {
 		 position: absolute;
 		 bottom: 30%;
-		 left: -150px;
+		 left: 30%;
 		 width: 150px;
 		 height: 150px;
 		 animation: fly-to-moon 40s ease-in-out infinite;
