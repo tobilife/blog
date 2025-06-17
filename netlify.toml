@@ -141,11 +141,7 @@
     Content-Type = "image/webp"
     Cache-Control = "public, max-age=31536000, immutable"
 
-# 이중 슬래시 정규화
-[[redirects]]
-  from = "/*//*"
-  to = "/:splat/"
-  status = 301
+
 
 [[redirects]]
   from = "/api/langflow/*"

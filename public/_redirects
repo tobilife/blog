@@ -1,4 +1,1 @@
-# sitemap 리다이렉트 (필요한 경우만)
 /sitemap.xml  /sitemap-index.xml  301
-
-# 404 페이지는 Astro가 처리하므로 별도 규칙 불필요
