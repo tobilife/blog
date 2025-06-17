@@ -13,7 +13,7 @@ let hasLoadedOnce = false; // iframe이 한번이라도 로드되었는지 추�
 let showLoadingMinTime = false; // 3초 로딩 표시 여부
 
 // 테스트용 플래그 - false로 설정하면 iframe이 로드되지 않음
-const checkFlag = true;
+const checkFlag = false;
 
 // 모바일 감지 함수
 function checkMobile() {
@@ -83,13 +83,13 @@ function toggleChat() {
 			isIframeLoading = true;
 			showLoadingMinTime = true;
 
-			// 3초 후 로딩 인디케이터 숨기기
+			// 5초 후 로딩 인디케이터 숨기기
 			setTimeout(() => {
 				showLoadingMinTime = false;
 				if (checkFlag) {
 					isIframeLoading = false;
 				}
-			}, 3000);
+			}, 5000);
 		}
 
 		iframeError = false;
@@ -838,7 +838,8 @@ onDestroy(() => {
 		.rocket-container {
 		 position: absolute;
 		 bottom: 30%;
-		 left: -150px;
+		 left: 50%;
+		 transform: translateX(-50%);
 		 width: 150px;
 		 height: 150px;
 		 animation: fly-to-moon 40s ease-in-out infinite;
@@ -846,19 +847,29 @@ onDestroy(() => {
 		
 		@keyframes fly-to-moon {
 		 0% {
-		  transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+		  transform: translateX(-50%) translateY(0) rotate(0deg) scale(0.5);
+		  opacity: 0;
+		 }
+		 5% {
+		  transform: translateX(-50%) translateY(0) rotate(0deg) scale(1);
+		  opacity: 1;
 		 }
 		 25% {
-		  transform: translateX(calc(50vw - 75px)) translateY(-50px) rotate(10deg) scale(1.1);
+		  transform: translateX(calc(-50% + 25vw)) translateY(-50px) rotate(10deg) scale(1.1);
 		 }
 		 50% {
-		  transform: translateX(calc(100vw - 150px)) translateY(-100px) rotate(0deg) scale(1);
+		  transform: translateX(calc(-50% + 50vw)) translateY(-100px) rotate(0deg) scale(1);
 		 }
 		 75% {
-		  transform: translateX(calc(150vw - 225px)) translateY(-50px) rotate(-10deg) scale(0.9);
+		  transform: translateX(calc(-50% + 75vw)) translateY(-50px) rotate(-10deg) scale(0.9);
+		 }
+		 95% {
+		  transform: translateX(calc(-50% + 100vw + 150px)) translateY(0) rotate(0deg) scale(1);
+		  opacity: 1;
 		 }
 		 100% {
-		  transform: translateX(calc(100vw + 200px)) translateY(0) rotate(0deg) scale(1);
+		  transform: translateX(calc(-50% + 100vw + 200px)) translateY(0) rotate(0deg) scale(1);
+		  opacity: 0;
 		 }
 		}
 		
