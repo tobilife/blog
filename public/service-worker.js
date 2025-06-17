@@ -173,8 +173,9 @@ class RequestHandler {
 	}
 
 	isAssetRequest() {
-		const assetExtensions = /\.(js|css|jpg|jpeg|png|gif|svg|webp|woff2?|ttf|eot)$/i;
-		return assetExtensions.test(this.url.pathname);
+	 // Exclude font files from asset handling
+	 const assetExtensions = /\.(js|css|jpg|jpeg|png|gif|svg|webp)$/i;
+	 return assetExtensions.test(this.url.pathname);
 	}
 
 	getResourceType() {
@@ -240,6 +241,12 @@ self.addEventListener("fetch", (event) => {
 
 	// Skip admin/API routes
 	if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin/")) return;
+	
+	// Skip @fontsource requests and node_modules
+	if (url.pathname.includes("@fontsource") || url.pathname.includes("node_modules")) return;
+	
+	// Skip font files
+	if (/\.(woff2?|ttf|eot|otf)$/i.test(url.pathname)) return;
 
 	const handler = new RequestHandler(event.request);
 	event.respondWith(
