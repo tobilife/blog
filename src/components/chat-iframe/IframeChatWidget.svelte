@@ -74,23 +74,17 @@ function handleMessage(event) {
 function toggleChat() {
 	chatVisible = !chatVisible;
 	if (chatVisible) {
-		// 챗봇을 열 때
-		if (hasLoadedOnce) {
-			// 이미 한번 로드된 경우 즉시 iframe 표시
-			isIframeLoading = false;
-		} else {
-			// 최초 로딩시 3초 동안 로딩 인디케이터 표시
-			isIframeLoading = true;
-			showLoadingMinTime = true;
+		// 챗봇을 열 때 매번 3초 동안 로딩 인디케이터 표시
+		isIframeLoading = true;
+		showLoadingMinTime = true;
 
-			// 3초 후 로딩 인디케이터 숨기기
-			setTimeout(() => {
-				showLoadingMinTime = false;
-				if (checkFlag) {
-					isIframeLoading = false;
-				}
-			}, 3000);
-		}
+		// 3초 후 로딩 인디케이터 숨기기
+		setTimeout(() => {
+			showLoadingMinTime = false;
+			if (checkFlag) {
+				isIframeLoading = false;
+			}
+		}, 3000);
 
 		iframeError = false;
 		lockBodyScroll();
