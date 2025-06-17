@@ -77,9 +77,16 @@ const { remarkPluginFrontmatter } = await entry.render();
                   class="transition opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 text-white text-5xl">
             </Icon>
         </div>
-        <ImageWrapper src={image} basePath={path.join("content/posts/", getDir(entry.id))} alt="Cover Image of the Post"
-                  class="w-full h-full"
-                  loading={isFirst ? "eager" : "lazy"}>
+        <ImageWrapper 
+         src={image} 
+         basePath={path.join("content/posts/", getDir(entry.id))} 
+         alt={`${title} - 포스트 커버 이미지`}
+         class="w-full h-full"
+         loading={isFirst ? "eager" : "lazy"}
+         widths={[320, 640, 768]}
+         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+         formats={["webp", "jpg"]}
+        >
         </ImageWrapper>
     </a>}
 

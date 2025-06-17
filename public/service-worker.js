@@ -173,9 +173,9 @@ class RequestHandler {
 	}
 
 	isAssetRequest() {
-	 // Exclude font files from asset handling
-	 const assetExtensions = /\.(js|css|jpg|jpeg|png|gif|svg|webp)$/i;
-	 return assetExtensions.test(this.url.pathname);
+		// Exclude font files from asset handling
+		const assetExtensions = /\.(js|css|jpg|jpeg|png|gif|svg|webp)$/i;
+		return assetExtensions.test(this.url.pathname);
 	}
 
 	getResourceType() {
@@ -186,27 +186,27 @@ class RequestHandler {
 	}
 
 	async handle() {
-	 // Skip font files completely - bypass service worker
-	 if (/\.(woff2?|ttf|eot|otf)$/i.test(this.url.pathname)) {
-	  return fetch(this.request);
-	 }
-	 
-	 // Skip @fontsource files - bypass service worker
-	 if (this.url.pathname.includes('@fontsource')) {
-	  return fetch(this.request);
-	 }
-	 
-	 // Handle different resource types
-	 if (this.isPost) {
-	  return this.handlePost();
-	 } else if (this.isAsset) {
-	  return this.handleAsset();
-	 } else if (this.request.destination === "document") {
-	  return this.handleDocument();
-	 }
-	
-	 // Default strategy
-	 return FetchStrategies.staleWhileRevalidate(this.request, CACHE_NAMES.DYNAMIC);
+		// Skip font files completely - bypass service worker
+		if (/\.(woff2?|ttf|eot|otf)$/i.test(this.url.pathname)) {
+			return fetch(this.request);
+		}
+
+		// Skip @fontsource files - bypass service worker
+		if (this.url.pathname.includes("@fontsource")) {
+			return fetch(this.request);
+		}
+
+		// Handle different resource types
+		if (this.isPost) {
+			return this.handlePost();
+		} else if (this.isAsset) {
+			return this.handleAsset();
+		} else if (this.request.destination === "document") {
+			return this.handleDocument();
+		}
+
+		// Default strategy
+		return FetchStrategies.staleWhileRevalidate(this.request, CACHE_NAMES.DYNAMIC);
 	}
 
 	async handlePost() {
@@ -251,10 +251,10 @@ self.addEventListener("fetch", (event) => {
 
 	// Skip admin/API routes
 	if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin/")) return;
-	
+
 	// Skip @fontsource requests and node_modules
 	if (url.pathname.includes("@fontsource") || url.pathname.includes("node_modules")) return;
-	
+
 	// Skip font files
 	if (/\.(woff2?|ttf|eot|otf)$/i.test(url.pathname)) return;
 

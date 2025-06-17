@@ -1,3 +1,4 @@
+@import './fonts/font-optimization.css';
 @import './post-card-optimize.css';
 @import './performance.css';
 @tailwind components;

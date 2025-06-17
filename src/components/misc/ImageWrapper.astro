@@ -8,11 +8,24 @@ interface Props {
 	position?: string;
 	basePath?: string;
 	loading?: "lazy" | "eager";
+	widths?: number[];
+	sizes?: string;
+	formats?: Array<"webp" | "jpg" | "png">;
 }
 import { Image } from "astro:assets";
 import { url } from "../../utils/url-utils";
 
-const { id, src, alt, position = "center", basePath = "/", loading = "lazy" } = Astro.props;
+const {
+	id,
+	src,
+	alt,
+	position = "center",
+	basePath = "/",
+	loading = "lazy",
+	widths = [320, 640, 768, 1024, 1200],
+	sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px",
+	formats = ["webp"],
+} = Astro.props;
 const className = Astro.props.class;
 
 const isLocal = !(src.startsWith("/") || src.startsWith("http") || src.startsWith("https") || src.startsWith("data:"));
@@ -34,11 +47,80 @@ if (isLocal) {
 	img = await file();
 }
 
-const imageClass = "w-full h-full object-contain md:object-cover -webkit-object-contain md:-webkit-object-cover";
+const imageClass = "w-full h-full object-contain md:object-cover";
 const imageStyle = `object-position: ${position}`;
+
+// 이미지 메타데이터 설정
+const imageAlt = alt || src.split("/").pop()?.split(".")[0] || "";
 ---
-<div id={id} class:list={[className, 'overflow-hidden relative']}>
+<div id={id} class:list={[className, 'overflow-hidden relative image-wrapper']}>
     <div class="transition absolute inset-0 dark:bg-black/10 bg-opacity-50 pointer-events-none"></div>
-    {isLocal && img && <Image src={img} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} />}
-    {!isLocal && <img src={isPublic ? url(src) : src} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} />}
+    {isLocal && img && (
+		<Image 
+			src={img} 
+			alt={imageAlt} 
+			class={imageClass} 
+			style={imageStyle} 
+			loading={loading}
+			widths={widths}
+			sizes={sizes}
+			formats={formats}
+			quality={85}
+			decoding="async"
+		/>
+	)}
+    {!isLocal && (
+		<img 
+			src={isPublic ? url(src) : src} 
+			alt={imageAlt} 
+			class={imageClass} 
+			style={imageStyle} 
+			loading={loading}
+			decoding="async"
+			fetchpriority={loading === "eager" ? "high" : "low"}
+		/>
+	)}
 </div>
+
+<style>
+	.image-wrapper {
+		background-color: var(--card-bg);
+		aspect-ratio: 16 / 9;
+	}
+	
+	@media (max-width: 640px) {
+		.image-wrapper {
+			aspect-ratio: 4 / 3;
+		}
+	}
+	
+	/* 이미지 로딩 중 스켈레톤 */
+	.image-wrapper::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			90deg,
+			var(--card-bg) 0%,
+			var(--btn-regular-bg) 50%,
+			var(--card-bg) 100%
+		);
+		background-size: 200% 100%;
+		animation: skeleton 1.5s ease-in-out infinite;
+		z-index: -1;
+	}
+	
+	@keyframes skeleton {
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
+	}
+	
+	/* 이미지 로드 완료 시 스켈레톤 숨기기 */
+	.image-wrapper img {
+		z-index: 1;
+	}
+</style>

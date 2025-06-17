@@ -21,7 +21,7 @@ import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 export default defineConfig({
 	site: "https://tobilife.netlify.app/",
 	base: "/",
-	
+
 	image: {
 		service: {
 			entrypoint: "astro/assets/services/sharp",

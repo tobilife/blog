@@ -1,31 +1,34 @@
 /*
   X-Robots-Tag: all
   X-Content-Type-Options: nosniff
-  X-Frame-Options: SAMEORIGIN
+  X-Frame-Options: DENY
   X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://identity.netlify.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://www.google-analytics.com https://cloudflareinsights.com https://api.langflow.org https://*.supabase.co wss://*.supabase.co https://identity.netlify.com; frame-src 'self' https://giscus.app; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
 
-# CSS 파일 - 구글봇 접근 허용
+
 /*.css
   X-Robots-Tag: all
   Content-Type: text/css; charset=UTF-8
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 
-# JavaScript 파일 - 구글봇 접근 허용  
+
 /*.js
   X-Robots-Tag: all
   Content-Type: application/javascript; charset=UTF-8
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 
-# Astro 빌드 파일들
+
 /_astro/*
   X-Robots-Tag: all
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 
-# 폰트 파일
+
 /*.woff
   X-Robots-Tag: all
   Cache-Control: public, max-age=31536000, immutable
@@ -76,10 +79,11 @@
 /posts/*
   X-Robots-Tag: all
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
-  Vary: User-Agent
+  Vary: User-Agent, Accept-Language
 
 /
   Cache-Control: public, max-age=0, must-revalidate
+  Vary: Accept-Language
   
 /sitemap-index.xml
   Content-Type: application/xml; charset=UTF-8
@@ -91,7 +95,20 @@
   Cache-Control: public, max-age=3600
   X-Robots-Tag: all
 
+/rss.xml
+  Content-Type: application/rss+xml; charset=UTF-8
+  Cache-Control: public, max-age=3600
+  X-Robots-Tag: all
+
 /robots.txt
   Content-Type: text/plain; charset=UTF-8
   Cache-Control: public, max-age=86400
   X-Robots-Tag: all
+
+/404
+  X-Robots-Tag: noindex
+  Cache-Control: no-cache
+
+/404.html
+  X-Robots-Tag: noindex
+  Cache-Control: no-cache

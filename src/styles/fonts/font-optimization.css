@@ -1,0 +1,107 @@
+/* 한글 폰트 최적화 설정 */
+/* Pretendard 폰트 - 한글 지원 */
+@font-face {
+	font-family: 'Pretendard';
+	font-weight: 400;
+	font-display: swap;
+	src: local('Pretendard Regular'),
+		url('@fontsource/pretendard/files/pretendard-korean-400-normal.woff2') format('woff2-variations'),
+		url('@fontsource/pretendard/files/pretendard-korean-400-normal.woff2') format('woff2');
+	unicode-range: U+AC00-D7AF, U+1100-11FF, U+3130-318F, U+A960-A97F, U+D7B0-D7FF;
+}
+
+@font-face {
+	font-family: 'Pretendard';
+	font-weight: 500;
+	font-display: swap;
+	src: local('Pretendard Medium'),
+		url('@fontsource/pretendard/files/pretendard-korean-500-normal.woff2') format('woff2-variations'),
+		url('@fontsource/pretendard/files/pretendard-korean-500-normal.woff2') format('woff2');
+	unicode-range: U+AC00-D7AF, U+1100-11FF, U+3130-318F, U+A960-A97F, U+D7B0-D7FF;
+}
+
+@font-face {
+	font-family: 'Pretendard';
+	font-weight: 700;
+	font-display: swap;
+	src: local('Pretendard Bold'),
+		url('@fontsource/pretendard/files/pretendard-korean-700-normal.woff2') format('woff2-variations'),
+		url('@fontsource/pretendard/files/pretendard-korean-700-normal.woff2') format('woff2');
+	unicode-range: U+AC00-D7AF, U+1100-11FF, U+3130-318F, U+A960-A97F, U+D7B0-D7FF;
+}
+
+/* 영문 및 숫자용 Roboto 폰트 */
+@font-face {
+	font-family: 'Roboto';
+	font-weight: 400;
+	font-display: swap;
+	src: local('Roboto Regular'),
+		url('@fontsource/roboto/files/roboto-latin-400-normal.woff2') format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Roboto';
+	font-weight: 500;
+	font-display: swap;
+	src: local('Roboto Medium'),
+		url('@fontsource/roboto/files/roboto-latin-500-normal.woff2') format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Roboto';
+	font-weight: 700;
+	font-display: swap;
+	src: local('Roboto Bold'),
+		url('@fontsource/roboto/files/roboto-latin-700-normal.woff2') format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* 폰트 스택 정의 */
+:root {
+	--font-sans: 'Pretendard', 'Roboto', -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+	--font-mono: 'Fira Code', 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+}
+
+/* 기본 폰트 설정 */
+html {
+	font-family: var(--font-sans);
+	font-weight: 400;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+
+/* 한글 타이포그래피 최적화 */
+body {
+	word-break: keep-all;
+	line-break: strict;
+	hanging-punctuation: allow-end;
+	font-kerning: normal;
+}
+
+/* 코드 블럭 폰트 */
+code, pre, kbd, samp {
+	font-family: var(--font-mono);
+	font-variant-ligatures: none;
+}
+
+/* 제목 폰트 굵기 조정 */
+h1, h2, h3, h4, h5, h6 {
+	font-weight: 700;
+	letter-spacing: -0.02em;
+}
+
+/* 본문 가독성 개선 */
+p, li {
+	line-height: 1.75;
+	letter-spacing: -0.01em;
+}
+
+/* 중국어/일본어 폰트 지원 (필요시) */
+:lang(zh), :lang(ja) {
+	font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+}

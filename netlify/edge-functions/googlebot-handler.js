@@ -16,12 +16,12 @@ async function getPostsMetadata() {
 	try {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
-		
+
 		const response = await fetch("https://tobilife.netlify.app/posts-metadata.json", {
-			signal: controller.signal
+			signal: controller.signal,
 		});
 		clearTimeout(timeoutId);
-		
+
 		if (response.ok) {
 			const data = await response.json();
 			metadataCache = data.posts || {};
@@ -44,12 +44,12 @@ async function getSiteConfig() {
 	try {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
-		
+
 		const response = await fetch("https://tobilife.netlify.app/site-config.json", {
-			signal: controller.signal
+			signal: controller.signal,
 		});
 		clearTimeout(timeoutId);
-		
+
 		if (response.ok) {
 			siteConfigCache = await response.json();
 			return siteConfigCache;
@@ -66,7 +66,7 @@ async function getSiteConfig() {
 		keywords: ["AI", "RAG", "Git", "GitHub", "보험IT", "개발", "프로그래밍", "기술블로그"],
 		defaultImage: "/images/banner.png",
 		author: "TobiLife",
-		lang: "ko"
+		lang: "ko",
 	};
 }
 
@@ -123,7 +123,7 @@ export default async (request, context) => {
 	console.info(`Google bot detected: ${userAgent.substring(0, 100)} for ${url.pathname}`);
 
 	// Google Search Console URL 검사와 일반 구글봇을 구분
-	const isGoogleInspection = 
+	const isGoogleInspection =
 		lowerUserAgent.includes("google-inspectiontool") ||
 		lowerUserAgent.includes("google-structured-data-testing-tool") ||
 		lowerUserAgent.includes("google-site-verification");
@@ -139,19 +139,19 @@ export default async (request, context) => {
 	try {
 		// 먼저 실제 페이지를 제공해보고, 실패하면 fallback
 		const response = await context.next();
-		
+
 		// 응답이 성공적이면 그대로 반환
 		if (response.ok) {
 			return response;
 		}
-		
+
 		// 오류가 발생하면 fallback response
 		console.warn(`Failed to get actual page for Googlebot, using fallback`);
 		const [metadata, siteConfig] = await Promise.all([getPostsMetadata(), getSiteConfig()]);
 		return createDynamicFallbackResponse(url, metadata, siteConfig);
 	} catch (error) {
 		console.error(`Error serving page to Googlebot: ${error.message}`);
-		
+
 		// Fallback response
 		try {
 			const [metadata, siteConfig] = await Promise.all([getPostsMetadata(), getSiteConfig()]);
@@ -294,7 +294,7 @@ ${JSON.stringify(structuredData, null, 2)}
 <body>
 <header>
 <h1>${isPostPage && postData ? postData.title : siteConfig.title}</h1>
-${!isPostPage ? `<p>${siteConfig.subtitle}</p>` : ""}
+${isPostPage ? "" : `<p>${siteConfig.subtitle}</p>`}
 </header>
 <main>
 <p>${description}</p>

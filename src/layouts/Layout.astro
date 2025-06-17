@@ -1,10 +1,9 @@
 ---
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
+// 폰트 최적화: 필요한 weight만 import
 import "@fontsource/pretendard/400.css";
 import "@fontsource/pretendard/500.css";
 import "@fontsource/pretendard/700.css";
+import "../styles/fonts/font-optimization.css";
 
 import { profileConfig, siteConfig } from "@/config";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
@@ -24,15 +23,15 @@ import type { Favicon } from "../types/config";
 import { url, pathsEqual } from "../utils/url-utils";
 import "katex/dist/katex.css";
 interface Props {
- title?: string;
- banner?: string;
- description?: string;
- lang?: string;
- setOGTypeArticle?: boolean;
- publishedTime?: string;
- modifiedTime?: string;
- tags?: string[];
- author?: string;
+	title?: string;
+	banner?: string;
+	description?: string;
+	lang?: string;
+	setOGTypeArticle?: boolean;
+	publishedTime?: string;
+	modifiedTime?: string;
+	tags?: string[];
+	author?: string;
 }
 
 const { title, banner: propsBanner, description, lang: propsLang, setOGTypeArticle, publishedTime, modifiedTime, tags, author } = Astro.props;
@@ -184,30 +183,6 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
       <!-- Font Awesome -->
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       
-      <!-- Structured Data for SEO -->
-      <script is:inline type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "TobiLife(토비라이프) 블로그",
-        "url": "https://tobilife.netlify.app/",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://tobilife.netlify.app/search?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        },
-        "author": {
-          "@type": "Person",
-          "name": "TobiLife(토비라이프)",
-          "url": "https://tobilife.netlify.app/about/"
-        },
-        "description": "TobiLife(토비라이프) 블로그 - IT 개발자의 기술 블로그. AI, 보험IT 등 다양한 개발 경험과 지식을 공유합니다.",
-        "inLanguage": "ko-KR"
-        }
-        </script>
         </head>
   
   <body 
