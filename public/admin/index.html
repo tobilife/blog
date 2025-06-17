@@ -26,6 +26,20 @@
     
     // CMS 설정
     CMS.registerPreviewStyle("/styles/blog.css");
+    
+    // 프리뷰 템플릿 커스터마이징
+    var PostPreview = createClass({
+      render: function() {
+        var entry = this.props.entry;
+        
+        return h('div', {className: "custom-md"},
+          h('h1', {}, entry.getIn(['data', 'title'])),
+          h('div', {dangerouslySetInnerHTML: {__html: this.props.widgetFor('body')}})
+        );
+      }
+    });
+    
+    CMS.registerPreviewTemplate("posts", PostPreview);
   </script>
 </body>
 </html>

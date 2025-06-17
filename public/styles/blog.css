@@ -1,0 +1,404 @@
+/* CMS Preview Styles - 실제 블로그와 동일한 스타일 적용 */
+
+/* Color Variables */
+:root {
+  --hue: 250;
+  --primary: oklch(0.70 0.14 var(--hue));
+  --page-bg: oklch(0.95 0.01 var(--hue));
+  --card-bg: white;
+  --btn-content: oklch(0.55 0.12 var(--hue));
+  --btn-regular-bg: oklch(0.95 0.025 var(--hue));
+  --btn-regular-bg-hover: oklch(0.9 0.05 var(--hue));
+  --btn-regular-bg-active: oklch(0.85 0.08 var(--hue));
+  --btn-plain-bg-hover: oklch(0.95 0.025 var(--hue));
+  --btn-plain-bg-active: oklch(0.98 0.01 var(--hue));
+  --deep-text: oklch(0.25 0.02 var(--hue));
+  --line-divider: rgba(0, 0, 0, 0.08);
+  --line-color: rgba(0, 0, 0, 0.1);
+  --meta-divider: rgba(0, 0, 0, 0.2);
+  --inline-code-bg: var(--btn-regular-bg);
+  --inline-code-color: var(--btn-content);
+  --selection-bg: oklch(0.90 0.05 var(--hue));
+  --codeblock-selection: oklch(0.40 0.08 var(--hue));
+  --codeblock-bg: oklch(0.2 0.015 var(--hue));
+  --link-underline: oklch(0.93 0.04 var(--hue));
+  --link-hover: oklch(0.95 0.025 var(--hue));
+  --link-active: oklch(0.90 0.05 var(--hue));
+  --tw-prose-body: rgb(31 41 55);
+  --tw-prose-headings: rgb(17 24 39);
+  --license-block-bg: rgba(0, 0, 0, 0.03);
+  
+  /* Admonition Colors */
+  --admonitions-color-tip: oklch(0.7 0.14 180);
+  --admonitions-color-note: oklch(0.7 0.14 250);
+  --admonitions-color-important: oklch(0.7 0.14 310);
+  --admonitions-color-warning: oklch(0.7 0.14 60);
+  --admonitions-color-caution: oklch(0.6 0.2 25);
+}
+
+/* Dark mode colors */
+:root.dark {
+  --primary: oklch(0.75 0.14 var(--hue));
+  --page-bg: oklch(0.16 0.014 var(--hue));
+  --card-bg: oklch(0.23 0.015 var(--hue));
+  --btn-content: oklch(0.75 0.1 var(--hue));
+  --btn-regular-bg: oklch(0.33 0.035 var(--hue));
+  --btn-regular-bg-hover: oklch(0.38 0.04 var(--hue));
+  --btn-regular-bg-active: oklch(0.43 0.045 var(--hue));
+  --btn-plain-bg-hover: oklch(0.30 0.035 var(--hue));
+  --btn-plain-bg-active: oklch(0.27 0.025 var(--hue));
+  --line-divider: rgba(255, 255, 255, 0.08);
+  --line-color: rgba(255, 255, 255, 0.1);
+  --meta-divider: rgba(255, 255, 255, 0.2);
+  --selection-bg: oklch(0.40 0.08 var(--hue));
+  --codeblock-bg: oklch(0.17 0.015 var(--hue));
+  --link-underline: oklch(0.40 0.08 var(--hue));
+  --link-hover: oklch(0.40 0.08 var(--hue));
+  --link-active: oklch(0.35 0.07 var(--hue));
+  --tw-prose-body: rgb(229 231 235);
+  --tw-prose-headings: rgb(243 244 246);
+  --license-block-bg: var(--codeblock-bg);
+  
+  /* Admonition Colors */
+  --admonitions-color-tip: oklch(0.75 0.14 180);
+  --admonitions-color-note: oklch(0.75 0.14 250);
+  --admonitions-color-important: oklch(0.75 0.14 310);
+  --admonitions-color-warning: oklch(0.75 0.14 60);
+  --admonitions-color-caution: oklch(0.65 0.2 25);
+}
+
+/* Font Settings */
+body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Roboto", "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  color: var(--tw-prose-body);
+  background-color: var(--page-bg);
+  line-height: 1.6;
+}
+
+/* Typography - Markdown Content */
+.custom-md h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: var(--tw-prose-headings);
+}
+
+.custom-md h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: var(--tw-prose-headings);
+}
+
+.custom-md h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--tw-prose-headings);
+}
+
+.custom-md h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--tw-prose-headings);
+}
+
+.custom-md p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.custom-md ul, .custom-md ol {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.custom-md li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.custom-md ul li::marker {
+  color: var(--primary);
+}
+
+.custom-md ol li::marker {
+  color: var(--primary);
+}
+
+/* Links */
+.custom-md a:not(.no-styling) {
+  position: relative;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: var(--link-underline);
+  text-decoration-style: dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.custom-md a:not(.no-styling):hover,
+.custom-md a:not(.no-styling):active {
+  text-decoration-color: transparent;
+  background: var(--btn-plain-bg-hover);
+  border-bottom: 1px dashed var(--link-hover);
+  text-decoration: none;
+}
+
+/* Code */
+.custom-md code {
+  background-color: var(--inline-code-bg);
+  color: var(--inline-code-color);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.375rem;
+  font-family: 'JetBrains Mono Variable', 'JetBrains Mono', 'D2Coding', 'Consolas', 'Monaco', 'Menlo', ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.875em;
+}
+
+.custom-md pre {
+  background-color: var(--codeblock-bg) !important;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.custom-md pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+/* Blockquote */
+.custom-md blockquote {
+  position: relative;
+  padding-left: 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-style: normal;
+  border-left: none;
+}
+
+.custom-md blockquote:before {
+  content: '';
+  position: absolute;
+  left: -0.25rem;
+  display: block;
+  background-color: var(--btn-regular-bg);
+  height: 100%;
+  width: 0.25rem;
+  border-radius: 9999px;
+  transition: all 0.15s;
+}
+
+/* Admonitions */
+.custom-md blockquote.admonition {
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: var(--btn-regular-bg);
+  border-left: none;
+}
+
+.custom-md blockquote.admonition:before {
+  display: none;
+}
+
+.custom-md blockquote.admonition .bdm-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: -0.9rem;
+  font-weight: bold;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.custom-md blockquote.admonition .bdm-title:before {
+  content: ' ';
+  display: inline-block;
+  font-size: inherit;
+  overflow: visible;
+  margin-right: 0.6rem;
+  height: 1em;
+  width: 1em;
+  vertical-align: -0.126em;
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  transform: translateY(-0.0625rem);
+}
+
+/* Tip Admonition */
+.custom-md blockquote.admonition.bdm-tip .bdm-title {
+  color: var(--admonitions-color-tip);
+}
+
+.custom-md blockquote.admonition.bdm-tip .bdm-title:before {
+  background: var(--admonitions-color-tip);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'%3E%3Cpath d='M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.custom-md blockquote.admonition.bdm-tip:before {
+  background: var(--admonitions-color-tip);
+}
+
+/* Note Admonition */
+.custom-md blockquote.admonition.bdm-note .bdm-title {
+  color: var(--admonitions-color-note);
+}
+
+.custom-md blockquote.admonition.bdm-note .bdm-title:before {
+  background: var(--admonitions-color-note);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'%3E%3Cpath d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.custom-md blockquote.admonition.bdm-note:before {
+  background: var(--admonitions-color-note);
+}
+
+/* Important Admonition */
+.custom-md blockquote.admonition.bdm-important .bdm-title {
+  color: var(--admonitions-color-important);
+}
+
+.custom-md blockquote.admonition.bdm-important .bdm-title:before {
+  background: var(--admonitions-color-important);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'%3E%3Cpath d='M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.custom-md blockquote.admonition.bdm-important:before {
+  background: var(--admonitions-color-important);
+}
+
+/* Warning Admonition */
+.custom-md blockquote.admonition.bdm-warning .bdm-title {
+  color: var(--admonitions-color-warning);
+}
+
+.custom-md blockquote.admonition.bdm-warning .bdm-title:before {
+  background: var(--admonitions-color-warning);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'%3E%3Cpath d='M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.custom-md blockquote.admonition.bdm-warning:before {
+  background: var(--admonitions-color-warning);
+}
+
+/* Caution Admonition */
+.custom-md blockquote.admonition.bdm-caution .bdm-title {
+  color: var(--admonitions-color-caution);
+}
+
+.custom-md blockquote.admonition.bdm-caution .bdm-title:before {
+  background: var(--admonitions-color-caution);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'%3E%3Cpath d='M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.custom-md blockquote.admonition.bdm-caution:before {
+  background: var(--admonitions-color-caution);
+}
+
+/* Images */
+.custom-md img {
+  border-radius: 0.75rem;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem auto;
+}
+
+/* Horizontal Rule */
+.custom-md hr {
+  border-color: var(--line-divider);
+  border-style: dashed;
+  margin: 2rem 0;
+}
+
+/* Tables */
+.custom-md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.custom-md th {
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 2px solid var(--line-divider);
+  color: var(--tw-prose-headings);
+}
+
+.custom-md td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--line-divider);
+}
+
+.custom-md tbody tr:hover {
+  background-color: var(--btn-plain-bg-hover);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--selection-bg);
+}
+
+/* Transitions */
+* {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* CMS Preview Container */
+body {
+  padding: 2rem;
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+/* For CMS preview pane */
+.frame-content {
+  padding: 2rem;
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+/* Ensure content wrapper has the custom-md class styles */
+.frame-content > div,
+[data-slate-editor="true"] {
+  font-family: inherit;
+}
+
+/* Apply custom-md styles to preview content */
+.frame-content h1,
+.frame-content h2,
+.frame-content h3,
+.frame-content h4,
+.frame-content h5,
+.frame-content h6,
+.frame-content p,
+.frame-content ul,
+.frame-content ol,
+.frame-content blockquote,
+.frame-content pre,
+.frame-content code,
+.frame-content a,
+.frame-content img,
+.frame-content hr,
+.frame-content table {
+  /* Inherit all styles from .custom-md elements */
+}
