@@ -640,6 +640,8 @@ onDestroy(() => {
 		 bottom: 0;
 		 width: 100%;
 		 height: 100%;
+		 will-change: transform;
+		 transform-style: preserve-3d;
 		}
 		
 		/* 별 모양 만들기 위한 기본 스타일 */
@@ -650,9 +652,9 @@ onDestroy(() => {
 		 text-shadow: 0 0 6px #FFD700;
 		}
 		
-		/* 첫 번째 레이어 - 큰 별들 */
 		.stars::before {
 		 font-size: 20px;
+		 top: -10%;
 		 left: 10%;
 		 animation: star-fall-1 8s ease-in-out infinite;
 		}
@@ -664,6 +666,7 @@ onDestroy(() => {
 		 text-shadow: 0 0 5px #FFF8DC;
 		 letter-spacing: 50px;
 		 white-space: nowrap;
+		 top: -15%;
 		 left: -20%;
 		 animation: star-fall-2 10s ease-in-out infinite;
 		}
@@ -676,6 +679,7 @@ onDestroy(() => {
 		 text-shadow: 0 0 4px #FFFACD;
 		 letter-spacing: 40px;
 		 white-space: nowrap;
+		 top: -20%;
 		 left: 30%;
 		 animation: star-fall-3 12s ease-in-out infinite;
 		}
@@ -687,6 +691,7 @@ onDestroy(() => {
 		 text-shadow: 0 0 3px #FFE5E5;
 		 letter-spacing: 35px;
 		 white-space: nowrap;
+		 top: -25%;
 		 left: -40%;
 		 animation: star-fall-4 14s ease-in-out infinite;
 		}
@@ -699,6 +704,7 @@ onDestroy(() => {
 		 text-shadow: 0 0 2px #FFFFFF;
 		 letter-spacing: 25px;
 		 white-space: nowrap;
+		 top: -30%;
 		 left: 50%;
 		 animation: star-fall-5 16s ease-in-out infinite;
 		}
@@ -710,11 +716,11 @@ onDestroy(() => {
 		 text-shadow: 0 0 2px #FFF0F5;
 		 letter-spacing: 30px;
 		 white-space: nowrap;
+		 top: -35%;
 		 left: -30%;
 		 animation: star-fall-6 18s ease-in-out infinite;
 		}
 		
-		/* 눈 내리듯 떨어지는 별 애니메이션들 */
 		@keyframes star-fall-1 {
 		 from { 
 		  transform: translateY(0vh) translateX(0px);
@@ -802,7 +808,7 @@ onDestroy(() => {
 		.loading-container-space {
 		 position: absolute;
 		 top: 0; left: 0; right: 0; bottom: 0;
-		 background: oklch(0.19 0.015 var(--hue));
+		 background: #1a1a2e;
 		 display: flex;
 		 align-items: center;
 		 justify-content: center;
@@ -842,6 +848,8 @@ onDestroy(() => {
 		 width: 150px;
 		 height: 150px;
 		 animation: fly-to-moon 15s ease-in-out infinite;
+		 will-change: transform;
+		 transform-style: preserve-3d;
 		}
 		
 		@keyframes fly-to-moon {
