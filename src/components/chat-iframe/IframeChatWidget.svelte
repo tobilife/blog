@@ -13,7 +13,7 @@ let hasLoadedOnce = false; // iframe이 한번이라도 로드되었는지 추�
 let showLoadingMinTime = false; // 3초 로딩 표시 여부
 
 // 테스트용 플래그 - false로 설정하면 iframe이 로드되지 않음
-const checkFlag = false;
+const checkFlag = true;
 
 // 모바일 감지 함수
 function checkMobile() {
