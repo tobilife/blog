@@ -2,9 +2,13 @@
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
+import "@fontsource/pretendard/400.css";
+import "@fontsource/pretendard/500.css";
+import "@fontsource/pretendard/700.css";
 
 import { profileConfig, siteConfig } from "@/config";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
+import SEO from "@components/SEO.astro";
 import {
 	AUTO_MODE,
 	BANNER_HEIGHT,
@@ -20,14 +24,18 @@ import type { Favicon } from "../types/config";
 import { url, pathsEqual } from "../utils/url-utils";
 import "katex/dist/katex.css";
 interface Props {
-	title?: string;
-	banner?: string;
-	description?: string;
-	lang?: string;
-	setOGTypeArticle?: boolean;
+ title?: string;
+ banner?: string;
+ description?: string;
+ lang?: string;
+ setOGTypeArticle?: boolean;
+ publishedTime?: string;
+ modifiedTime?: string;
+ tags?: string[];
+ author?: string;
 }
 
-const { title, banner: propsBanner, description, lang: propsLang, setOGTypeArticle } = Astro.props;
+const { title, banner: propsBanner, description, lang: propsLang, setOGTypeArticle, publishedTime, modifiedTime, tags, author } = Astro.props;
 
 const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
 
@@ -84,37 +92,28 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
     </script>
     <!-- End Google Tag Manager -->
     
-    <title>{pageTitle}</title>
-
-    <meta charset="UTF-8" />
-    <meta name="description" content={description || siteConfig.subtitle} />
-    <meta name="author" content={profileConfig.name} />
-    <meta name="robots" content="index, follow" />
-    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-
-    <meta property="og:site_name" content={siteConfig.title} />
-    <meta property="og:url" content={Astro.url} />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={description || siteConfig.subtitle} />
-    {banner && <meta property="og:image" content={new URL(banner.startsWith('/') ? banner : url(banner), Astro.site || Astro.url.origin).href} />}
-    {setOGTypeArticle ? (
-      <meta property="og:type" content="article" />
-    ) : (
-      <meta property="og:type" content="website" />
-    )}
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={Astro.url} />
-    <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={description || siteConfig.subtitle} />
-    {banner && <meta name="twitter:image" content={new URL(banner.startsWith('/') ? banner : url(banner), Astro.site || Astro.url.origin).href} />}
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href={Astro.url.href} />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
+    <SEO 
+      title={pageTitle}
+      description={description || siteConfig.subtitle}
+      image={banner}
+      author={author || profileConfig.name}
+      type={setOGTypeArticle ? "article" : "website"}
+      lang={siteLang}
+      publishedTime={publishedTime}
+      modifiedTime={modifiedTime}
+      tags={tags}
+    />
+    
+    <!-- Site Verification Tags -->
     <meta name="google-site-verification" content="sXx03iWxJpMRg7shZbcEQowAmDr_jm8Z0rvZH59alOg" />
     <meta name="naver-site-verification" content="66642a782c9f3757fef173dee0a5e0bd0b098442" />
+
+    
+    
+    <!-- Preload fonts for better performance -->
+    <link rel="preload" href="/@fontsource/pretendard/files/pretendard-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="/@fontsource/pretendard/files/pretendard-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="/@fontsource/pretendard/files/pretendard-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     
     {favicons.map((favicon) => (
       <link 

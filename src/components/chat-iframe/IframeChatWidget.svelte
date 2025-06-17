@@ -83,13 +83,13 @@ function toggleChat() {
 			isIframeLoading = true;
 			showLoadingMinTime = true;
 
-			// 5초 후 로딩 인디케이터 숨기기
+			// 3초 후 로딩 인디케이터 숨기기
 			setTimeout(() => {
 				showLoadingMinTime = false;
 				if (checkFlag) {
 					isIframeLoading = false;
 				}
-			}, 5000);
+			}, 3000);
 		}
 
 		iframeError = false;

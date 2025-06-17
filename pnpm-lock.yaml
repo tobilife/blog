@@ -29,6 +29,9 @@ importers:
       '@fontsource-variable/jetbrains-mono':
         specifier: ^5.2.5
         version: 5.2.5
+      '@fontsource/pretendard':
+        specifier: ^5.2.5
+        version: 5.2.5
       '@fontsource/roboto':
         specifier: ^5.2.5
         version: 5.2.5
@@ -661,6 +664,9 @@ packages:
 
   '@fontsource-variable/jetbrains-mono@5.2.5':
     resolution: {integrity: sha512-G3sN1xq1moZd0JL+hFaA4MEdsiQS+JXC/z7m+EqA5/Fzn5CQlXGUaaNKFGQdDsFuLTnCfW0KOOSWHjygNfjEPw==}
+
+  '@fontsource/pretendard@5.2.5':
+    resolution: {integrity: sha512-UAj3l+Exfx6Sq5hySbhTQhNzkZnhzBxQdHySmjo2lifXyXpMAHv7GD7hAQTLgZfBd1WixJJkmynfJbOp+TAckg==}
 
   '@fontsource/roboto@5.2.5':
     resolution: {integrity: sha512-70r2UZ0raqLn5W+sPeKhqlf8wGvUXFWlofaDlcbt/S3d06+17gXKr3VNqDODB0I1ASme3dGT5OJj9NABt7OTZQ==}
@@ -5848,6 +5854,8 @@ snapshots:
     optional: true
 
   '@fontsource-variable/jetbrains-mono@5.2.5': {}
+
+  '@fontsource/pretendard@5.2.5': {}
 
   '@fontsource/roboto@5.2.5': {}
 

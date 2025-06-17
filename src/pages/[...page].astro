@@ -23,9 +23,8 @@ const len = page.data.length;
     description={siteConfig.subtitle}
     banner={siteConfig.banner.src}
 >
-    <!-- SEO Meta Tags for Home Page -->
+    <!-- Additional SEO Meta Tags for Home Page -->
     <meta slot="head" name="keywords" content="AI, RAG, Git, GitHub, 보험IT, 개발, 프로그래밍, 기술블로그, TobiLife, 토비라이프" />
-    <link slot="head" rel="canonical" href={Astro.url.origin} />
     <PostPage page={page}></PostPage>
     <Pagination class="mx-auto onload-animation" page={page} style={`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`}></Pagination>
 </MainGridLayout>

@@ -30,6 +30,7 @@
 		"@astrojs/svelte": "7.1.0",
 		"@astrojs/tailwind": "^6.0.2",
 		"@fontsource-variable/jetbrains-mono": "^5.2.5",
+		"@fontsource/pretendard": "^5.2.5",
 		"@fontsource/roboto": "^5.2.5",
 		"@iconify-json/fa6-brands": "^1.2.5",
 		"@iconify-json/fa6-regular": "^1.2.3",
