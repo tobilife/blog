@@ -24,15 +24,15 @@ import type { Favicon } from "../types/config";
 import { url, pathsEqual } from "../utils/url-utils";
 import "katex/dist/katex.css";
 interface Props {
- title?: string;
- banner?: string;
- description?: string;
- lang?: string;
- setOGTypeArticle?: boolean;
- publishedTime?: string;
- modifiedTime?: string;
- tags?: string[];
- author?: string;
+	title?: string;
+	banner?: string;
+	description?: string;
+	lang?: string;
+	setOGTypeArticle?: boolean;
+	publishedTime?: string;
+	modifiedTime?: string;
+	tags?: string[];
+	author?: string;
 }
 
 const { title, banner: propsBanner, description, lang: propsLang, setOGTypeArticle, publishedTime, modifiedTime, tags, author } = Astro.props;

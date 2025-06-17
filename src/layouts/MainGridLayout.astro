@@ -13,16 +13,16 @@ import { siteConfig } from "../config";
 import { BANNER_HEIGHT, BANNER_HEIGHT_EXTEND, MAIN_PANEL_OVERLAPS_BANNER_HEIGHT } from "../constants/constants";
 import Layout from "./Layout.astro";
 interface Props {
- title?: string;
- banner?: string;
- description?: string;
- lang?: string;
- setOGTypeArticle?: boolean;
- headings?: MarkdownHeading[];
- publishedTime?: string;
- modifiedTime?: string;
- tags?: string[];
- author?: string;
+	title?: string;
+	banner?: string;
+	description?: string;
+	lang?: string;
+	setOGTypeArticle?: boolean;
+	headings?: MarkdownHeading[];
+	publishedTime?: string;
+	modifiedTime?: string;
+	tags?: string[];
+	author?: string;
 }
 const { title, banner, description, lang, setOGTypeArticle, headings = [], publishedTime, modifiedTime, tags, author } = Astro.props;
 const hasBannerCredit = siteConfig.banner.enable && siteConfig.banner.credit.enable;
