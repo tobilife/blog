@@ -1,7 +1,7 @@
 // Service Worker for Blog - Network Optimization Strategy
-// Version: 1.0.0
+// Version: 1.0.1 - Skip font files
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v1.0.1";
 const CACHE_NAMES = {
 	STATIC: `static-${CACHE_VERSION}`,
 	DYNAMIC: `dynamic-${CACHE_VERSION}`,
@@ -14,7 +14,7 @@ const STATIC_ASSETS = ["/", "/about/", "/archive/"];
 
 // Resource priorities
 const RESOURCE_PRIORITY = {
-	HIGH: ["document", "style", "font"],
+	HIGH: ["document", "style"],
 	MEDIUM: ["script", "manifest"],
 	LOW: ["image", "media"],
 };
@@ -186,17 +186,27 @@ class RequestHandler {
 	}
 
 	async handle() {
-		// Handle different resource types
-		if (this.isPost) {
-			return this.handlePost();
-		} else if (this.isAsset) {
-			return this.handleAsset();
-		} else if (this.request.destination === "document") {
-			return this.handleDocument();
-		}
-
-		// Default strategy
-		return FetchStrategies.staleWhileRevalidate(this.request, CACHE_NAMES.DYNAMIC);
+	 // Skip font files completely - bypass service worker
+	 if (/\.(woff2?|ttf|eot|otf)$/i.test(this.url.pathname)) {
+	  return fetch(this.request);
+	 }
+	 
+	 // Skip @fontsource files - bypass service worker
+	 if (this.url.pathname.includes('@fontsource')) {
+	  return fetch(this.request);
+	 }
+	 
+	 // Handle different resource types
+	 if (this.isPost) {
+	  return this.handlePost();
+	 } else if (this.isAsset) {
+	  return this.handleAsset();
+	 } else if (this.request.destination === "document") {
+	  return this.handleDocument();
+	 }
+	
+	 // Default strategy
+	 return FetchStrategies.staleWhileRevalidate(this.request, CACHE_NAMES.DYNAMIC);
 	}
 
 	async handlePost() {
