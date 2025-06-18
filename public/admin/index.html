@@ -27,19 +27,133 @@
     // CMS 설정
     CMS.registerPreviewStyle("/styles/blog.css");
     
-    // 프리뷰 템플릿 커스터마이징
-    var PostPreview = createClass({
+    // 커스텀 위젯으로 마크다운 렌더링 처리
+    CMS.registerPreviewTemplate("posts", createClass({
       render: function() {
-        var entry = this.props.entry;
+        const entry = this.props.entry;
+        const title = entry.getIn(['data', 'title']) || '';
+        const date = entry.getIn(['data', 'published']);
+        const category = entry.getIn(['data', 'category']) || '';
+        const tags = entry.getIn(['data', 'tags']) || [];
         
-        return h('div', {className: "custom-md"},
-          h('h1', {}, entry.getIn(['data', 'title'])),
-          h('div', {dangerouslySetInnerHTML: {__html: this.props.widgetFor('body')}})
+        return h('article', {className: "custom-md"},
+          h('header', {},
+            h('h1', {}, title),
+            date && h('p', {className: "text-50"}, 
+              new Date(date).toLocaleDateString('ko-KR', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })
+            ),
+            category && h('p', {}, 
+              h('span', {className: "text-75"}, '카테고리: '),
+              h('span', {className: "text-primary"}, category)
+            ),
+            tags.size > 0 && h('p', {}, 
+              h('span', {className: "text-75"}, '태그: '),
+              tags.map(tag => h('span', {className: "tag", key: tag}, tag)).toArray()
+            )
+          ),
+          h('div', {className: "content"}, 
+            this.props.widgetFor('body')
+          )
         );
+      }
+    }));
+    
+    // Decap CMS의 마크다운 프로세서 확장
+    // 기본 마크다운 렌더러가 ::: 문법을 처리하지 못하므로
+    // registerEditorComponent를 사용하여 커스텀 컴포넌트 추가
+    CMS.registerEditorComponent({
+      id: 'note',
+      label: 'Note',
+      fields: [{name: 'text', label: 'Note text', widget: 'text'}],
+      pattern: /^:::note\n([\s\S]*?)\n:::$/m,
+      fromBlock: function(match) {
+        return {
+          text: match[1]
+        };
+      },
+      toBlock: function(obj) {
+        return ':::note\n' + obj.text + '\n:::';
+      },
+      toPreview: function(obj) {
+        return '<blockquote class="admonition bdm-note"><span class="bdm-title">NOTE</span><p>' + obj.text + '</p></blockquote>';
       }
     });
     
-    CMS.registerPreviewTemplate("posts", PostPreview);
+    CMS.registerEditorComponent({
+      id: 'tip',
+      label: 'Tip',
+      fields: [{name: 'text', label: 'Tip text', widget: 'text'}],
+      pattern: /^:::tip\n([\s\S]*?)\n:::$/m,
+      fromBlock: function(match) {
+        return {
+          text: match[1]
+        };
+      },
+      toBlock: function(obj) {
+        return ':::tip\n' + obj.text + '\n:::';
+      },
+      toPreview: function(obj) {
+        return '<blockquote class="admonition bdm-tip"><span class="bdm-title">TIP</span><p>' + obj.text + '</p></blockquote>';
+      }
+    });
+    
+    CMS.registerEditorComponent({
+      id: 'important',
+      label: 'Important',
+      fields: [{name: 'text', label: 'Important text', widget: 'text'}],
+      pattern: /^:::important\n([\s\S]*?)\n:::$/m,
+      fromBlock: function(match) {
+        return {
+          text: match[1]
+        };
+      },
+      toBlock: function(obj) {
+        return ':::important\n' + obj.text + '\n:::';
+      },
+      toPreview: function(obj) {
+        return '<blockquote class="admonition bdm-important"><span class="bdm-title">IMPORTANT</span><p>' + obj.text + '</p></blockquote>';
+      }
+    });
+    
+    CMS.registerEditorComponent({
+      id: 'warning',
+      label: 'Warning',
+      fields: [{name: 'text', label: 'Warning text', widget: 'text'}],
+      pattern: /^:::warning\n([\s\S]*?)\n:::$/m,
+      fromBlock: function(match) {
+        return {
+          text: match[1]
+        };
+      },
+      toBlock: function(obj) {
+        return ':::warning\n' + obj.text + '\n:::';
+      },
+      toPreview: function(obj) {
+        return '<blockquote class="admonition bdm-warning"><span class="bdm-title">WARNING</span><p>' + obj.text + '</p></blockquote>';
+      }
+    });
+    
+    CMS.registerEditorComponent({
+      id: 'caution',
+      label: 'Caution',
+      fields: [{name: 'text', label: 'Caution text', widget: 'text'}],
+      pattern: /^:::caution\n([\s\S]*?)\n:::$/m,
+      fromBlock: function(match) {
+        return {
+          text: match[1]
+        };
+      },
+      toBlock: function(obj) {
+        return ':::caution\n' + obj.text + '\n:::';
+      },
+      toPreview: function(obj) {
+        return '<blockquote class="admonition bdm-caution"><span class="bdm-title">CAUTION</span><p>' + obj.text + '</p></blockquote>';
+      }
+    });
   </script>
 </body>
 </html>
