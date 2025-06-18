@@ -34,10 +34,14 @@
 [[edge_functions]]
   path = "/api/chat"
   function = "langflow-proxy-edge"
+
+[[edge_functions]]
+  path = "/api/og-image"
+  function = "og-image-generator"
   
-  [[edge_functions]]
-    path = "/api/cache/check"
-    function = "cache-invalidator"
+[[edge_functions]]
+  path = "/api/cache/check"
+  function = "cache-invalidator"
 
 # Sitemap XML files - XML content type 명시
 [[headers]]

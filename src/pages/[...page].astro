@@ -16,12 +16,15 @@ export const getStaticPaths = (async ({ paginate }) => {
 const { page } = Astro.props;
 
 const len = page.data.length;
+
+// 동적 OG 이미지 URL 생성
+const ogImageUrl = `/api/og-image?type=home&title=${encodeURIComponent(siteConfig.title)}&description=${encodeURIComponent(siteConfig.subtitle)}`;
 ---
 
 <MainGridLayout 
     title={siteConfig.title}
     description={siteConfig.subtitle}
-    banner={siteConfig.banner.src}
+    banner={ogImageUrl}
 >
     <!-- Additional SEO Meta Tags for Home Page -->
     <meta slot="head" name="keywords" content="AI, RAG, Git, GitHub, 보험IT, 개발, 프로그래밍, 기술블로그, TobiLife, 토비라이프" />
