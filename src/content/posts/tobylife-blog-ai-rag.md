@@ -2,13 +2,21 @@
 title: 토비라이프 블로그 AI 적용 여정
 slug: tobylife-blog-ai-rag
 published: 2024-05-19T09:01:00.000Z
-description: 'Next.js 챗봇에 RAG 시스템을 적용하여 블로그 검색 기능을 구현한 과정과 하이브리드 검색 적용 경험을 공유합니다'
-image: ''
-tags: [RAG, AI, Chatbot, Next.js, Supabase, Vector Search, Hybrid Search, 임베딩, 검색 시스템]
+description: Next.js 챗봇에 RAG 시스템을 적용하여 블로그 검색 기능을 구현한 과정과 하이브리드 검색 적용 경험을 공유합니다
 category: AI
-draft: false 
+tags:
+  - RAG
+  - AI
+  - Chatbot
+  - Next.js
+  - Supabase
+  - Vector Search
+  - Hybrid Search
+  - 임베딩
+  - 검색 시스템
+image: /images/uploads/main.png
+draft: false
 ---
-
 ## 적용 동기
 
 요즘 핫한 RAG(Retrieval-Augmented Generation) 시스템을\
@@ -19,34 +27,23 @@ draft: false
 답변해주는 시스템을 만들어보기로 했습니다.<br>
 라고 쓰고 **자기만족**이라 읽는다.
 
-
 ## 프로젝트 개요: 무엇을 만들었나?
 
 ### 핵심 기능
-- 🔍 **자연어 질문 처리**: "토비라이프 여정글 보여줘"
-- 🤖 **AI 기반 검색**: 단순 키워드 매칭이 아닌 의미 기반 검색
-- ⚡ **하이브리드 검색**: 벡터 검색 + 키워드 검색 조합으로 정확도 향상
-- 🔄 **자동 인덱싱**: GitHub Actions로 하루 3번 자동 업데이트 또는 빌드시 업데이트
-- 💾 **캐싱 시스템**: Redis로 검색 성능 최적화
 
-### 기술 스택 선택 이유
+* 🔍 **자연어 질문 처리**: "토비라이프 여정글 보여줘"
+* 🤖 **AI 기반 검색**: 단순 키워드 매칭이 아닌 의미 기반 검색
+* ⚡ **하이브리드 검색**: 벡터 검색 + 키워드 검색 조합으로 정확도 향상
+* 🔄 **자동 인덱싱**: GitHub Actions로 하루 3번 자동 업데이트 또는 빌드시 업데이트
+* 💾 **캐싱 시스템**: Redis로 검색 성능 최적화
 
-```mermaid
-graph TB
-    A[Next.js 챗봇] --> B[RAG 시스템]
-    B --> C[Supabase Vector DB]
-    B --> D[임베딩 생성]
-    B --> E[하이브리드 검색]
-    
-    C --> F[pgvector 확장]
-    D --> G[HuggingFace API]
-    D --> H[Transformers.js]
-    D --> I[Groq LLM 폴백]
-    
-    E --> J[벡터 유사도 검색]
-    E --> K[키워드 매칭]
-    E --> L[결과 리랭킹]
-```
+
+
+### 챗봇 FLOW
+
+![](/images/uploads/d1.png)
+
+
 
 ## 기술 선택 과정: 왜 이 스택을 선택했나?
 
@@ -66,10 +63,15 @@ export function savePosts(posts: any[]) {
 ```
 
 **Supabase를 선택한 이유:**
-- 무료 플랜으로 500MB 스토리지 제공 (블로그에는 충분)
-- pgvector 확장 지원으로 벡터 검색 가능
-- PostgreSQL 기반으로 안정적
-- Vercel과의 통합 용이
+
+* 무료 플랜으로 500MB 스토리지 제공 (블로그에는 충분)
+* pgvector 확장 지원으로 벡터 검색 가능
+* PostgreSQL 기반으로 안정적
+* Vercel과의 통합 용이
+
+![](/images/uploads/supa.png)
+
+![](/images/uploads/chatlog.png)
 
 ### 2. 임베딩 생성: 3단계 폴백 전략
 
@@ -104,9 +106,10 @@ export async function getEmbedding(text: string): Promise<number[]> {
 ```
 
 **각 방법의 장단점:**
-- **HuggingFace API**: 가장 정확하지만 API 호출 제한 있음
-- **Transformers.js**: 로컬 실행으로 무제한이지만 Vercel에서 사용 불가
-- **해시 기반**: 정확도는 낮지만 항상 작동
+
+* **HuggingFace API**: 가장 정확하지만 API 호출 제한 있음
+* **Transformers.js**: 로컬 실행으로 무제한이지만 Vercel에서 사용 불가
+* **해시 기반**: 정확도는 낮지만 항상 작동
 
 ### 3. 하이브리드 검색: 정확도를 높이는 비결
 
@@ -147,9 +150,10 @@ export function splitIntoChunks(
 ```
 
 **개선 포인트:**
-- 헤더(#, ##, ###)를 기준으로 의미 단위 분할
-- 코드 블록은 보존하여 컨텍스트 유지
-- 오버랩을 통해 경계 부분 정보 손실 방지
+
+* 헤더(#, ##, ###)를 기준으로 의미 단위 분할
+* 코드 블록은 보존하여 컨텍스트 유지
+* 오버랩을 통해 경계 부분 정보 손실 방지
 
 ### 2. 하이브리드 검색 구현
 
@@ -280,9 +284,15 @@ function mergeAndRerank(
 }
 ```
 
+![](/images/uploads/log.png)
+
+
+
 ### 5. 캐싱 시스템: 성능 최적화
 
 Redis(Upstash)를 활용한 검색 결과 캐싱
+
+![](/images/uploads/redis.png)
 
 ```typescript
 // lib/blog-rag/cache.ts
@@ -548,39 +558,41 @@ jobs:
 ### 적용하고 느낀점
 
 1. **하이브리드 검색의 위력**
-   - 벡터 검색: 의미적 유사성 파악 (예: "AI" ≈ "인공지능")
-   - 키워드 검색: 정확한 용어 매칭 (예: "Portfolio")
-   - 둘을 조합하면 각각의 단점을 보완
 
+   * 벡터 검색: 의미적 유사성 파악 (예: "AI" ≈ "인공지능")
+   * 키워드 검색: 정확한 용어 매칭 (예: "Portfolio")
+   * 둘을 조합하면 각각의 단점을 보완
 2. **폴백 전략의 중요성**
-   - 외부 API는 언제든 실패할 수 있음
-   - 정확도는 낮더라도 항상 작동하는 폴백 필요
-   - 사용자는 "느리지만 작동"을 "안 됨"보다 선호
 
+   * 외부 API는 언제든 실패할 수 있음
+   * 정확도는 낮더라도 항상 작동하는 폴백 필요
+   * 사용자는 "느리지만 작동"을 "안 됨"보다 선호
 3. **청크 크기의 트레이드오프**
-   - 작은 청크: 정확한 매칭, 하지만 컨텍스트 부족
-   - 큰 청크: 풍부한 컨텍스트, 하지만 노이즈 증가
-   - 의미 단위(섹션/문단) 분할이 최적
 
+   * 작은 청크: 정확한 매칭, 하지만 컨텍스트 부족
+   * 큰 청크: 풍부한 컨텍스트, 하지만 노이즈 증가
+   * 의미 단위(섹션/문단) 분할이 최적
 4. **프로덕션 환경 고려사항**
-   - Vercel 같은 서버리스 환경의 제약 미리 파악
-   - 로컬과 프로덕션 환경 분리 전략 필수
-   - 모니터링과 로깅으로 문제 조기 발견
+
+   * Vercel 같은 서버리스 환경의 제약 미리 파악
+   * 로컬과 프로덕션 환경 분리 전략 필수
+   * 모니터링과 로깅으로 문제 조기 발견
 
 ## 향후 개선 계획
 
 1. **Fine-tuning된 임베딩 모델**
-   - 블로그 도메인에 특화된 임베딩 모델 학습
-   - 블로그 용어에 최적화
 
+   * 블로그 도메인에 특화된 임베딩 모델 학습
+   * 블로그 용어에 최적화
 2. **검색 분석 대시보드**
-   - 인기 검색어 추적
-   - 검색 실패율 모니터링
-   - 사용자 피드백 수집
 
+   * 인기 검색어 추적
+   * 검색 실패율 모니터링
+   * 사용자 피드백 수집
 3. **다국어 검색 강화**
-   - 한영 혼용 검색 개선
-   - 언어별 가중치 조정
+
+   * 한영 혼용 검색 개선
+   * 언어별 가중치 조정
 
 ## 마무리: RAG는 생각보다 가까이 있다
 
@@ -593,11 +605,13 @@ RAG 시스템이라고 하면 거창해 보이지만,
 최신 기술과 최고의 정확도를 추구하기보다는,<br>실제로 작동하고 유용한 시스템을 만드는 것이 먼저입니다.<br>
 생각보다 어렵지 않고, 사용자 경험을 크게 개선할 수 있습니다.<br>
 다만, 사용된 기능은 무료플랜으로 작업한거라,<br>한정된 limit이 아쉬웠습니다.
----
+
+- - -
 
 ## 🔗 참고 자료
-- [Supabase pgvector 문서](https://supabase.com/docs/guides/database/extensions/pgvector)
-- [HuggingFace Inference API](https://huggingface.co/docs/api-inference/index)
-- [Upstash Redis](https://upstash.com/)
-- [neon](https://neon.com/docs/get-started-with-neon/signing-up)
-- [supabase](https://supabase.com/docs/guides/functions)
+
+* [Supabase pgvector 문서](https://supabase.com/docs/guides/database/extensions/pgvector)
+* [HuggingFace Inference API](https://huggingface.co/docs/api-inference/index)
+* [Upstash Redis](https://upstash.com/)
+* [neon](https://neon.com/docs/get-started-with-neon/signing-up)
+* [supabase](https://supabase.com/docs/guides/functions)
