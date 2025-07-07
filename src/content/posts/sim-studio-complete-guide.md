@@ -21,7 +21,6 @@ draft: false
 LangChain, AutoGPT, CrewAI...<br> 
 <br>
 이미 시장에는 AI 에이전트 프레임워크가 넘쳐나죠. <br>
-그런데 Sim Studio를 써보고 나서 생각이 완전히 바뀌었어요.<br>
 
 제가 평소에 개발하면서 가장 불편했던게,<br>
 간단한 자동화 하나 만들려고 해도 보일러플레이트 코드를 수십 줄씩 써야 한다는 거였어요. <br>
@@ -86,8 +85,8 @@ Ollama로 로컬 모델 돌리니까 비용이 0달러예요.<br>
 * Git
 * 텍스트 에디터 (VS Code 추천)
 
-:::warning 
-
+:::warning
+<br>
 \[Windows 사용자 주의!]\
 Windows에서는 WSL2를 먼저 설정하세요<br>
 Docker Desktop만 깔면 된다고 생각하시면 큰 오산입니다.<br>
@@ -159,7 +158,7 @@ cd sim
 cp sim/.env.example sim/.env
 ```
 
-:::caution 
+:::caution
 
 \[Windows 특별 주의사항]<br>
 Windows에서 가장 많이 겪는 문제:<br>
