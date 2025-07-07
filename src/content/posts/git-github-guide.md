@@ -10,7 +10,7 @@ tags:
   - 가이드
   - 초보
 image: /images/uploads/github-6980894_640.webp
-draft: false
+draft: true
 ---
 # 🚀 Git/GitHub 명령어 완벽 가이드 (초보자를 위한 상세 설명)
 
