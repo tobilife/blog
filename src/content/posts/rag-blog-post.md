@@ -190,7 +190,7 @@ class DocumentLoader:
         for root, dirs, files in os.walk(self.docs_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                print(f"📄 로딩 중: {file}")
+                print(f"로딩 중: {file}")
                 
                 try:
                     # PDF 파일
@@ -219,9 +219,9 @@ class DocumentLoader:
                     all_documents.extend(splits)
                     
                 except Exception as e:
-                    print(f"❌ 오류 발생 ({file}): {str(e)}")
+                    print(f"오류 발생 ({file}): {str(e)}")
         
-        print(f"✅ 총 {len(all_documents)}개의 문서 청크 로드 완료!")
+        print(f"총 {len(all_documents)}개의 문서 청크 로드 완료!")
         return all_documents
 ```
 
@@ -261,7 +261,7 @@ class RAGEngine:
     
     def create_vectorstore(self, documents: List[Document]):
         """문서로부터 벡터 저장소 생성"""
-        print("🔄 벡터 데이터베이스 생성 중...")
+        print("벡터 데이터베이스 생성 중...")
         
         # ChromaDB 클라이언트 설정
         client = chromadb.PersistentClient(path=self.persist_directory)
@@ -275,11 +275,11 @@ class RAGEngine:
             collection_name="company_docs"
         )
         
-        print("✅ 벡터 데이터베이스 생성 완료!")
+        print("벡터 데이터베이스 생성 완료!")
     
     def load_vectorstore(self):
         """기존 벡터 저장소 로드"""
-        print("🔄 기존 벡터 데이터베이스 로드 중...")
+        print("기존 벡터 데이터베이스 로드 중...")
         
         client = chromadb.PersistentClient(path=self.persist_directory)
         
@@ -290,7 +290,7 @@ class RAGEngine:
             collection_name="company_docs"
         )
         
-        print("✅ 벡터 데이터베이스 로드 완료!")
+        print("벡터 데이터베이스 로드 완료!")
     
     def setup_qa_chain(self):
         """QA 체인 설정"""
@@ -371,7 +371,7 @@ if 'chat_history' not in st.session_state:
 
 def initialize_rag_engine():
     """RAG 엔진 초기화"""
-    with st.spinner("🚀 AI 엔진을 초기화하는 중..."):
+    with st.spinner("AI 엔진을 초기화하는 중..."):
         try:
             rag_engine = RAGEngine()
             
@@ -379,7 +379,7 @@ def initialize_rag_engine():
             if os.path.exists("./chroma_db"):
                 rag_engine.load_vectorstore()
             else:
-                st.warning("⚠️ 문서 데이터베이스가 없습니다. 문서를 업로드해주세요.")
+                st.warning("문서 데이터베이스가 없습니다. 문서를 업로드해주세요.")
                 return None
             
             rag_engine.setup_qa_chain()
@@ -390,12 +390,12 @@ def initialize_rag_engine():
             return None
 
 def main():
-    st.title("🏢 회사 문서 AI 검색 시스템")
+    st.title("회사 문서 AI 검색 시스템")
     st.markdown("---")
     
     # 사이드바: 문서 관리
     with st.sidebar:
-        st.header("📁 문서 관리")
+        st.header("문서 관리")
         
         # 문서 업로드
         uploaded_files = st.file_uploader(
@@ -405,7 +405,7 @@ def main():
         )
         
         if uploaded_files:
-            if st.button("📤 업로드한 문서 처리하기"):
+            if st.button("업로드한 문서 처리하기"):
                 # documents 폴더 생성
                 os.makedirs("documents", exist_ok=True)
                 
@@ -425,20 +425,20 @@ def main():
                         rag_engine.create_vectorstore(documents)
                         rag_engine.setup_qa_chain()
                         st.session_state.rag_engine = rag_engine
-                        st.success("✅ 문서 처리 완료!")
+                        st.success("문서 처리 완료!")
                         st.rerun()
         
         st.markdown("---")
         
         # 현재 등록된 문서 표시
         if os.path.exists("documents"):
-            st.subheader("📚 등록된 문서")
+            st.subheader("등록된 문서")
             files = os.listdir("documents")
             for file in files:
                 st.text(f"• {file}")
         
         # 채팅 기록 초기화
-        if st.button("🗑️ 대화 기록 삭제"):
+        if st.button("대화 기록 삭제"):
             st.session_state.chat_history = []
             st.rerun()
     
@@ -446,7 +446,7 @@ def main():
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.header("💬 AI와 대화하기")
+        st.header("AI와 대화하기")
         
         # RAG 엔진 초기화
         if st.session_state.rag_engine is None:
@@ -460,7 +460,7 @@ def main():
                 placeholder="예: 우리 회사의 연차 사용 규정이 어떻게 되나요?"
             )
             
-            if st.button("🔍 검색") and user_question:
+            if st.button("검색") and user_question:
                 with st.spinner("답변을 생성하는 중..."):
                     try:
                         # 답변 생성
@@ -479,36 +479,36 @@ def main():
             
             # 채팅 기록 표시
             st.markdown("---")
-            st.subheader("📝 대화 기록")
+            st.subheader("대화 기록")
             
             for chat in reversed(st.session_state.chat_history):
                 with st.container():
-                    st.markdown(f"**🕐 {chat['timestamp']}**")
-                    st.markdown(f"**👤 질문:** {chat['question']}")
-                    st.markdown(f"**🤖 답변:** {chat['answer']}")
+                    st.markdown(f"**{chat['timestamp']}**")
+                    st.markdown(f"**질문:** {chat['question']}")
+                    st.markdown(f"**답변:** {chat['answer']}")
                     if chat['sources']:
-                        st.markdown(f"**📌 출처:** {', '.join(chat['sources'])}")
+                        st.markdown(f"**출처:** {', '.join(chat['sources'])}")
                     st.markdown("---")
         else:
-            st.info("👈 왼쪽 사이드바에서 문서를 업로드해주세요.")
+            st.info("왼쪽 사이드바에서 문서를 업로드해주세요.")
     
     with col2:
-        st.header("📊 시스템 상태")
+        st.header("시스템 상태")
         
         # 시스템 상태 표시
         if st.session_state.rag_engine:
-            st.success("✅ AI 엔진 활성화")
+            st.success("AI 엔진 활성화")
             
             # 벡터 저장소 정보
             if st.session_state.rag_engine.vectorstore:
                 collection = st.session_state.rag_engine.vectorstore._collection
                 st.metric("저장된 문서 청크", collection.count())
         else:
-            st.warning("⚠️ AI 엔진 비활성화")
+            st.warning("AI 엔진 비활성화")
         
         # 사용 가이드
         st.markdown("---")
-        st.subheader("💡 사용 방법")
+        st.subheader("사용 방법")
         st.markdown("""
         1. **문서 업로드**: 왼쪽 사이드바에서 회사 문서를 업로드
         2. **질문하기**: 자연스러운 한국어로 질문 입력
