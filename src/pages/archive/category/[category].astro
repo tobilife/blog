@@ -13,22 +13,24 @@ export async function getStaticPaths() {
 	// 빈 카테고리 필터링
 	const validCategories = categories.filter((category) => category.name && category.name.trim() !== "");
 
-	// Simply return all categories - Astro handles URL encoding automatically
+	// URL을 소문자로 생성하여 Netlify 리다이렉트 방지
 	return validCategories.map((category) => {
 		const categoryPosts = posts.filter(p => p.data.category === category.name);
 		return {
 			params: {
-				category: category.name.trim(),
+				category: category.name.trim().toLowerCase(),
 			},
 			props: {
+				originalName: category.name.trim(),
 				postCount: categoryPosts.length,
 			},
 		};
 	});
 }
 
-const category = Astro.params.category;
-const { postCount } = Astro.props;
+const categorySlug = Astro.params.category;
+const { originalName, postCount } = Astro.props;
+const category = originalName || categorySlug;
 
 // SEO 최적화된 타이틀과 설명
 const pageTitle = `${category} 카테고리`;

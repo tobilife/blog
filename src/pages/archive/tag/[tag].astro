@@ -27,19 +27,21 @@ export async function getStaticPaths() {
 
 	const allTagsArray = Array.from(tagPostCounts.keys()).filter((tag) => tag && tag.trim() !== "");
 
-	// Simply return all tags - Astro handles URL encoding automatically
+	// URL을 소문자로 생성하여 Netlify 리다이렉트 방지
 	return allTagsArray.map((tag) => ({
 		params: {
-			tag: tag,
+			tag: tag.toLowerCase(),
 		},
 		props: {
+			originalName: tag,
 			postCount: tagPostCounts.get(tag) || 0,
 		},
 	}));
 }
 
-const tag = Astro.params.tag;
-const { postCount } = Astro.props;
+const tagSlug = Astro.params.tag;
+const { originalName, postCount } = Astro.props;
+const tag = originalName || tagSlug;
 
 // SEO 최적화된 타이틀과 설명
 const pageTitle = `#${tag} 태그`;
