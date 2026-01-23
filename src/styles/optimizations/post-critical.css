@@ -1,12 +1,7 @@
-/* Critical CSS for post pages - prevent FOUC */
+/* Critical CSS for post pages - layout stabilization */
 
-/* Pre-load essential styles */
+/* Post container is immediately visible - animations handled by transition.css */
 #post-container {
-	opacity: 0;
-	transition: opacity 0.3s ease-out;
-}
-
-#post-container.loaded {
 	opacity: 1;
 }
 
@@ -128,36 +123,11 @@ pre {
 	background-color: #161b22;
 }
 
-/* Hide elements until styles are loaded */
-.onload-animation {
-	opacity: 0;
-	animation: none;
-}
-
-/* Quick fade-in for loaded content */
-@keyframes quickFadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-.post-loaded .onload-animation {
-	animation: quickFadeIn 0.3s ease-out forwards;
-}
-
-/* Stagger animations for smooth appearance */
-.post-loaded .onload-animation:nth-child(1) { animation-delay: 0ms; }
-.post-loaded .onload-animation:nth-child(2) { animation-delay: 50ms; }
-.post-loaded .onload-animation:nth-child(3) { animation-delay: 100ms; }
-.post-loaded .onload-animation:nth-child(4) { animation-delay: 150ms; }
-.post-loaded .onload-animation:nth-child(5) { animation-delay: 200ms; }
-.post-loaded .onload-animation:nth-child(6) { animation-delay: 250ms; }
-.post-loaded .onload-animation:nth-child(7) { animation-delay: 300ms; }
+/*
+ * IMPORTANT: Animation handling is now unified in transition.css
+ * Do NOT add .onload-animation rules here - they conflict with swup transitions
+ * This file only handles layout stabilization to prevent content shifts
+ */
 
 /* Prevent Giscus layout shift */
 .giscus-frame {
@@ -166,13 +136,5 @@ pre {
 
 /* Mobile-specific optimizations */
 @media (max-width: 768px) {
-	/* Faster animations on mobile */
-	.post-loaded .onload-animation {
-		animation-duration: 0.2s;
-	}
-	
-	/* Reduce animation delays on mobile */
-	.post-loaded .onload-animation:nth-child(n) {
-		animation-delay: 0ms !important;
-	}
+	/* Faster animations on mobile - handled by transition.css */
 }

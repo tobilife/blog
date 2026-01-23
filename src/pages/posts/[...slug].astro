@@ -117,53 +117,23 @@ const breadcrumbJsonLd = {
     <style slot="head" is:inline set:html={postCriticalCSS}></style>
     <!-- Post page load optimization script -->
     <script slot="head" is:inline>
-        // Prevent FOUC by managing load states
-        document.addEventListener('DOMContentLoaded', function() {
+        // Simple post load handling - add classes immediately to trigger animations
+        // Works for both initial page load and swup navigation
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPostPage);
+        } else {
+            initPostPage();
+        }
+
+        function initPostPage() {
             const postContainer = document.getElementById('post-container');
             if (postContainer) {
-                postContainer.classList.add('loaded');
-                document.body.classList.add('post-loaded');
+                // Use requestAnimationFrame for smooth animation start
+                requestAnimationFrame(() => {
+                    postContainer.classList.add('loaded');
+                    document.body.classList.add('post-loaded');
+                });
             }
-        });
-        
-        // Ensure images are loaded before showing
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', handleImagesLoad);
-        } else {
-            handleImagesLoad();
-        }
-        
-        function handleImagesLoad() {
-            const images = document.querySelectorAll('#post-container img');
-            let loadedCount = 0;
-            const totalImages = images.length;
-            
-            if (totalImages === 0) {
-                document.body.classList.add('post-loaded');
-                return;
-            }
-            
-            images.forEach(img => {
-                if (img.complete) {
-                    loadedCount++;
-                    if (loadedCount === totalImages) {
-                        document.body.classList.add('post-loaded');
-                    }
-                } else {
-                    img.addEventListener('load', () => {
-                        loadedCount++;
-                        if (loadedCount === totalImages) {
-                            document.body.classList.add('post-loaded');
-                        }
-                    });
-                    img.addEventListener('error', () => {
-                        loadedCount++;
-                        if (loadedCount === totalImages) {
-                            document.body.classList.add('post-loaded');
-                        }
-                    });
-                }
-            });
         }
     </script>
     <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
