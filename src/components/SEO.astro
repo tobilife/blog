@@ -29,8 +29,9 @@ const {
 	nofollow = false,
 } = Astro.props;
 
-const siteUrl = Astro.site || "https://tobilife.netlify.app";
-const fullImageUrl = image.startsWith("http") ? image : `${siteUrl}${image}`;
+const siteUrl = (Astro.site || "https://tobilife.netlify.app").toString().replace(/\/$/, '');
+const normalizedImage = image.startsWith('/') ? image : `/${image}`;
+const fullImageUrl = image.startsWith("http") ? image : `${siteUrl}${normalizedImage}`;
 const canonicalUrl = canonical || Astro.url.href;
 
 // robots meta content 생성
