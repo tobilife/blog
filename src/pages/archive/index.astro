@@ -3,9 +3,54 @@ import ArchivePanel from "@components/ArchivePanel.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getSortedPosts, getCategoryList } from "@utils/content-utils";
+import { siteConfig } from "src/config";
+
+const posts = await getSortedPosts();
+const categories = await getCategoryList();
+
+const pageTitle = `${i18n(I18nKey.archive)} - ${siteConfig.title}`;
+const pageDescription = `${siteConfig.title} 블로그의 모든 글을 카테고리와 태그별로 확인하세요. 총 ${posts.length}개의 포스트가 ${categories.length}개 카테고리에 정리되어 있습니다.`;
+
+// Breadcrumb JSON-LD
+const breadcrumbJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{
+			"@type": "ListItem",
+			"position": 1,
+			"name": "홈",
+			"item": Astro.site?.href || Astro.url.origin
+		},
+		{
+			"@type": "ListItem",
+			"position": 2,
+			"name": "아카이브",
+			"item": Astro.url.href
+		}
+	]
+};
+
+// CollectionPage JSON-LD
+const collectionJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "CollectionPage",
+	"name": pageTitle,
+	"description": pageDescription,
+	"url": Astro.url.href,
+	"isPartOf": {
+		"@type": "WebSite",
+		"name": siteConfig.title,
+		"url": Astro.site?.href || Astro.url.origin
+	},
+	"numberOfItems": posts.length
+};
 ---
 
-<MainGridLayout title={i18n(I18nKey.archive)}>
+<MainGridLayout title={pageTitle} description={pageDescription}>
+	<script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
+	<script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)}></script>
     <ArchivePanel></ArchivePanel>
 </MainGridLayout>
 

@@ -1,53 +1,62 @@
-# Specific for Googlebot - Priority
+# Robots.txt for TobiLife Blog
+# https://tobilife.netlify.app
+
+# Googlebot - Priority (no crawl delay for faster indexing)
 User-agent: Googlebot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /.netlify/
+Disallow: /*?*
 Crawl-delay: 0
 
 User-agent: Googlebot-Image
-Allow: /
+Allow: /images/
+Allow: /assets/
 Crawl-delay: 0
 
-# Naver Bot
+# Naver Bot (Korean search engine)
 User-agent: Yeti
 Allow: /
+Disallow: /admin/
+Disallow: /api/
 Crawl-delay: 0
 
 User-agent: NaverBot
 Allow: /
-Crawl-delay: 0
-
-User-agent: NaverBot-Scrap
-Allow: /
-Crawl-delay: 0
-
-# Allow all web crawlers
-User-agent: *
-Allow: /
-Crawl-delay: 1
-
-# Disallow admin area
-User-agent: *
 Disallow: /admin/
-
-# Sitemap location
-Sitemap: https://tobilife.netlify.app/sitemap-index.xml
-Sitemap: https://tobilife.netlify.app/sitemap-0.xml
-Sitemap: https://tobilife.netlify.app/rss.xml
-
-# Other search engine bots
-User-agent: Yeti
-Allow: /
 Crawl-delay: 0
 
+# Bing Bot
 User-agent: Bingbot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
 Crawl-delay: 0
 
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /admin/
+Crawl-delay: 0
+
+# Yahoo
 User-agent: Slurp
 Allow: /
+Disallow: /admin/
 Crawl-delay: 0
 
-# Block bad bots
+# Default for all other crawlers
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /.netlify/
+Disallow: /cache-admin.html
+Disallow: /*?*
+Crawl-delay: 1
+
+# Block bad/aggressive bots
 User-agent: SemrushBot
 Disallow: /
 
@@ -56,3 +65,50 @@ Disallow: /
 
 User-agent: MJ12bot
 Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+# AI 크롤러 허용 (블로그 콘텐츠 학습 허용)
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: CCBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap locations
+Sitemap: https://tobilife.netlify.app/sitemap-index.xml
+Sitemap: https://tobilife.netlify.app/sitemap-0.xml
+
+# RSS Feed
+Sitemap: https://tobilife.netlify.app/rss.xml

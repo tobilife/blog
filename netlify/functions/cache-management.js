@@ -1,9 +1,13 @@
 // 캐시 관리 API
 
 exports.handler = async (event, context) => {
-	// CORS 헤더
+	// CORS 헤더 - 특정 도메인만 허용
+	const allowedOrigins = ["https://tobilife.netlify.app", "https://blog.tobimind.com"];
+	const origin = event.headers.origin || event.headers.Origin || "";
+	const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
 	const headers = {
-		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Origin": corsOrigin,
 		"Access-Control-Allow-Headers": "Content-Type, X-Admin-Key",
 		"Content-Type": "application/json",
 	};
@@ -16,11 +20,25 @@ exports.handler = async (event, context) => {
 		};
 	}
 
-	// 관리자 키 확인 (환경 변수로 설정)
+	// 관리자 키 확인 (환경 변수 또는 LANGFLOW 토큰 기반 자동 생성)
 	const adminKey = event.headers["x-admin-key"];
-	const ADMIN_KEY = process.env.CACHE_ADMIN_KEY || "your-secret-admin-key";
+	// CACHE_ADMIN_KEY가 없으면 LANGFLOW_API_TOKEN의 앞 32자를 사용
+	const ADMIN_KEY = process.env.CACHE_ADMIN_KEY ||
+		(process.env.LANGFLOW_API_TOKEN ? process.env.LANGFLOW_API_TOKEN.substring(0, 32) : null);
 
-	if (adminKey !== ADMIN_KEY) {
+	// 어떤 키도 없으면 서비스 비활성화
+	if (!ADMIN_KEY) {
+		return {
+			statusCode: 503,
+			headers,
+			body: JSON.stringify({
+				error: "Service not configured",
+				message: "CACHE_ADMIN_KEY 또는 LANGFLOW_API_TOKEN 환경변수가 필요합니다."
+			}),
+		};
+	}
+
+	if (!adminKey || adminKey !== ADMIN_KEY) {
 		return {
 			statusCode: 401,
 			headers,

@@ -5,6 +5,14 @@ export class OptimizedChatService {
 		this.EDGE_API_URL = "/api/chat"; // Edge Function URL 추가
 		this.CHECK_STATUS_URL = "/.netlify/functions/check-task-status";
 		this.pollingIntervals = new Map(); // 진행 중인 폴링 관리
+		this.maxPollingTasks = 10; // 동시 폴링 최대 수
+	}
+
+	/**
+	 * 서비스 정리 (컴포넌트 언마운트 시 호출)
+	 */
+	destroy() {
+		this.stopAllPolling();
 	}
 
 	// 메시지 전송
@@ -69,6 +77,15 @@ export class OptimizedChatService {
 			return;
 		}
 
+		// 동시 폴링 태스크 수 제한
+		if (this.pollingIntervals.size >= this.maxPollingTasks) {
+			console.warn(`Max polling tasks reached (${this.maxPollingTasks})`);
+			if (onError) {
+				onError(new Error("Too many concurrent tasks"));
+			}
+			return;
+		}
+
 		let attempts = 0;
 		const maxAttempts = 60; // 최대 60번 시도 (약 2분)
 		const baseInterval = 1000; // 기본 간격 1초
@@ -79,24 +96,32 @@ export class OptimizedChatService {
 				attempts++;
 				const status = await this.checkTaskStatus(taskId);
 
-				// 진행 상태 업데이트
+				// 진행 상태 업데이트 (콜백 에러 처리)
 				if (onProgress) {
-					onProgress({
-						status: status.status,
-						progress: status.progress || 0,
-						message: status.message,
-						taskId: taskId,
-					});
+					try {
+						onProgress({
+							status: status.status,
+							progress: status.progress || 0,
+							message: status.message,
+							taskId: taskId,
+						});
+					} catch (cbError) {
+						console.warn("Progress callback error:", cbError);
+					}
 				}
 
 				// 완료된 경우
 				if (status.status === "completed") {
 					this.stopPolling(taskId);
 					if (onComplete) {
-						onComplete({
-							answer: status.answer,
-							taskId: taskId,
-						});
+						try {
+							onComplete({
+								answer: status.answer,
+								taskId: taskId,
+							});
+						} catch (cbError) {
+							console.warn("Complete callback error:", cbError);
+						}
 					}
 					return;
 				}
@@ -105,7 +130,11 @@ export class OptimizedChatService {
 				if (status.status === "failed") {
 					this.stopPolling(taskId);
 					if (onError) {
-						onError(new Error(status.error || "Task failed"));
+						try {
+							onError(new Error(status.error || "Task failed"));
+						} catch (cbError) {
+							console.warn("Error callback error:", cbError);
+						}
 					}
 					return;
 				}

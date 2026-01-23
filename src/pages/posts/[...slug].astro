@@ -32,6 +32,9 @@ const { remarkPluginFrontmatter } = await entry.render();
 const postUrl = getPostUrlBySlug(entry.slug);
 const fullPostUrl = new URL(postUrl, Astro.site || Astro.url.origin).href;
 
+const siteUrl = Astro.site?.href || Astro.url.origin;
+
+// BlogPosting JSON-LD
 const jsonLd = {
 	"@context": "https://schema.org",
 	"@type": "BlogPosting",
@@ -41,7 +44,11 @@ const jsonLd = {
 	author: {
 		"@type": "Person",
 		name: profileConfig.name,
-		url: Astro.site ? Astro.site.href : "",
+		url: siteUrl,
+		sameAs: [
+			profileConfig.links?.find(l => l.name === "GitHub")?.url,
+			profileConfig.links?.find(l => l.name === "LinkedIn")?.url,
+		].filter(Boolean),
 	},
 	publisher: {
 		"@type": "Organization",
@@ -60,7 +67,34 @@ const jsonLd = {
 	},
 	inLanguage: entry.data.lang ? entry.data.lang.replace("_", "-") : siteConfig.lang.replace("_", "-"),
 	wordCount: remarkPluginFrontmatter.words,
+	articleSection: entry.data.category || "Blog",
 	image: entry.data.image ? new URL(entry.data.image, Astro.site || Astro.url.origin).href : null,
+};
+
+// BreadcrumbList JSON-LD
+const breadcrumbJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{
+			"@type": "ListItem",
+			"position": 1,
+			"name": "홈",
+			"item": siteUrl
+		},
+		entry.data.category && {
+			"@type": "ListItem",
+			"position": 2,
+			"name": entry.data.category,
+			"item": new URL(`/archive/category/${encodeURIComponent(entry.data.category)}`, siteUrl).href
+		},
+		{
+			"@type": "ListItem",
+			"position": entry.data.category ? 3 : 2,
+			"name": entry.data.title,
+			"item": fullPostUrl
+		}
+	].filter(Boolean)
 };
 ---
 <MainGridLayout 
@@ -76,6 +110,7 @@ const jsonLd = {
     author={profileConfig.name}
 >
     <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+    <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
     <!-- Additional SEO meta tags for article -->
     <meta slot="head" name="keywords" content={entry.data.tags ? entry.data.tags.join(", ") : ""} />
     <!-- Critical CSS for preventing FOUC -->

@@ -2,7 +2,7 @@
 import type { GetStaticPaths } from "astro";
 import PostPage from "../components/PostPage.astro";
 import Pagination from "../components/control/Pagination.astro";
-import { siteConfig } from "../config";
+import { siteConfig, profileConfig } from "../config";
 import { PAGE_SIZE } from "../constants/constants";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 import { getSortedPosts } from "../utils/content-utils";
@@ -16,18 +16,75 @@ export const getStaticPaths = (async ({ paginate }) => {
 const { page } = Astro.props;
 
 const len = page.data.length;
+const siteUrl = Astro.site?.href || Astro.url.origin;
 
 // 동적 OG 이미지 URL 생성
 const ogImageUrl = `/api/og-image?type=home&title=${encodeURIComponent(siteConfig.title)}&description=${encodeURIComponent(siteConfig.subtitle)}`;
+
+// 페이지별 타이틀과 설명
+const isFirstPage = page.currentPage === 1;
+const pageTitle = isFirstPage
+	? siteConfig.title
+	: `${siteConfig.title} - 페이지 ${page.currentPage}`;
+const pageDescription = isFirstPage
+	? siteConfig.subtitle
+	: `${siteConfig.title} 블로그 ${page.currentPage}페이지 - ${siteConfig.subtitle}`;
+
+// Blog JSON-LD (홈페이지용)
+const blogJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "Blog",
+	"name": siteConfig.title,
+	"description": siteConfig.subtitle,
+	"url": siteUrl,
+	"inLanguage": siteConfig.lang.replace("_", "-"),
+	"author": {
+		"@type": "Person",
+		"name": profileConfig.name,
+		"url": siteUrl
+	},
+	"publisher": {
+		"@type": "Organization",
+		"name": siteConfig.title,
+		"logo": {
+			"@type": "ImageObject",
+			"url": `${siteUrl}images/logo.png`
+		}
+	},
+	"blogPost": page.data.slice(0, 5).map(post => ({
+		"@type": "BlogPosting",
+		"headline": post.data.title,
+		"url": `${siteUrl}posts/${post.slug}/`,
+		"datePublished": post.data.published.toISOString()
+	}))
+};
+
+// ItemList JSON-LD (검색결과에 목록 표시)
+const itemListJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "ItemList",
+	"name": `${siteConfig.title} 최신 포스트`,
+	"numberOfItems": page.data.length,
+	"itemListElement": page.data.map((post, index) => ({
+		"@type": "ListItem",
+		"position": index + 1,
+		"url": `${siteUrl}posts/${post.slug}/`,
+		"name": post.data.title
+	}))
+};
 ---
 
-<MainGridLayout 
-    title={siteConfig.title}
-    description={siteConfig.subtitle}
+<MainGridLayout
+    title={pageTitle}
+    description={pageDescription}
     banner={ogImageUrl}
 >
     <!-- Additional SEO Meta Tags for Home Page -->
     <meta slot="head" name="keywords" content="AI, RAG, Git, GitHub, 보험IT, 개발, 프로그래밍, 기술블로그, TobiLife, 토비라이프" />
+    {isFirstPage && <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(blogJsonLd)}></script>}
+    <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(itemListJsonLd)}></script>
+    {!isFirstPage && <link slot="head" rel="prev" href={page.url.prev} />}
+    {page.url.next && <link slot="head" rel="next" href={page.url.next} />}
     <PostPage page={page}></PostPage>
     <Pagination class="mx-auto onload-animation" page={page} style={`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`}></Pagination>
 </MainGridLayout>

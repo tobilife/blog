@@ -4,38 +4,95 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
+import { siteConfig, profileConfig } from "src/config";
 
 export async function getStaticPaths() {
 	const posts = await getSortedPosts();
 
-	const allTags = posts.reduce<Set<string>>((acc, post) => {
+	const tagPostCounts = new Map<string, number>();
+
+	posts.forEach((post) => {
 		if (Array.isArray(post.data.tags)) {
 			post.data.tags.forEach((tag) => {
-				if (typeof tag === "string") {
-					acc.add(tag.trim());
-				} else {
-					acc.add(String(tag).trim());
-				}
+				const tagName = typeof tag === "string" ? tag.trim() : String(tag).trim();
+				tagPostCounts.set(tagName, (tagPostCounts.get(tagName) || 0) + 1);
 			});
 		} else if (post.data.tags && typeof post.data.tags === "string") {
-			(post.data.tags as string).split(",").forEach((tag) => acc.add(tag.trim()));
+			(post.data.tags as string).split(",").forEach((tag) => {
+				const tagName = tag.trim();
+				tagPostCounts.set(tagName, (tagPostCounts.get(tagName) || 0) + 1);
+			});
 		}
-		return acc;
-	}, new Set());
+	});
 
-	const allTagsArray = Array.from(allTags).filter((tag) => tag && tag.trim() !== "");
+	const allTagsArray = Array.from(tagPostCounts.keys()).filter((tag) => tag && tag.trim() !== "");
 
 	// Simply return all tags - Astro handles URL encoding automatically
 	return allTagsArray.map((tag) => ({
 		params: {
 			tag: tag,
 		},
+		props: {
+			postCount: tagPostCounts.get(tag) || 0,
+		},
 	}));
 }
 
 const tag = Astro.params.tag;
+const { postCount } = Astro.props;
+
+// SEO 최적화된 타이틀과 설명
+const pageTitle = `#${tag} 태그`;
+const pageDescription = `${tag} 태그가 붙은 글 ${postCount}개 | ${siteConfig.title} 블로그에서 ${tag} 관련 포스트를 확인하세요.`;
+
+// Breadcrumb JSON-LD
+const breadcrumbJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{
+			"@type": "ListItem",
+			"position": 1,
+			"name": "홈",
+			"item": Astro.site?.href || Astro.url.origin
+		},
+		{
+			"@type": "ListItem",
+			"position": 2,
+			"name": "아카이브",
+			"item": new URL("/archive", Astro.site || Astro.url.origin).href
+		},
+		{
+			"@type": "ListItem",
+			"position": 3,
+			"name": `#${tag}`,
+			"item": Astro.url.href
+		}
+	]
+};
+
+// CollectionPage JSON-LD
+const collectionJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "CollectionPage",
+	"name": pageTitle,
+	"description": pageDescription,
+	"url": Astro.url.href,
+	"isPartOf": {
+		"@type": "WebSite",
+		"name": siteConfig.title,
+		"url": Astro.site?.href || Astro.url.origin
+	},
+	"about": {
+		"@type": "Thing",
+		"name": tag
+	},
+	"numberOfItems": postCount
+};
 ---
 
-<MainGridLayout title={i18n(I18nKey.archive)} description={i18n(I18nKey.archive)}>
+<MainGridLayout title={pageTitle} description={pageDescription}>
+	<script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
+	<script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)}></script>
     <ArchivePanel tags={[tag]}></ArchivePanel>
 </MainGridLayout>

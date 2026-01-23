@@ -3,26 +3,86 @@ import ArchivePanel from "@components/ArchivePanel.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { getCategoryList } from "@utils/content-utils";
+import { getCategoryList, getSortedPosts } from "@utils/content-utils";
+import { siteConfig, profileConfig } from "src/config";
 
 export async function getStaticPaths() {
 	const categories = await getCategoryList();
+	const posts = await getSortedPosts();
 
 	// 빈 카테고리 필터링
 	const validCategories = categories.filter((category) => category.name && category.name.trim() !== "");
 
 	// Simply return all categories - Astro handles URL encoding automatically
-	return validCategories.map((category) => ({
-		params: {
-			category: category.name.trim(),
-		},
-	}));
+	return validCategories.map((category) => {
+		const categoryPosts = posts.filter(p => p.data.category === category.name);
+		return {
+			params: {
+				category: category.name.trim(),
+			},
+			props: {
+				postCount: categoryPosts.length,
+			},
+		};
+	});
 }
 
 const category = Astro.params.category;
+const { postCount } = Astro.props;
+
+// SEO 최적화된 타이틀과 설명
+const pageTitle = `${category} 카테고리`;
+const pageDescription = `${category} 관련 글 ${postCount}개 | ${siteConfig.title} 블로그에서 ${category}에 대한 포스트를 확인하세요.`;
+
+// Breadcrumb JSON-LD
+const breadcrumbJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{
+			"@type": "ListItem",
+			"position": 1,
+			"name": "홈",
+			"item": Astro.site?.href || Astro.url.origin
+		},
+		{
+			"@type": "ListItem",
+			"position": 2,
+			"name": "아카이브",
+			"item": new URL("/archive", Astro.site || Astro.url.origin).href
+		},
+		{
+			"@type": "ListItem",
+			"position": 3,
+			"name": category,
+			"item": Astro.url.href
+		}
+	]
+};
+
+// CollectionPage JSON-LD
+const collectionJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "CollectionPage",
+	"name": pageTitle,
+	"description": pageDescription,
+	"url": Astro.url.href,
+	"isPartOf": {
+		"@type": "WebSite",
+		"name": siteConfig.title,
+		"url": Astro.site?.href || Astro.url.origin
+	},
+	"about": {
+		"@type": "Thing",
+		"name": category
+	},
+	"numberOfItems": postCount
+};
 ---
 
-<MainGridLayout title={i18n(I18nKey.archive)} description={i18n(I18nKey.archive)}>
+<MainGridLayout title={pageTitle} description={pageDescription}>
+	<script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
+	<script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)}></script>
     <ArchivePanel categories={[category]}></ArchivePanel>
 </MainGridLayout>
 

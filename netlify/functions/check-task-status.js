@@ -2,9 +2,13 @@
 const { getAsyncTaskService } = require("./utils/async-task-service.js");
 
 exports.handler = async (event, context) => {
-	// CORS 헤더
+	// CORS 헤더 - 특정 도메인만 허용
+	const allowedOrigins = ["https://tobilife.netlify.app", "https://blog.tobimind.com"];
+	const origin = event.headers.origin || event.headers.Origin || "";
+	const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
 	const headers = {
-		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Origin": corsOrigin,
 		"Access-Control-Allow-Headers": "Content-Type",
 		"Content-Type": "application/json",
 	};

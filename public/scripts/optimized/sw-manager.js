@@ -13,6 +13,17 @@
 			this.isSupported = "serviceWorker" in navigator;
 			this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 			this.registration = null;
+			this.updateCheckInterval = null;
+		}
+
+		/**
+		 * 서비스 정리 (페이지 언로드 시 호출)
+		 */
+		destroy() {
+			if (this.updateCheckInterval) {
+				clearInterval(this.updateCheckInterval);
+				this.updateCheckInterval = null;
+			}
 		}
 
 		async init() {
@@ -88,7 +99,7 @@
 
 		setupUpdateChecker() {
 			// Check for updates periodically (every 60 minutes)
-			setInterval(
+			this.updateCheckInterval = setInterval(
 				() => {
 					if (this.registration) {
 						this.registration.update();
@@ -191,6 +202,9 @@
 	} else {
 		swManager.init();
 	}
+
+	// 페이지 언로드 시 정리
+	window.addEventListener("beforeunload", () => swManager.destroy());
 
 	// Export for global use
 	window.swManager = swManager;

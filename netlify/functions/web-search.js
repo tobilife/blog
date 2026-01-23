@@ -2,9 +2,13 @@
 // 실제 검색 API 호출을 서버 사이드에서 처리
 
 exports.handler = async (event, context) => {
-	// CORS 헤더
+	// CORS 헤더 - 특정 도메인만 허용
+	const allowedOrigins = ["https://tobilife.netlify.app", "https://blog.tobimind.com"];
+	const origin = event.headers.origin || event.headers.Origin || "";
+	const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
 	const headers = {
-		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Origin": corsOrigin,
 		"Access-Control-Allow-Headers": "Content-Type",
 		"Access-Control-Allow-Methods": "POST, OPTIONS",
 		"Content-Type": "application/json",

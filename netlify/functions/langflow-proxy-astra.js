@@ -798,8 +798,8 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
 		// 작업 처리 시작 상태로 업데이트
 		await taskService.startProcessing(taskId);
 
-		// Langflow API 호출
-		const LANGFLOW_API_URL =
+		// Langflow API 호출 (환경 변수 사용)
+		const LANGFLOW_API_URL = process.env.LANGFLOW_API_URL ||
 			"https://api.langflow.astra.datastax.com/lf/88f74398-7c51-4066-a0e2-c6a1992f0889/api/v1/run/790574cb-2624-492b-a3a5-e0e118c1416f";
 
 		const response = await fetch(LANGFLOW_API_URL, {
@@ -845,9 +845,13 @@ async function processAsyncTask(taskId, requestBody, apiToken) {
 exports.handler = async (event, context) => {
 	const startTime = Date.now();
 
-	// CORS headers
+	// CORS 헤더 - 특정 도메인만 허용
+	const allowedOrigins = ["https://tobilife.netlify.app", "https://blog.tobimind.com"];
+	const origin = event.headers.origin || event.headers.Origin || "";
+	const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
 	const headers = {
-		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Origin": corsOrigin,
 		"Access-Control-Allow-Headers": "Content-Type, Authorization",
 		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 	};
@@ -876,8 +880,8 @@ exports.handler = async (event, context) => {
 		const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
 		const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 		const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
-		const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
-		const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID;
+		const GOOGLE_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+		const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_CX;
 
 		// Astra DB 환경 변수 자세히 체크
 		const astraConfig = {
@@ -892,8 +896,18 @@ exports.handler = async (event, context) => {
 			throw new Error("LANGFLOW_API_TOKEN is not configured");
 		}
 
-		const LANGFLOW_API_URL =
+		// Langflow API URL (환경 변수 우선)
+		const LANGFLOW_API_URL = process.env.LANGFLOW_API_URL ||
 			"https://api.langflow.astra.datastax.com/lf/88f74398-7c51-4066-a0e2-c6a1992f0889/api/v1/run/790574cb-2624-492b-a3a5-e0e118c1416f";
+
+		// 요청 크기 검증 (최대 1MB)
+		if (!event.body || event.body.length > 1024 * 1024) {
+			return {
+				statusCode: 413,
+				headers: { ...headers, "Content-Type": "application/json" },
+				body: JSON.stringify({ error: "Payload too large", maxSize: "1MB" }),
+			};
+		}
 
 		// 요청 본문 파싱
 		const requestBody = JSON.parse(event.body);

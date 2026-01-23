@@ -9,6 +9,43 @@ export class WebSearchService {
 		this.searchEndpoint = "/.netlify/functions/langflow-proxy-astra";
 		this.cache = new Map();
 		this.cacheExpiry = 5 * 60 * 1000; // 5분
+		this.maxCacheSize = 100; // 최대 캐시 항목 수
+
+		// 주기적 캐시 정리 (1분마다)
+		this.cleanupInterval = setInterval(() => this.cleanupExpiredCache(), 60 * 1000);
+	}
+
+	/**
+	 * 만료된 캐시 항목 정리
+	 */
+	cleanupExpiredCache() {
+		const now = Date.now();
+		for (const [key, value] of this.cache.entries()) {
+			if (now - value.timestamp > this.cacheExpiry) {
+				this.cache.delete(key);
+			}
+		}
+
+		// 캐시 크기 제한 (LRU 방식으로 오래된 항목 제거)
+		if (this.cache.size > this.maxCacheSize) {
+			const entriesToDelete = this.cache.size - this.maxCacheSize;
+			const iterator = this.cache.keys();
+			for (let i = 0; i < entriesToDelete; i++) {
+				const key = iterator.next().value;
+				this.cache.delete(key);
+			}
+		}
+	}
+
+	/**
+	 * 서비스 정리 (컴포넌트 언마운트 시 호출)
+	 */
+	destroy() {
+		if (this.cleanupInterval) {
+			clearInterval(this.cleanupInterval);
+			this.cleanupInterval = null;
+		}
+		this.cache.clear();
 	}
 
 	/**
