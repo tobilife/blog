@@ -106,9 +106,5 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-# Sitemap locations
+# Sitemap location (index contains all sitemap files)
 Sitemap: https://tobilife.netlify.app/sitemap-index.xml
-Sitemap: https://tobilife.netlify.app/sitemap-0.xml
-
-# RSS Feed
-Sitemap: https://tobilife.netlify.app/rss.xml

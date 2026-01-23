@@ -53,13 +53,19 @@ export default defineConfig({
 			},
 		}),
 		sitemap({
-			customPages: [],
 			entryLimit: 10000,
+			// 불필요한 페이지 제외
+			filter: (page) => {
+				const excludePages = ['/offline/', '/404/', '/search/'];
+				return !excludePages.some(exclude => page.includes(exclude));
+			},
 			// serialize 함수를 통해 각 페이지의 설정을 동적으로 조정
 			serialize: (item) => {
 				// URL에 따른 우선순위 설정
-				let priority = 0.7; // 기본값
-				let changefreq = "weekly"; // 기본값
+				let priority = 0.7;
+				let changefreq = "weekly";
+				// lastmod를 현재 날짜로 설정 (빌드 시점)
+				const now = new Date().toISOString().split('T')[0];
 
 				// 홈페이지
 				if (item.url === "https://tobilife.netlify.app/") {
@@ -73,18 +79,18 @@ export default defineConfig({
 				}
 				// 카테고리, 태그 페이지
 				else if (item.url.includes("/archive/category/") || item.url.includes("/archive/tag/")) {
-					priority = 0.7;
+					priority = 0.5;
 					changefreq = "weekly";
 				}
-				// 개별 포스트
+				// 개별 포스트 - 가장 중요
 				else if (item.url.includes("/posts/")) {
-					priority = 0.6;
+					priority = 0.9;
 					changefreq = "monthly";
 				}
 
 				return {
 					url: item.url,
-					lastmod: item.lastmod,
+					lastmod: item.lastmod || now,
 					changefreq: changefreq,
 					priority: priority,
 				};
