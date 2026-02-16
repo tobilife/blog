@@ -1,8 +1,6 @@
 ---
 import Footer from "@components/Footer.astro";
 import Navbar from "@components/Navbar.astro";
-// import LangflowChatAstra from "@components/chat/LangflowChatAstra.svelte"; // 기존 챗봇 비활성화
-import IframeChatWidget from "@components/chat-iframe/IframeChatWidget.svelte";
 import BackToTop from "@components/control/BackToTop.astro";
 import SideBar from "@components/widget/SideBar.astro";
 import type { MarkdownHeading } from "astro";
@@ -112,8 +110,4 @@ const mainPanelTop = siteConfig.banner.enable ? `calc(${BANNER_HEIGHT}vh - ${MAI
         {!siteConfig.toc.enable && <div id="toc"></div>}
     </div>
 </div>
-<!-- Chat Widget -->
-<!-- <LangflowChatAstra client:only="svelte" /> --> <!-- 기존 챗봇 비활성화 -->
-<IframeChatWidget client:only="svelte" />
-
 </Layout>
